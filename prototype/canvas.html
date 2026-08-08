@@ -53,7 +53,12 @@ html, body {
 /* The page sits on a table: a fixed max-size sheet, paper edges visible around. */
 .stage {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  /* dvh, not 100%: on iOS the layout viewport stays tall while the toolbars are
+     shown, which pushes the bottom of the page under them. */
+  height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--pad);
@@ -76,7 +81,9 @@ html, body {
   background: var(--paper);
   border: var(--rule) solid var(--ink);
   box-shadow: 0 18px 0 rgba(0, 0, 0, .35);
-  touch-action: none;
+  /* pan-y so a cell's own scroller still works on touch; horizontal swipes are
+     handled in script for navigation. */
+  touch-action: pan-y;
   cursor: grab;
 }
 .sheet.dragging { cursor: grabbing; }
@@ -126,13 +133,31 @@ html, body {
   overflow: hidden;
   border-right: var(--rule) solid var(--ink);
   border-bottom: var(--rule) solid var(--ink);
-  /* Lanes reserved for the edge arrows and the HUD bar. Content never enters
-     them, so an arrow can never sit on top of anything. */
-  padding: var(--lane-y) var(--lane-x) var(--lane-bottom);
+  /* The top and bottom lanes belong to the cell, not to the scroller inside it.
+     A scroller's padding reserves space at the end of its content, which does
+     nothing while it is scrolled to the top - content would still pass under
+     the sticker and the arrows. Insetting the scroller actually clips it. */
+  padding: var(--lane-y) 0 var(--lane-bottom);
+  display: flex;
+  outline: 0;
+}
+
+/* Every cell scrolls its own content. This is the guarantee that nothing is
+   ever cut off: if a substituted font, a browser toolbar or a long list makes
+   content taller than the cell, it scrolls rather than spilling. The lanes
+   reserved for the edge arrows live here, so content never sits under one. */
+.cell__scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vmin, 20px);
-  outline: 0;
+  padding: 0 var(--lane-x) 12px;
 }
 /* Cells are focused programmatically on every move, so the ring is scoped to
    actual keyboard use or it would frame the page permanently. */
@@ -159,8 +184,10 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 .lettered span { display: inline-block; }
 .lettered .word { white-space: nowrap; }
 
-.title-xl { font-size: clamp(2rem, 7.4vmin, 4.6rem); }
-.title-l  { font-size: clamp(1.5rem, 4.6vmin, 2.7rem); }
+/* Lower minimums than feel ideal, because iOS has no Arial Black and the
+   substituted face runs wider - the title has to survive that. */
+.title-xl { font-size: clamp(1.55rem, 7.4vmin, 4.6rem); }
+.title-l  { font-size: clamp(1.2rem, 4.6vmin, 2.7rem); }
 .title-m  { font-size: clamp(1.05rem, 2.7vmin, 1.5rem); text-shadow: 2px 2px 0 var(--ink); -webkit-text-stroke-width: 1.5px; }
 
 .eyebrow {
@@ -201,8 +228,10 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 .prose + .prose { margin-top: .7em; }
 
 .shot {
-  flex: 1;
-  min-height: 0;
+  /* Deterministic height: a flexible image inside a scroll container collapses.
+     4:3 also keeps every photo inside the never-widescreen rule. */
+  flex: 0 0 auto;
+  aspect-ratio: 4 / 3;
   border: var(--rule) solid var(--ink);
   overflow: hidden;
   background: var(--paper-deep);
@@ -217,12 +246,13 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 }
 .shot--contain img { object-fit: contain; height: auto; }
 
-.scroller { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* Nested scrollers are gone: the cell owns the only scroll container, so there
+   is one place for content to overflow into and no nested-gesture confusion. */
+.scroller { flex: 0 0 auto; }
 
 /* --- tiles: the things you can zoom into ---------------------------------- */
 .tiles {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
   display: grid;
   gap: clamp(8px, 1.5vmin, 16px);
   /* Capped track width, so a cell holding one tile does not blow it up to
@@ -230,8 +260,6 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   grid-template-columns: repeat(auto-fill, minmax(146px, 196px));
   justify-content: start;
   align-content: start;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 .tiles--cast { grid-template-columns: repeat(auto-fill, minmax(100px, 130px)); }
 
@@ -625,13 +653,26 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   .edge svg { height: 15px; }
   .edge--up svg, .edge--down svg { margin: 0; }
 
-  /* No side lanes needed: the arrows live in the controller row, so only the
-     bottom has to be reserved. */
+  /* No side lanes needed: the arrows live in the controller row. The top lane
+     still has to clear the next-date sticker. */
   .cell {
     --lane-x: 16px;
-    --lane-y: 18px;
+    --lane-y: 64px;
     --lane-bottom: 112px;
   }
+
+  /* Keep the HUD one line tall. A wrapping breadcrumb grew past its reserved
+     band and covered the content above it; Zpět already carries the way back,
+     so only the current cell's name is needed here. */
+  .chrome { flex-wrap: nowrap; }
+  .crumb {
+    min-width: 0;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .crumb > *:not(:last-child) { display: none; }
 }
 </style>
 </head>
@@ -1192,7 +1233,9 @@ function buildLayer(canvas) {
       if (definition) {
         cell.dataset.label = definition.label;
         cell.setAttribute('aria-label', definition.label);
-        cell.append(...definition.build());
+        const scroll = element('div', 'cell__scroll');
+        scroll.append(...definition.build());
+        cell.append(scroll);
       } else {
         cell.dataset.label = '';
         cell.setAttribute('aria-hidden', 'true');
@@ -1436,8 +1479,8 @@ document.addEventListener('keydown', (event) => {
 // from flying across the whole canvas.
 let wheelLock = false;
 sheet.addEventListener('wheel', (event) => {
-  if (event.target.closest('.scroller, .tiles')) {
-    const box = event.target.closest('.scroller, .tiles');
+  if (event.target.closest('.cell__scroll')) {
+    const box = event.target.closest('.cell__scroll');
     const canScroll = box.scrollHeight > box.clientHeight + 2;
     const atTop = box.scrollTop <= 0;
     const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
@@ -1459,8 +1502,15 @@ sheet.addEventListener('wheel', (event) => {
 // Pointer drag covers both touch swipe and mouse drag.
 let drag = null;
 sheet.addEventListener('pointerdown', (event) => {
-  if (event.target.closest('button, a, .scroller, .tiles')) return;
-  drag = { x: event.clientX, y: event.clientY };
+  if (event.target.closest('button, a')) return;
+  // Remember whether the cell under the finger can scroll: if it can, a vertical
+  // drag belongs to it, not to navigation.
+  const scroller = event.target.closest('.cell__scroll');
+  drag = {
+    x: event.clientX,
+    y: event.clientY,
+    scrolls: scroller ? scroller.scrollHeight > scroller.clientHeight + 2 : false,
+  };
   sheet.classList.add('dragging');
 });
 sheet.addEventListener('pointerup', (event) => {
@@ -1468,12 +1518,15 @@ sheet.addEventListener('pointerup', (event) => {
   if (!drag) return;
   const dx = event.clientX - drag.x;
   const dy = event.clientY - drag.y;
+  const scrolls = drag.scrolls;
   drag = null;
+
   const threshold = 55;
   if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
+
   // Drag the page: content follows the hand, so movement is the opposite sign.
   if (Math.abs(dx) > Math.abs(dy)) move(-Math.sign(dx), 0);
-  else move(0, -Math.sign(dy));
+  else if (!scrolls) move(0, -Math.sign(dy));
 });
 sheet.addEventListener('pointercancel', () => { drag = null; sheet.classList.remove('dragging'); });
 
