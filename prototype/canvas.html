@@ -556,10 +556,48 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   .sheet { border-width: 0; box-shadow: none; }
   .stage { padding: 0; }
   .sticker { max-width: 58vw; }
-  .edge b { display: none; }
-  /* Reserve room for the up arrow, which would otherwise sit on the heading. */
-  .cell { padding-top: 56px; }
   .steps { display: none; }
+
+  /* One column. On a phone a cell is one viewport, so a grid of eleven tiles
+     never fits - it becomes a list. The square-glyph aspect ratio is dropped
+     here because it fought the grid and clipped the names. */
+  .tiles--cast { grid-template-columns: minmax(0, 1fr); }
+  .tiles--cast .tile { flex-direction: row; align-items: stretch; }
+  .tiles--cast .tile__glyph {
+    aspect-ratio: auto;
+    flex: 0 0 58px;
+    font-size: 1.6rem;
+    -webkit-text-stroke-width: 2px;
+  }
+  .tiles--cast .tile__body {
+    flex: 1;
+    justify-content: center;
+    border-top: 0;
+    border-left: var(--rule) solid var(--ink);
+    padding: 10px 12px;
+  }
+
+  /* The four arrows collect into a controller row above the HUD instead of
+     sitting at the cell edges on top of the content. */
+  .edge b { display: none; }
+  .edge {
+    top: auto;
+    bottom: 60px;
+    width: 46px;
+    height: 42px;
+    padding: 0;
+    translate: 0 0;
+  }
+  .edge:hover { translate: 0 0; }
+  .edge--left  { left: calc(50% - 101px); right: auto; }
+  .edge--up    { left: calc(50% - 49px); }
+  .edge--down  { left: calc(50% + 3px); }
+  .edge--right { left: calc(50% + 55px); right: auto; }
+  .edge svg { height: 15px; }
+  .edge--up svg, .edge--down svg { margin: 0; }
+
+  /* Clear both the controller row and the HUD. */
+  .cell { padding-bottom: 112px; }
 }
 </style>
 </head>
