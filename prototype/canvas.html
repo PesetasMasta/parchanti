@@ -1,0 +1,1487 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Kolekce Parchant</title>
+<style>
+:root {
+  color-scheme: only light;
+
+  --paper:      #F2E3B8;
+  --paper-deep: #E4CE93;
+  --ink:        #241A12;
+  --ink-soft:   #4A382A;
+  --red:        #C4241E;
+  --green:      #2E6B3A;
+  --ochre:      #E8A317;
+  --card:       #C8703A;
+
+  --display: "Arial Black", "Helvetica Neue", Impact, sans-serif;
+  --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --utility: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --rule: 3px;
+  --ease: cubic-bezier(.22, .75, .2, 1);
+  --step: .58s;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--ink);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* The page sits on a table: a fixed max-size sheet, paper edges visible around. */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(0px, 1.5vmin, 26px);
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1500px;
+  max-height: 980px;
+  overflow: hidden;
+  background: var(--paper);
+  border: var(--rule) solid var(--ink);
+  box-shadow: 0 18px 0 rgba(0, 0, 0, .35);
+  touch-action: none;
+  cursor: grab;
+}
+.sheet.dragging { cursor: grabbing; }
+.sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  opacity: .3;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='.5'/%3E%3C/svg%3E");
+}
+
+/* --- canvas layers -------------------------------------------------------- */
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 50%);
+  transition: transform var(--step) var(--ease), opacity var(--step) var(--ease);
+}
+.layer[data-state="parent"] { transform: scale(1.18); opacity: 0; pointer-events: none; }
+.layer[data-state="entering"] { transform: scale(.34); opacity: 0; }
+.layer[data-state="active"] { transform: scale(1); opacity: 1; }
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--cols) * 100%);
+  height: calc(var(--rows) * 100%);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows), 1fr);
+  /* Percentage translate resolves against this element's own size, so one cell
+     is 100% / cols of it. */
+  transform: translate(
+    calc(var(--col) * -100% / var(--cols)),
+    calc(var(--row) * -100% / var(--rows))
+  );
+  transition: transform var(--step) var(--ease);
+}
+
+.cell {
+  position: relative;
+  overflow: hidden;
+  border-right: var(--rule) solid var(--ink);
+  border-bottom: var(--rule) solid var(--ink);
+  padding: clamp(16px, 3.2vmin, 40px);
+  /* Keep content clear of the HUD bar pinned along the bottom of the sheet. */
+  padding-bottom: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.8vmin, 20px);
+  outline: 0;
+}
+/* Cells are focused programmatically on every move, so the ring is scoped to
+   actual keyboard use or it would frame the page permanently. */
+body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
+.cell--tint  { background: var(--paper-deep); }
+.cell--ochre { background: var(--ochre); }
+.cell--green { background: var(--green); color: var(--paper); }
+.cell--card  { background: var(--card); color: var(--paper); }
+
+/* --- lettering ------------------------------------------------------------ */
+.lettered {
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -.02em;
+  line-height: .9;
+  color: var(--red);
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink);
+  margin: 0;
+  text-wrap: balance;
+}
+.lettered span { display: inline-block; }
+.lettered .word { white-space: nowrap; }
+
+.title-xl { font-size: clamp(2rem, 7.4vmin, 4.6rem); }
+.title-l  { font-size: clamp(1.5rem, 4.6vmin, 2.7rem); }
+.title-m  { font-size: clamp(1.05rem, 2.7vmin, 1.5rem); text-shadow: 2px 2px 0 var(--ink); -webkit-text-stroke-width: 1.5px; }
+
+.eyebrow {
+  font-family: var(--utility);
+  font-size: clamp(.58rem, 1.25vmin, .74rem);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.cell--green .eyebrow,
+.cell--card .eyebrow { color: rgba(242, 227, 184, .8); }
+
+.bubble {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--rule) solid var(--ink);
+  border-radius: 24px 28px 22px 26px;
+  padding: clamp(12px, 2vmin, 18px) clamp(14px, 2.2vmin, 20px);
+  margin: 0;
+  font-size: clamp(.76rem, 1.6vmin, .96rem);
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+.bubble::before, .bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -17px;
+  left: 30px;
+  border: 9px solid transparent;
+  border-top-color: var(--ink);
+}
+.bubble::after { bottom: -12px; left: 33px; border-width: 7px; border-top-color: var(--paper); }
+.bubble strong { color: var(--red); }
+
+.prose { margin: 0; font-size: clamp(.78rem, 1.6vmin, .95rem); line-height: 1.6; max-width: 46ch; }
+.prose + .prose { margin-top: .7em; }
+
+.shot {
+  flex: 1;
+  min-height: 0;
+  border: var(--rule) solid var(--ink);
+  overflow: hidden;
+  background: var(--paper-deep);
+}
+.shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Artwork keeps its own proportions rather than letterboxing across the cell. */
+.shot--contain {
+  background: var(--paper);
+  align-self: start;
+  flex: 0 0 auto;
+  max-width: min(100%, 320px);
+}
+.shot--contain img { object-fit: contain; height: auto; }
+
+.scroller { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+/* --- tiles: the things you can zoom into ---------------------------------- */
+.tiles {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: clamp(8px, 1.5vmin, 16px);
+  /* Capped track width, so a cell holding one tile does not blow it up to
+     fill the whole cell. */
+  grid-template-columns: repeat(auto-fill, minmax(146px, 196px));
+  justify-content: start;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tiles--cast { grid-template-columns: repeat(auto-fill, minmax(100px, 130px)); }
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: var(--rule) solid var(--ink);
+  background: var(--paper);
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: translate .16s var(--ease), box-shadow .16s var(--ease);
+}
+/* Each tile is its own height. Stretching to the row would clip the role line
+   under a name that wraps to two lines. */
+.tiles > .tile { align-self: start; }
+.tile:hover, .tile:focus-visible { translate: -2px -2px; box-shadow: 4px 4px 0 var(--ink); }
+.tile:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+.tile img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.tile__body { padding: 10px 11px 12px; display: flex; flex-direction: column; gap: 5px; border-top: var(--rule) solid var(--ink); }
+.tile__name { font-family: var(--display); font-size: clamp(.72rem, 1.5vmin, .9rem); text-transform: uppercase; line-height: 1.05; color: var(--ink); }
+.tile__meta { font-family: var(--utility); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+.tile--initial .tile__glyph {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 4vmin, 2.4rem);
+  color: var(--paper);
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+}
+.tiles--cast .tile:nth-child(3n+1) .tile__glyph { background: var(--card); }
+.tiles--cast .tile:nth-child(3n+2) .tile__glyph { background: var(--green); }
+.tiles--cast .tile:nth-child(3n+3) .tile__glyph { background: var(--red); }
+
+.slate {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  aspect-ratio: 4 / 3;
+  background: var(--card);
+  border-bottom: var(--rule) solid var(--ink);
+  padding: 14px;
+  text-align: center;
+}
+.slate span { font-family: var(--utility); font-size: .56rem; letter-spacing: .14em; text-transform: uppercase; color: var(--paper); }
+
+/* --- dates ---------------------------------------------------------------- */
+.dates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dates li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--utility);
+  font-size: clamp(.62rem, 1.35vmin, .76rem);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(36, 26, 18, .22);
+  font-variant-numeric: tabular-nums;
+}
+.dates time { min-width: 8.5em; }
+.dates .state { margin-left: auto; color: var(--ink-soft); }
+.dates .state[data-state="SOLD_OUT"] { color: var(--red); font-weight: 700; }
+.dates .state[data-state="CANCELLED"] { text-decoration: line-through; }
+
+.stamp {
+  font-family: var(--display);
+  font-size: clamp(1.1rem, 3.2vmin, 1.9rem);
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0;
+}
+
+/* --- edge arrows: the affordance, in their own language ------------------- */
+.edge {
+  position: absolute;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  /* A plate, so the arrow stays legible sitting over photos and date lists. */
+  background: var(--paper);
+  border: var(--rule) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--ink);
+  transition: translate .2s var(--ease), opacity .2s var(--ease);
+}
+.edge[hidden] { display: none; }
+.edge svg { height: clamp(18px, 3vmin, 26px); width: auto; }
+.edge b {
+  font-family: var(--utility);
+  font-size: .56rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  padding: 0;
+  white-space: nowrap;
+}
+.edge:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+
+.edge--right  { right: 10px;  top: 50%; translate: 0 -50%; }
+.edge--left   { left: 10px;   top: 50%; translate: 0 -50%; }
+.edge--down   { bottom: 10px; left: 50%; translate: -50% 0; }
+.edge--up     { top: 10px;    left: 50%; translate: -50% 0; }
+.edge--right:hover { translate: 6px -50%; }
+.edge--left:hover  { translate: -6px -50%; }
+.edge--down:hover  { translate: -50% 6px; }
+.edge--up:hover    { translate: -50% -6px; }
+.edge--left svg  { rotate: 180deg; }
+/* Rotation does not change the layout box, so the vertical arrows overflow it.
+   The margin buys back the room their label needs. */
+.edge--down svg  { rotate: 90deg; margin: 13px 0; }
+.edge--up svg    { rotate: -90deg; margin: 13px 0; }
+
+/* --- chrome: breadcrumb, minimap, back ----------------------------------- */
+.chrome {
+  position: absolute;
+  z-index: 35;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+.chrome > * { pointer-events: auto; }
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-family: var(--utility);
+  font-size: .6rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 5px 9px;
+}
+.crumb button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.crumb span[aria-current] { font-weight: 700; }
+
+.minimap { display: flex; flex-direction: column; gap: 4px; background: var(--paper); border: 2px solid var(--ink); padding: 6px; }
+.minimap__row { display: flex; gap: 4px; }
+.minimap__dot { width: 13px; height: 10px; border: 1.5px solid var(--ink); background: transparent; }
+.minimap__dot[data-here] { background: var(--red); }
+.minimap__dot[data-deep] { background: var(--ink); }
+
+.hint {
+  position: absolute;
+  z-index: 36;
+  left: 50%;
+  bottom: 58px;
+  translate: -50% 0;
+  font-family: var(--utility);
+  font-size: .6rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 6px 12px;
+  transition: opacity .5s ease;
+}
+.hint[hidden] { display: none; }
+.hint.gone { opacity: 0; }
+
+/* Always reachable, never lost on the canvas. */
+.sticker {
+  position: absolute;
+  z-index: 34;
+  right: 12px;
+  top: 12px;
+  rotate: 3deg;
+  background: var(--ochre);
+  border: var(--rule) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 8px 12px;
+  max-width: 42vw;
+  text-decoration: none;
+  color: var(--ink);
+  display: grid;
+  gap: 2px;
+}
+.sticker b { font-family: var(--display); font-size: clamp(.72rem, 1.6vmin, .92rem); text-transform: uppercase; }
+.sticker span { font-family: var(--utility); font-size: .55rem; letter-spacing: .14em; text-transform: uppercase; }
+.sticker:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+
+/* Adventure HUD. Lives in the bottom bar so it never collides with cell
+   headings, and gives back / restart / step-count one home. */
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--paper);
+  border: var(--rule) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: var(--utility);
+  font-size: .6rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.hud[hidden] { display: none; }
+.hud svg { height: 11px; width: auto; }
+.hud--back svg { rotate: 180deg; }
+.hud:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+.hud--restart { background: var(--red); color: var(--paper); border-color: var(--ink); }
+
+.steps {
+  font-family: var(--utility);
+  font-size: .6rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+  padding: 6px 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- title card and game over: the adventure framing --------------------- */
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 5vmin, 60px);
+  background: var(--ink);
+  text-align: center;
+  transition: opacity .45s var(--ease);
+}
+.screen[hidden] { display: none; }
+.screen.gone { opacity: 0; pointer-events: none; }
+.screen__inner { display: grid; gap: clamp(14px, 2.6vmin, 26px); justify-items: center; max-width: 44ch; }
+.screen .eyebrow { color: var(--ochre); }
+.screen p { color: var(--paper); }
+/* On the dark ground the default ink stroke and shadow both disappear. */
+.screen .lettered { -webkit-text-stroke-color: var(--paper); text-shadow: 6px 6px 0 var(--ochre); }
+
+.press {
+  font-family: var(--display);
+  font-size: clamp(1rem, 2.6vmin, 1.5rem);
+  text-transform: uppercase;
+  background: var(--ochre);
+  color: var(--ink);
+  border: var(--rule) solid var(--paper);
+  box-shadow: 6px 6px 0 var(--red);
+  padding: clamp(11px, 1.9vmin, 17px) clamp(20px, 3.4vmin, 34px);
+  cursor: pointer;
+  letter-spacing: .02em;
+}
+.press:hover { translate: -2px -2px; box-shadow: 8px 8px 0 var(--red); }
+.press:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
+
+.skip {
+  font-family: var(--utility);
+  font-size: .6rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Shown in a cell that is a genuine dead end, not over the whole page. */
+.gameover {
+  border: var(--rule) solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: clamp(16px, 2.6vmin, 26px);
+  display: grid;
+  gap: clamp(9px, 1.6vmin, 15px);
+  justify-items: start;
+  box-shadow: 6px 6px 0 var(--red);
+}
+.gameover .lettered { color: var(--ochre); -webkit-text-stroke-color: var(--paper); text-shadow: 3px 3px 0 var(--red); }
+.gameover .eyebrow { color: var(--ochre); }
+.gameover p { margin: 0; font-size: clamp(.76rem, 1.6vmin, .92rem); line-height: 1.5; }
+.gameover .row { display: flex; flex-wrap: wrap; gap: 9px; }
+.gameover a, .gameover button {
+  font-family: var(--display);
+  font-size: clamp(.68rem, 1.5vmin, .82rem);
+  text-transform: uppercase;
+  background: var(--ochre);
+  color: var(--ink);
+  border: 2px solid var(--paper);
+  padding: 8px 13px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.gameover a:hover, .gameover button:hover { background: var(--paper); }
+.gameover a:focus-visible, .gameover button:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+
+.link {
+  align-self: flex-start;
+  font-family: var(--utility);
+  font-size: .62rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--red);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.cell--green .link, .cell--card .link { color: var(--paper); }
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas, .layer, .tile, .edge { transition-duration: 1ms; }
+}
+
+/* Portrait phones: cells are tall, so keep type and padding tighter. */
+@media (max-width: 620px) {
+  .sheet { border-width: 0; box-shadow: none; }
+  .stage { padding: 0; }
+  .sticker { max-width: 58vw; }
+  .edge b { display: none; }
+  /* Reserve room for the up arrow, which would otherwise sit on the heading. */
+  .cell { padding-top: 56px; }
+  .steps { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="sheet" id="sheet">
+    <!-- canvas layers are rendered here -->
+
+    <button class="edge edge--left"  type="button" data-move="-1,0" hidden><svg viewBox="0 0 34 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M1 7h28m-9-6 9 6-9 6"/></svg><b data-label></b></button>
+    <button class="edge edge--right" type="button" data-move="1,0"  hidden><svg viewBox="0 0 34 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M1 7h28m-9-6 9 6-9 6"/></svg><b data-label></b></button>
+    <button class="edge edge--up"    type="button" data-move="0,-1" hidden><svg viewBox="0 0 34 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M1 7h28m-9-6 9 6-9 6"/></svg><b data-label></b></button>
+    <button class="edge edge--down"  type="button" data-move="0,1"  hidden><svg viewBox="0 0 34 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M1 7h28m-9-6 9 6-9 6"/></svg><b data-label></b></button>
+
+    <a class="sticker" id="sticker" href="https://goout.net/en/kolekce-parchant/pzpmtpg/">
+      <span>Příští termín</span>
+      <b id="sticker-text">Zatím žádný</b>
+    </a>
+
+    <p class="hint" id="hint">Táhni, swipni nebo šipky &mdash; pohybuj se po stránce</p>
+
+    <div class="chrome">
+      <button class="hud hud--back" type="button" id="back" hidden>
+        <svg viewBox="0 0 34 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"><path d="M1 7h28m-9-6 9 6-9 6"/></svg>
+        Zpět
+      </button>
+      <nav class="crumb" id="crumb" aria-label="Kde jsi"></nav>
+      <span class="steps" id="steps">Kroky 0</span>
+      <button class="hud hud--restart" type="button" id="restart">Začít znova</button>
+      <div class="minimap" id="minimap" aria-hidden="true"></div>
+    </div>
+
+    <div class="screen" id="title-screen" hidden>
+      <div class="screen__inner">
+        <p class="eyebrow">Studio Citadela &middot; Klimentská 16 &middot; Praha</p>
+        <h1 class="lettered title-xl">Kolekce Parchant</h1>
+        <p class="prose">Čtyři místa, jeden komiks. Pohybuj se šipkami, swipem nebo táhnutím. Klikni na inscenaci a přiblížíš se do ní.</p>
+        <button class="press" type="button" id="start">Začni hrát</button>
+        <button class="skip" type="button" id="skip">Přeskočit na program</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p aria-live="polite" id="announcer" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);"></p>
+
+<script type="application/json" id="asset-map">
+/* ASSETS:START */
+{}
+/* ASSETS:END */
+</script>
+
+<script type="application/json" id="goout-data">
+/* GOOUT:START */
+{"fetchedAt":"2026-08-08T13:13:34.726Z","dates":[{"gooutEventId":3242569,"start":"2025-05-02T20:00:00+02:00","cancelled":false,"ticketingState":"SOLD_OUT","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/sztcrtx/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-05-09T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szscrtx/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-06-13T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szokyux/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-06-15T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/sznkyux/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-09-06T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szaexwx/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-09-09T20:00:00+02:00","cancelled":false,"ticketingState":"SOLD_OUT","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szydxwx/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2025-10-25T20:00:00+02:00","cancelled":true,"ticketingState":"CANCELLED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szalyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-10-28T15:00:00+01:00","cancelled":true,"ticketingState":"CANCELLED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szblyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-11-01T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szelyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-11-25T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szflyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-12-02T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szglyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2025-12-11T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szhlyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2025-12-13T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szulyby/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2026-01-15T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szqhafy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-01-16T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szshafy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-01-22T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szrhafy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-02-10T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szisyfy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2026-02-17T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szgsyfy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-02-24T20:00:00+01:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szhsyfy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-04-10T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/sznbfgy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2026-04-11T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szpbfgy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3242569,"start":"2026-05-02T20:00:00+02:00","cancelled":false,"ticketingState":"ENDED","ticketUrl":"https://goout.net/en/hra-lasky-a-nahody/szmbfgy/","venue":{"name":"Studio Citadela"}},{"gooutEventId":3304956,"start":"2026-05-23T20:00:00+02:00","cancelled":true,"ticketingState":"CANCELLED","ticketUrl":"https://goout.net/en/audience-pivarska-odyssea/szekoiy/","venue":{"name":"Studio Citadela"}}]}
+/* GOOUT:END */
+</script>
+
+<script>
+'use strict';
+
+/* ==========================================================================
+   Content. Every canvas declares its own grid, so a two-facet thing (an actor)
+   is a 2x1 rather than a 2x2 padded with filler.
+   ========================================================================== */
+
+const PANELS = './assets/panels/';
+
+// Inlined builds replace the asset map with data URIs; local dev falls through
+// to the files on disk.
+const ASSETS = JSON.parse(
+  document.getElementById('asset-map').textContent.replace(/\/\* ASSETS:(START|END) \*\//g, '')
+);
+function asset(name) {
+  return ASSETS[name] ?? PANELS + name;
+}
+
+// Read off the hand-drawn Rychlé šípy poster. Verify before publishing.
+const CAST = [
+  { id: 'prokop-zach',     name: 'Prokop Zach',        role: 'hraje, režie' },
+  { id: 'maximilian-kocek', name: 'Maximilián Kocek',  role: 'hraje' },
+  { id: 'matous-visata',   name: 'Matouš Višata',      role: 'alternace' },
+  { id: 'ondrej-stupka',   name: 'Ondřej Stupka',      role: 'hraje' },
+  { id: 'zuzana-matuskova', name: 'Zuzana Matušková',  role: 'hraje' },
+  { id: 'maximilian-dolansky', name: 'Maximilián Dolanský', role: 'hraje' },
+  { id: 'mikulas-polak',   name: 'Mikuláš Polák',      role: 'hraje' },
+  { id: 'tomas-turek',     name: 'Tomáš Turek',        role: 'hraje' },
+  { id: 'roman-zach',      name: 'Roman Zach',         role: 'hraje' },
+  { id: 'simon-lorko',     name: 'Šimon Lorko',        role: 'text' },
+  { id: 'marek-cimbal',    name: 'Marek Cimbál',       role: 'hudba a světla' },
+];
+
+// Casting is only known for Rychlé šípy (it is printed on the poster). The other
+// two are deliberately empty rather than guessed.
+const PRODUCTIONS = [
+  {
+    id: 'rychle-sipy',
+    title: 'Rychlé šípy',
+    subtitle: 'a záhada klubovny',
+    credits: ['Napsal Šimon Lorko', 'Režie Prokop Zach', 'Hudba a světla Marek Cimbál'],
+    premiere: 'Premiéra 30. 1. 2026',
+    blurb: 'Foglarova parta z papíru na jeviště. Klubovna, Tam-tam, a jedna záhada, která se nedá vygooglit.',
+    image: asset('sipy-1.png'),
+    gallery: [asset('sipy-2.png'), asset('sipy-3.png'), asset('sipy-dark.png')],
+    poster: asset('poster.jpg'),
+    gooutEventId: null,
+    castIds: CAST.filter((person) => person.role !== 'text' && person.role !== 'hudba a světla').map((p) => p.id),
+  },
+  {
+    id: 'hra-lasky',
+    title: 'Hra lásky a náhody',
+    subtitle: 'Marivaux',
+    credits: [],
+    premiere: null,
+    blurb: 'Dva páry, dvě záměny, a nikdo se nepřizná první.',
+    image: asset('hra.png'),
+    gallery: [],
+    poster: null,
+    gooutEventId: 3242569,
+    castIds: [],
+  },
+  {
+    id: 'audience',
+    title: 'Audience',
+    subtitle: 'Pivařská Odyssea · Havel',
+    credits: [],
+    premiere: null,
+    blurb: 'Sládek, Vaněk a pivo, které nikdy nekončí.',
+    image: null,
+    gallery: [],
+    poster: null,
+    gooutEventId: 3304956,
+    castIds: [],
+  },
+];
+
+const GOOUT = JSON.parse(
+  document.getElementById('goout-data').textContent.replace(/\/\* GOOUT:(START|END) \*\//g, '')
+);
+
+const STATE_LABEL = { SOLD_OUT: 'vyprodáno', ENDED: 'odehráno', CANCELLED: 'zrušeno', AVAILABLE: 'v prodeji' };
+
+const formatDate = new Intl.DateTimeFormat('cs-CZ', {
+  day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
+});
+
+function datesFor(gooutEventId) {
+  if (!gooutEventId) return [];
+  return (GOOUT.dates ?? []).filter((date) => date.gooutEventId === gooutEventId);
+}
+
+function upcomingDates() {
+  const now = new Date().toISOString();
+  return (GOOUT.dates ?? []).filter((date) => date.start > now && !date.cancelled);
+}
+
+function productionsFor(personId) {
+  return PRODUCTIONS.filter((production) => production.castIds.includes(personId));
+}
+
+/* ==========================================================================
+   Cell builders
+   ========================================================================== */
+
+function element(tag, className, html) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (html !== undefined) node.innerHTML = html;
+  return node;
+}
+
+function shot(source, alt, contain) {
+  const frame = element('div', contain ? 'shot shot--contain' : 'shot');
+  const image = element('img');
+  image.src = source;
+  image.alt = alt;
+  frame.append(image);
+  return frame;
+}
+
+function datesList(dates) {
+  if (dates.length === 0) {
+    return element('p', 'prose', '<em>Žádné termíny nejsou vypsané.</em>');
+  }
+  const list = element('ul', 'dates');
+  for (const date of dates) {
+    const item = element('li');
+    const stamp = element('time', null, formatDate.format(new Date(date.start)));
+    stamp.dateTime = date.start;
+    const where = element('span', null, date.venue ? date.venue.name : '');
+    const state = element('span', 'state', STATE_LABEL[date.ticketingState] ?? date.ticketingState.toLowerCase());
+    state.dataset.state = date.ticketingState;
+    item.append(stamp, where, state);
+    list.append(item);
+  }
+  return list;
+}
+
+function tileButton({ label, meta, image, glyph, target }) {
+  const tile = element('button', 'tile');
+  tile.type = 'button';
+  tile.dataset.zoom = target;
+
+  if (image) {
+    const picture = element('img');
+    picture.src = image;
+    picture.alt = '';
+    tile.append(picture);
+  } else if (glyph) {
+    tile.classList.add('tile--initial');
+    tile.append(element('span', 'tile__glyph', glyph));
+  } else {
+    const slate = element('div', 'slate');
+    slate.innerHTML = '<svg viewBox="0 0 60 28" fill="none" stroke="#F2E3B8" stroke-width="3" stroke-linecap="square"><path d="M2 14h22m-8-8 8 8-8 8"/><path d="M32 14h22m-8-8 8 8-8 8"/></svg><span>Foto doplníme</span>';
+    tile.append(slate);
+  }
+
+  const body = element('div', 'tile__body');
+  body.append(element('span', 'tile__name', label));
+  if (meta) body.append(element('span', 'tile__meta', meta));
+  tile.append(body);
+  return tile;
+}
+
+/* ==========================================================================
+   Canvas definitions
+   ========================================================================== */
+
+function rootCanvas() {
+  return {
+    id: 'root',
+    label: 'Kolekce Parchant',
+    cols: 2,
+    rows: 2,
+    cells: [
+      {
+        col: 0, row: 0, label: 'Úvod', className: '',
+        build() {
+          const cell = element('div');
+          cell.append(element('h1', 'lettered title-xl', 'Kolekce Parchant'));
+          cell.append(element('p', 'eyebrow', 'Nezávislé divadlo &middot; Studio Citadela &middot; Klimentská 16, Praha 1'));
+          cell.append(shot(asset('hero.png'), 'Soubor Kolekce Parchant při děkovačce'));
+          cell.append(element('p', 'bubble', 'Hrajeme v suterénu na Klimentské. Publikum sedí na zemi, metr od nás &mdash; a to je celý ten trik.'));
+          return cell.childNodes;
+        },
+      },
+      {
+        col: 1, row: 0, label: 'Inscenace', className: 'cell--tint',
+        build() {
+          const parts = [];
+          parts.push(element('h2', 'lettered title-l', 'Inscenace'));
+          parts.push(element('p', 'eyebrow', 'Klikni na inscenaci &mdash; přiblížíš se do ní'));
+          const tiles = element('div', 'tiles');
+          for (const production of PRODUCTIONS) {
+            const dates = datesFor(production.gooutEventId);
+            tiles.append(tileButton({
+              label: production.title,
+              meta: dates.length ? `${dates.length} představení` : (production.premiere ?? 'termíny připravujeme'),
+              image: production.image,
+              target: `inscenace/${production.id}`,
+            }));
+          }
+          parts.push(tiles);
+          return parts;
+        },
+      },
+      {
+        col: 1, row: 1, label: 'Soubor', className: 'cell--tint',
+        build() {
+          const parts = [];
+          parts.push(element('h2', 'lettered title-l', 'Soubor'));
+          parts.push(element('p', 'eyebrow', 'Klikni na jméno &mdash; uvidíš, v čem hraje'));
+          const tiles = element('div', 'tiles tiles--cast');
+          for (const person of CAST) {
+            tiles.append(tileButton({
+              label: person.name,
+              meta: person.role,
+              glyph: person.name[0],
+              target: `soubor/${person.id}`,
+            }));
+          }
+          parts.push(tiles);
+          return parts;
+        },
+      },
+      {
+        col: 0, row: 1, label: 'O nás', className: 'cell--green',
+        build() {
+          const parts = [];
+          parts.push(element('h2', 'lettered title-l', 'O nás'));
+          const scroller = element('div', 'scroller');
+          scroller.append(element('p', 'prose', '<em>Sem patří text o souboru &mdash; kdo jste, jak jste začali, proč Parchant.</em> Zatím drží místo, aby bylo vidět, kolik ho tu je.'));
+          scroller.append(element('p', 'prose', 'Co je na stránce pravda: tři inscenace, 23 odehraných představení, všechna ve Studiu Citadela, dvě z nich vyprodaná.'));
+          parts.push(scroller);
+          parts.push(shot(asset('cardboard.png'), 'Ručně vyrobená cedule Klubovna'));
+          const link = element('a', 'link', 'Program a vstupenky na GoOut');
+          link.href = 'https://goout.net/en/kolekce-parchant/pzpmtpg/';
+          parts.push(link);
+          return parts;
+        },
+      },
+    ],
+  };
+}
+
+function productionCanvas(production) {
+  const dates = datesFor(production.gooutEventId);
+
+  const cells = [
+    {
+      col: 0, row: 0, label: 'O inscenaci', className: '',
+      build() {
+        const parts = [];
+        parts.push(element('h2', 'lettered title-l', production.title));
+        parts.push(element('p', 'eyebrow', production.subtitle ?? ''));
+        parts.push(element('p', 'bubble', production.blurb));
+        const scroller = element('div', 'scroller');
+        for (const line of production.credits) scroller.append(element('p', 'prose', line));
+        if (production.premiere) scroller.append(element('p', 'prose', production.premiere));
+        if (production.credits.length === 0 && !production.premiere) {
+          scroller.append(element('p', 'prose', '<em>Autor, režie a obsazení &mdash; doplní soubor.</em>'));
+        }
+        parts.push(scroller);
+        return parts;
+      },
+    },
+    {
+      col: 1, row: 0, label: 'Obsazení', className: 'cell--tint',
+      build() {
+        const parts = [];
+        parts.push(element('h2', 'lettered title-l', 'Obsazení'));
+        if (production.castIds.length === 0) {
+          parts.push(element('p', 'eyebrow', 'Neznámé'));
+          parts.push(element('p', 'prose', '<em>Obsazení této inscenace nemáme &mdash; na plakátu je jen u Rychlých šípů. Doplní soubor.</em>'));
+          return parts;
+        }
+        parts.push(element('p', 'eyebrow', 'Klikni na jméno &mdash; přeskočíš na herce'));
+        const tiles = element('div', 'tiles tiles--cast');
+        for (const id of production.castIds) {
+          const person = CAST.find((candidate) => candidate.id === id);
+          tiles.append(tileButton({ label: person.name, meta: person.role, glyph: person.name[0], target: `soubor/${person.id}` }));
+        }
+        parts.push(tiles);
+        return parts;
+      },
+    },
+    {
+      col: 1, row: 1, label: 'Termíny', className: 'cell--ochre',
+      build() {
+        const parts = [];
+        parts.push(element('h2', 'lettered title-l', 'Termíny'));
+        const now = new Date().toISOString();
+        const future = dates.filter((date) => date.start > now && !date.cancelled);
+        // Cancelled dates are listed but never counted as played.
+        const played = dates.filter((date) => !date.cancelled && date.start <= now).length;
+        const soldOut = dates.filter((date) => date.ticketingState === 'SOLD_OUT').length;
+
+        if (future.length > 0) {
+          parts.push(element('p', 'eyebrow', 'V prodeji'));
+          parts.push(datesList(future));
+        } else {
+          // A genuine dead end, so it gets the game-over card rather than a
+          // blank box. The exits out of it are real: GoOut, or back to the start.
+          // Two different dead ends: a run that finished, and one that never ran.
+          const over = element('div', 'gameover');
+          over.append(element('p', 'eyebrow', 'Konec hry'));
+          if (played > 0) {
+            over.append(element('h3', 'lettered title-l', 'Dohráno'));
+            const tally = soldOut > 0
+              ? `Odehráli jsme to ${played}&times;, z toho ${soldOut}&times; vyprodáno.`
+              : `Odehráli jsme to ${played}&times;.`;
+            over.append(element('p', null, `${tally} Další termín zveřejníme na GoOut.`));
+          } else {
+            over.append(element('h3', 'lettered title-l', 'Žádné termíny'));
+            over.append(element('p', null, 'Tahle inscenace zatím nemá vypsaný termín. Jak nějaký přidáme na GoOut, naskočí i sem.'));
+          }
+          const row = element('div', 'row');
+          const goout = element('a', null, 'Hlídat na GoOut');
+          goout.href = production.gooutEventId
+            ? `https://goout.net/cs/-/e${production.gooutEventId}/`
+            : 'https://goout.net/en/kolekce-parchant/pzpmtpg/';
+          const again = element('button', null, 'Začít znova');
+          again.type = 'button';
+          again.dataset.restart = 'true';
+          row.append(goout, again);
+          over.append(row);
+          parts.push(over);
+        }
+
+        const past = dates.filter((date) => date.start <= now || date.cancelled);
+        if (past.length > 0) {
+          parts.push(element('p', 'eyebrow', `Odehráno &middot; ${played}`));
+          const scroller = element('div', 'scroller');
+          scroller.append(datesList(past.slice().reverse()));
+          parts.push(scroller);
+        }
+
+        if (production.gooutEventId) {
+          const link = element('a', 'link', 'Otevřít na GoOut');
+          link.href = `https://goout.net/cs/-/e${production.gooutEventId}/`;
+          parts.push(link);
+        }
+        return parts;
+      },
+    },
+    {
+      col: 0, row: 1, label: 'Galerie', className: 'cell--card',
+      build() {
+        const parts = [];
+        parts.push(element('h2', 'lettered title-l', 'Galerie'));
+        if (production.poster) {
+          parts.push(shot(production.poster, 'Plakát k inscenaci ' + production.title, true));
+        }
+        const pictures = production.gallery.length > 0 ? production.gallery : (production.image ? [production.image] : []);
+        if (pictures.length > 0) {
+          const tiles = element('div', 'tiles');
+          for (const source of pictures) {
+            const frame = element('div', 'shot');
+            const image = element('img');
+            image.src = source;
+            image.alt = 'Scéna z inscenace ' + production.title;
+            frame.append(image);
+            tiles.append(frame);
+          }
+          parts.push(tiles);
+        }
+        if (pictures.length === 0 && !production.poster) {
+          parts.push(element('p', 'prose', '<em>Fotky doplníme &mdash; soubor chystá nové.</em>'));
+        }
+        return parts;
+      },
+    },
+  ];
+
+  return { id: production.id, label: production.title, cols: 2, rows: 2, cells };
+}
+
+function personCanvas(person) {
+  const appears = productionsFor(person.id);
+
+  return {
+    id: person.id,
+    label: person.name,
+    cols: 2,
+    rows: 1,
+    cells: [
+      {
+        col: 0, row: 0, label: 'Profil', className: '',
+        build() {
+          const parts = [];
+          parts.push(element('h2', 'lettered title-l', person.name));
+          parts.push(element('p', 'eyebrow', person.role));
+          const frame = element('div', 'shot');
+          frame.innerHTML = '<div class="slate" style="aspect-ratio:auto;height:100%;border:0"><svg viewBox="0 0 60 28" fill="none" stroke="#F2E3B8" stroke-width="3" stroke-linecap="square"><path d="M2 14h22m-8-8 8 8-8 8"/><path d="M32 14h22m-8-8 8 8-8 8"/></svg><span>Portrét doplníme</span></div>';
+          parts.push(frame);
+          parts.push(element('p', 'prose', '<em>Sem patří pár řádků o herci.</em>'));
+          return parts;
+        },
+      },
+      {
+        col: 1, row: 0, label: 'Hraje v', className: 'cell--tint',
+        build() {
+          const parts = [];
+          parts.push(element('h2', 'lettered title-l', 'Hraje v'));
+          if (appears.length === 0) {
+            parts.push(element('p', 'prose', '<em>Zatím nevíme &mdash; obsazení máme jen z plakátu Rychlých šípů.</em>'));
+            return parts;
+          }
+          const tiles = element('div', 'tiles');
+          for (const production of appears) {
+            tiles.append(tileButton({
+              label: production.title,
+              meta: production.subtitle,
+              image: production.image,
+              target: `inscenace/${production.id}`,
+            }));
+          }
+          parts.push(tiles);
+          return parts;
+        },
+      },
+    ],
+  };
+}
+
+function resolveCanvas(path) {
+  if (path.length === 0) return rootCanvas();
+
+  const [section, id] = path;
+  if (section === 'inscenace') {
+    const production = PRODUCTIONS.find((candidate) => candidate.id === id);
+    if (production) return productionCanvas(production);
+  }
+  if (section === 'soubor') {
+    const person = CAST.find((candidate) => candidate.id === id);
+    if (person) return personCanvas(person);
+  }
+  return null;
+}
+
+/* ==========================================================================
+   Navigator
+   ========================================================================== */
+
+const sheet = document.getElementById('sheet');
+const crumb = document.getElementById('crumb');
+const minimap = document.getElementById('minimap');
+const backButton = document.getElementById('back');
+const announcer = document.getElementById('announcer');
+const hint = document.getElementById('hint');
+const edges = [...document.querySelectorAll('.edge')];
+
+const stepsBadge = document.getElementById('steps');
+const restartButton = document.getElementById('restart');
+const titleScreen = document.getElementById('title-screen');
+
+const view = {
+  path: [],       // [] | ['inscenace', 'rychle-sipy']
+  col: 0,
+  row: 0,
+  canvas: null,
+  layer: null,
+  busy: false,
+  steps: 0,
+};
+
+function countStep() {
+  view.steps += 1;
+  stepsBadge.textContent = `Kroky ${view.steps}`;
+}
+
+function restart() {
+  view.steps = 0;
+  stepsBadge.textContent = 'Kroky 0';
+  view.path = [];
+  mount(rootCanvas(), { col: 0, row: 0 });
+}
+
+function cellAt(canvas, col, row) {
+  return canvas.cells.find((cell) => cell.col === col && cell.row === row) ?? null;
+}
+
+function buildLayer(canvas) {
+  const layer = element('div', 'layer');
+  const grid = element('div', 'canvas');
+  grid.style.setProperty('--cols', canvas.cols);
+  grid.style.setProperty('--rows', canvas.rows);
+  grid.style.setProperty('--col', 0);
+  grid.style.setProperty('--row', 0);
+
+  for (let row = 0; row < canvas.rows; row += 1) {
+    for (let col = 0; col < canvas.cols; col += 1) {
+      const definition = cellAt(canvas, col, row);
+      const cell = element('section', 'cell' + (definition?.className ? ' ' + definition.className : ''));
+      cell.style.gridColumn = String(col + 1);
+      cell.style.gridRow = String(row + 1);
+      cell.tabIndex = -1;
+      if (definition) {
+        cell.dataset.label = definition.label;
+        cell.setAttribute('aria-label', definition.label);
+        cell.append(...definition.build());
+      } else {
+        cell.dataset.label = '';
+        cell.setAttribute('aria-hidden', 'true');
+      }
+      grid.append(cell);
+    }
+  }
+
+  layer.append(grid);
+  layer._grid = grid;
+  return layer;
+}
+
+function jitterLettering(scope) {
+  for (const node of scope.querySelectorAll('.lettered')) {
+    const text = node.childNodes[0];
+    if (!text || text.nodeType !== Node.TEXT_NODE) continue;
+
+    const fragment = document.createDocumentFragment();
+    let index = 0;
+    text.textContent.split(' ').forEach((word, wordIndex) => {
+      if (wordIndex > 0) fragment.append(' ');
+      const holder = element('span', 'word');
+      for (const character of word) {
+        const glyph = element('span', null);
+        glyph.textContent = character;
+        glyph.style.rotate = `${(Math.sin(index * 2.399) * 1.7).toFixed(2)}deg`;
+        glyph.style.translate = `0 ${(Math.cos(index * 1.7) * 1.6).toFixed(2)}px`;
+        holder.append(glyph);
+        index += 1;
+      }
+      fragment.append(holder);
+    });
+    text.replaceWith(fragment);
+  }
+}
+
+function paintPosition() {
+  const { canvas, col, row, layer } = view;
+  layer._grid.style.setProperty('--col', col);
+  layer._grid.style.setProperty('--row', row);
+
+  // Edge arrows only offer moves that exist, labelled with the destination.
+  for (const edge of edges) {
+    const [dx, dy] = edge.dataset.move.split(',').map(Number);
+    const target = cellAt(canvas, col + dx, row + dy);
+    edge.hidden = !target;
+    if (target) edge.querySelector('[data-label]').textContent = target.label;
+  }
+
+  // Breadcrumb.
+  crumb.replaceChildren();
+  const trail = [{ label: 'Kolekce Parchant', depth: 0 }];
+  if (view.path.length > 0) trail.push({ label: canvas.label, depth: 1 });
+  trail.forEach((entry, index) => {
+    if (index > 0) crumb.append(element('span', null, '&rsaquo;'));
+    if (index === trail.length - 1) {
+      const here = element('span', null, entry.label);
+      here.setAttribute('aria-current', 'true');
+      crumb.append(here);
+    } else {
+      const jump = element('button', null, entry.label);
+      jump.type = 'button';
+      jump.addEventListener('click', () => zoomOut());
+      crumb.append(jump);
+    }
+  });
+  const current = cellAt(canvas, col, row);
+  if (current) {
+    crumb.append(element('span', null, '&rsaquo;'));
+    const cellName = element('span', null, current.label);
+    cellName.setAttribute('aria-current', 'true');
+    crumb.append(cellName);
+  }
+
+  // Mini-map: which cell of which grid, and whether we are one level deep.
+  minimap.replaceChildren();
+  for (let r = 0; r < canvas.rows; r += 1) {
+    const line = element('div', 'minimap__row');
+    for (let c = 0; c < canvas.cols; c += 1) {
+      const dot = element('span', 'minimap__dot');
+      if (c === col && r === row) dot.dataset.here = 'true';
+      else if (!cellAt(canvas, c, r)) dot.dataset.deep = 'true';
+      line.append(dot);
+    }
+    minimap.append(line);
+  }
+
+  backButton.hidden = view.path.length === 0;
+  announcer.textContent = `${canvas.label}, ${current ? current.label : ''}`;
+
+  const cellNode = layer._grid.children[row * canvas.cols + col];
+  if (cellNode && document.activeElement !== cellNode) cellNode.focus({ preventScroll: true });
+}
+
+function writeHash() {
+  const parts = [...view.path];
+  const cell = cellAt(view.canvas, view.col, view.row);
+  if (cell) parts.push(slug(cell.label));
+  const next = '#/' + parts.join('/');
+  if (location.hash !== next) history.pushState(null, '', next);
+}
+
+function slug(label) {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function move(dx, dy, record = true) {
+  if (view.busy) return;
+  const target = cellAt(view.canvas, view.col + dx, view.row + dy);
+  if (!target) return;
+  view.col += dx;
+  view.row += dy;
+  countStep();
+  paintPosition();
+  if (record) writeHash();
+  dismissHint();
+}
+
+function mount(canvas, { col = 0, row = 0, origin = null, record = true } = {}) {
+  const layer = buildLayer(canvas);
+  jitterLettering(layer);
+
+  const previous = view.layer;
+  if (origin) {
+    layer.style.setProperty('--origin-x', origin.x);
+    layer.style.setProperty('--origin-y', origin.y);
+  }
+  layer.dataset.state = origin ? 'entering' : 'active';
+  sheet.prepend(layer);
+
+  view.canvas = canvas;
+  view.layer = layer;
+  view.col = col;
+  view.row = row;
+  paintPosition();
+
+  if (origin) {
+    view.busy = true;
+    requestAnimationFrame(() => {
+      layer.dataset.state = 'active';
+      if (previous) {
+        previous.style.setProperty('--origin-x', origin.x);
+        previous.style.setProperty('--origin-y', origin.y);
+        previous.dataset.state = 'parent';
+      }
+    });
+    window.setTimeout(() => {
+      if (previous) previous.remove();
+      view.busy = false;
+    }, 620);
+  } else if (previous) {
+    previous.remove();
+  }
+
+  if (record) writeHash();
+}
+
+function zoomInto(target, originElement) {
+  if (view.busy) return;
+  const path = target.split('/');
+  const canvas = resolveCanvas(path);
+  if (!canvas) return;
+
+  const box = originElement?.getBoundingClientRect();
+  const frame = sheet.getBoundingClientRect();
+  const origin = box
+    ? { x: `${((box.left + box.width / 2 - frame.left) / frame.width) * 100}%`, y: `${((box.top + box.height / 2 - frame.top) / frame.height) * 100}%` }
+    : { x: '50%', y: '50%' };
+
+  view.path = path;
+  mount(canvas, { origin });
+  dismissHint();
+}
+
+function zoomOut() {
+  if (view.busy || view.path.length === 0) return;
+  view.path = [];
+  mount(rootCanvas(), { col: 1, row: 0 });
+}
+
+function dismissHint() {
+  if (hint.hidden) return;
+  hint.classList.add('gone');
+  window.setTimeout(() => { hint.hidden = true; }, 500);
+}
+
+/* --- input --------------------------------------------------------------- */
+
+sheet.addEventListener('click', (event) => {
+  if (event.target.closest('[data-restart]')) {
+    event.preventDefault();
+    restart();
+    return;
+  }
+  const tile = event.target.closest('[data-zoom]');
+  if (tile) {
+    event.preventDefault();
+    zoomInto(tile.dataset.zoom, tile);
+  }
+});
+
+restartButton.addEventListener('click', () => restart());
+
+// Ring the focused cell only for people actually navigating by keyboard.
+document.addEventListener('keydown', (event) => {
+  if (['Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+    document.body.classList.add('keys');
+  }
+}, { capture: true });
+
+for (const edge of edges) {
+  edge.addEventListener('click', () => {
+    const [dx, dy] = edge.dataset.move.split(',').map(Number);
+    move(dx, dy);
+  });
+}
+
+backButton.addEventListener('click', () => zoomOut());
+
+document.addEventListener('keydown', (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  const moves = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] };
+  if (moves[event.key]) {
+    event.preventDefault();
+    move(...moves[event.key]);
+    return;
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    zoomOut();
+  }
+});
+
+// Trackpad and wheel. One gesture moves one cell; a lock stops a long swipe
+// from flying across the whole canvas.
+let wheelLock = false;
+sheet.addEventListener('wheel', (event) => {
+  if (event.target.closest('.scroller, .tiles')) {
+    const box = event.target.closest('.scroller, .tiles');
+    const canScroll = box.scrollHeight > box.clientHeight + 2;
+    const atTop = box.scrollTop <= 0;
+    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
+    const wantsVertical = Math.abs(event.deltaY) > Math.abs(event.deltaX);
+    if (canScroll && wantsVertical && !((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0))) return;
+  }
+
+  event.preventDefault();
+  if (wheelLock) return;
+  if (Math.max(Math.abs(event.deltaX), Math.abs(event.deltaY)) < 12) return;
+
+  wheelLock = true;
+  window.setTimeout(() => { wheelLock = false; }, 520);
+
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) move(Math.sign(event.deltaX), 0);
+  else move(0, Math.sign(event.deltaY));
+}, { passive: false });
+
+// Pointer drag covers both touch swipe and mouse drag.
+let drag = null;
+sheet.addEventListener('pointerdown', (event) => {
+  if (event.target.closest('button, a, .scroller, .tiles')) return;
+  drag = { x: event.clientX, y: event.clientY };
+  sheet.classList.add('dragging');
+});
+sheet.addEventListener('pointerup', (event) => {
+  sheet.classList.remove('dragging');
+  if (!drag) return;
+  const dx = event.clientX - drag.x;
+  const dy = event.clientY - drag.y;
+  drag = null;
+  const threshold = 55;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
+  // Drag the page: content follows the hand, so movement is the opposite sign.
+  if (Math.abs(dx) > Math.abs(dy)) move(-Math.sign(dx), 0);
+  else move(0, -Math.sign(dy));
+});
+sheet.addEventListener('pointercancel', () => { drag = null; sheet.classList.remove('dragging'); });
+
+// Hash routing, so browser back and forward work and every cell is linkable.
+function readHash() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const parts = raw.split('/').filter(Boolean);
+  if (parts.length === 0) return { path: [], cell: null };
+  // A single segment is always a cell on the root canvas: "#/inscenace" is the
+  // overview cell, "#/inscenace/rychle-sipy" is the production's own canvas.
+  if ((parts[0] === 'inscenace' || parts[0] === 'soubor') && parts.length >= 2) {
+    return { path: parts.slice(0, 2), cell: parts[2] ?? null };
+  }
+  return { path: [], cell: parts[0] };
+}
+
+function applyHash({ record = false } = {}) {
+  const { path, cell } = readHash();
+  const canvas = resolveCanvas(path) ?? rootCanvas();
+  const resolvedPath = resolveCanvas(path) ? path : [];
+
+  let col = 0;
+  let row = 0;
+  if (cell) {
+    const match = canvas.cells.find((candidate) => slug(candidate.label) === cell);
+    if (match) { col = match.col; row = match.row; }
+  }
+
+  view.path = resolvedPath;
+  mount(canvas, { col, row, record });
+}
+
+window.addEventListener('popstate', () => applyHash({ record: false }));
+
+// Sticker: the one thing a visitor always needs, wherever they are.
+const nextDates = upcomingDates();
+document.getElementById('sticker-text').textContent = nextDates.length
+  ? formatDate.format(new Date(nextDates[0].start))
+  : 'Zatím žádný';
+
+applyHash({ record: false });
+
+/* --- title card ----------------------------------------------------------- */
+// Once per session, and never when someone arrives on a deep link - a shared
+// link to a production must land on that production, not on a splash screen.
+const arrivedDeep = location.hash.replace(/^#\/?/, '').length > 0;
+const alreadySeen = sessionStorage.getItem('parchant-seen') === 'true';
+const wantsLessMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function openTitleScreen() {
+  titleScreen.hidden = false;
+  jitterLettering(titleScreen);
+  document.getElementById('start').focus({ preventScroll: true });
+}
+
+function closeTitleScreen() {
+  sessionStorage.setItem('parchant-seen', 'true');
+  if (wantsLessMotion) {
+    titleScreen.hidden = true;
+  } else {
+    titleScreen.classList.add('gone');
+    window.setTimeout(() => { titleScreen.hidden = true; }, 460);
+  }
+  const cell = view.layer._grid.children[view.row * view.canvas.cols + view.col];
+  cell?.focus({ preventScroll: true });
+}
+
+document.getElementById('start').addEventListener('click', closeTitleScreen);
+document.getElementById('skip').addEventListener('click', () => {
+  closeTitleScreen();
+  view.path = [];
+  mount(rootCanvas(), { col: 1, row: 0 });
+});
+
+if (arrivedDeep || alreadySeen) {
+  dismissHint();
+} else {
+  openTitleScreen();
+  window.setTimeout(dismissHint, 9000);
+}
+</script>
+</body>
+</html>

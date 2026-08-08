@@ -4,16 +4,61 @@ Prototype site for the theatre company Kolekce Parchant (Studio Citadela, Prague
 Not live anywhere yet. This repo holds the visual direction, the GoOut integration,
 and the photo pipeline.
 
+## Two prototypes
+
+- `prototype/canvas.html` — **the live direction.** A pannable 2x2 comic map you
+  move across instead of scrolling, zooming into each production and actor.
+  Framed as half an adventure game.
+- `prototype/index.html` — the earlier scrolling version, kept for comparison.
+
 ## Run it
 
 ```bash
 node scripts/fetch-goout.mjs        # refresh data/goout.json from GoOut
+node scripts/embed-data.mjs         # bake those dates into canvas.html
 ./scripts/make-panels.sh            # re-ink the photos from ~/Downloads/parchant
-node scripts/inline.mjs             # build/parchant.html, self-contained for sharing
-open -a "Brave Browser" prototype/index.html
+node scripts/inline.mjs canvas      # build/parchant-canvas.html, self-contained
+node scripts/inline.mjs             # build/parchant.html (scrolling version)
+open -a "Brave Browser" prototype/canvas.html
 ```
 
 `make-panels.sh` takes an optional source directory as `$1` if the raw photos move.
+`embed-data.mjs` writes between `/* GOOUT:START */` markers; `inline.mjs` writes
+between `/* ASSETS:START */` markers and turns every panel into a data URI, so the
+built file works from `file://` and from a host that blocks external requests.
+
+## Navigation model
+
+Each canvas declares its own grid, so content is never padded to fit a shape:
+the root and each production are 2x2, an actor is 2x1.
+
+| Canvas | Cells |
+|---|---|
+| root | Úvod, Inscenace / O nás, Soubor |
+| production | O inscenaci, Obsazení / Galerie, Termíny |
+| actor | Profil, Hraje v |
+
+Movement: swipe, mouse drag, trackpad, arrow keys, or the edge arrows. Zoom in by
+clicking a tile; out via Escape, the Zpět button, the breadcrumb, or browser back.
+
+Every cell has its own hash route (`#/inscenace/rychle-sipy/terminy`), which is
+what makes browser back and forward work and makes any cell linkable. A deep link
+skips the title card, so a shared link lands on the content, not a splash screen.
+
+Three devices exist specifically to stop people getting lost in a zoomable
+canvas, which is its main failure mode: the mini-map, the breadcrumb, and
+redundant exits.
+
+### Adventure framing
+
+- A title card on first visit per session (`sessionStorage`), skipped on deep links.
+- A HUD along the bottom: back, breadcrumb, step counter, restart.
+- A game-over card on genuine dead ends only. It never blocks anyone: the exits
+  from it are GoOut and restart. Copy adapts — a run that finished says
+  *Dohráno* with the tally, one that never ran says *Žádné termíny*.
+
+Deliberately not a real fail state. A screen that ejects someone looking for
+tickets would be hostile.
 
 ## Design direction
 
