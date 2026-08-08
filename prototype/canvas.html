@@ -434,7 +434,8 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   position: absolute;
   z-index: 36;
   left: 50%;
-  bottom: 58px;
+  /* Above the reserved band, so it never lands on the down arrow. */
+  bottom: calc(var(--lane-bottom) + 8px);
   translate: -50% 0;
   font-family: var(--utility);
   font-size: .6rem;
@@ -634,31 +635,28 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
     padding: 10px 12px;
   }
 
-  /* The four arrows collect into a controller row above the HUD instead of
-     sitting at the cell edges on top of the content. */
+  /* Arrows stay at the cell edges as on desktop, just compact and unlabelled so
+     their lanes stay narrow enough for a phone. */
   .edge b { display: none; }
   .edge {
-    top: auto;
-    bottom: 60px;
-    width: 46px;
-    height: 42px;
+    width: 36px;
+    height: 34px;
     padding: 0;
-    translate: 0 0;
+    box-shadow: 2px 2px 0 var(--ink);
   }
-  .edge:hover { translate: 0 0; }
-  .edge--left  { left: calc(50% - 101px); right: auto; }
-  .edge--up    { left: calc(50% - 49px); }
-  .edge--down  { left: calc(50% + 3px); }
-  .edge--right { left: calc(50% + 55px); right: auto; }
-  .edge svg { height: 15px; }
+  .edge svg { height: 13px; }
   .edge--up svg, .edge--down svg { margin: 0; }
+  .edge--left  { left: 4px; }
+  .edge--right { right: 4px; }
+  .edge--up    { top: 10px; }
+  .edge--down  { bottom: calc(var(--hud) + 6px); }
 
-  /* No side lanes needed: the arrows live in the controller row. The top lane
-     still has to clear the next-date sticker. */
+  /* Lanes: sides clear the left and right arrows, the top clears the up arrow
+     and the next-date sticker, the bottom clears the down arrow and the HUD. */
   .cell {
-    --lane-x: 16px;
-    --lane-y: 64px;
-    --lane-bottom: 112px;
+    --lane-x: 46px;
+    --lane-y: 54px;
+    --lane-bottom: 104px;
   }
 
   /* Keep the HUD one line tall. A wrapping breadcrumb grew past its reserved
