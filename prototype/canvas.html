@@ -24,6 +24,17 @@
   --rule: 3px;
   --ease: cubic-bezier(.22, .75, .2, 1);
   --step: .58s;
+
+  /* Arrow lanes. Cell padding and arrow offsets both derive from these, so the
+     two can never drift apart. */
+  --lane-x: 88px;
+  --lane-y: 66px;
+  --hud: 58px;
+  --lane-bottom: 130px;
+
+  /* Gap between the sheet and the window. The sheet's width calculation needs
+     the same value, so it lives here rather than inline on .stage. */
+  --pad: clamp(0px, 1.5vmin, 26px);
 }
 
 * { box-sizing: border-box; }
@@ -45,15 +56,22 @@ html, body {
   inset: 0;
   display: grid;
   place-items: center;
-  padding: clamp(0px, 1.5vmin, 26px);
+  padding: var(--pad);
 }
 
+/* Never wider than 4:3. A cell is exactly one sheet, so capping the sheet caps
+   every cell. The width is computed rather than left to aspect-ratio: as a
+   centred grid item, aspect-ratio and max-width did not resolve against the
+   viewport reliably. min() picks the smallest of available width, the width
+   4:3 allows at this height, and the hard cap - so a phone stays portrait. */
 .sheet {
   position: relative;
-  width: 100%;
   height: 100%;
-  max-width: 1500px;
-  max-height: 980px;
+  width: min(
+    calc(100vw - 2 * var(--pad)),
+    calc((100dvh - 2 * var(--pad)) * 4 / 3),
+    1500px
+  );
   overflow: hidden;
   background: var(--paper);
   border: var(--rule) solid var(--ink);
@@ -108,9 +126,9 @@ html, body {
   overflow: hidden;
   border-right: var(--rule) solid var(--ink);
   border-bottom: var(--rule) solid var(--ink);
-  padding: clamp(16px, 3.2vmin, 40px);
-  /* Keep content clear of the HUD bar pinned along the bottom of the sheet. */
-  padding-bottom: 64px;
+  /* Lanes reserved for the edge arrows and the HUD bar. Content never enters
+     them, so an arrow can never sit on top of anything. */
+  padding: var(--lane-y) var(--lane-x) var(--lane-bottom);
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vmin, 20px);
@@ -323,10 +341,11 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 }
 .edge:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 
-.edge--right  { right: 10px;  top: 50%; translate: 0 -50%; }
-.edge--left   { left: 10px;   top: 50%; translate: 0 -50%; }
-.edge--down   { bottom: 10px; left: 50%; translate: -50% 0; }
-.edge--up     { top: 10px;    left: 50%; translate: -50% 0; }
+.edge--right  { right: 12px;  top: 50%; translate: 0 -50%; }
+.edge--left   { left: 12px;   top: 50%; translate: 0 -50%; }
+/* Sits above the HUD bar, not on it. */
+.edge--down   { bottom: calc(var(--hud) + 8px); left: 50%; translate: -50% 0; }
+.edge--up     { top: 12px;    left: 50%; translate: -50% 0; }
 .edge--right:hover { translate: 6px -50%; }
 .edge--left:hover  { translate: -6px -50%; }
 .edge--down:hover  { translate: -50% 6px; }
@@ -346,8 +365,7 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   bottom: 0;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 12px;
   pointer-events: none;
 }
@@ -447,6 +465,9 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 .hud--restart { background: var(--red); color: var(--paper); border-color: var(--ink); }
 
 .steps {
+  /* Splits the HUD into a left and a right cluster, leaving the middle free
+     for the down arrow instead of spreading items across it. */
+  margin-left: auto;
   font-family: var(--utility);
   font-size: .6rem;
   letter-spacing: .14em;
@@ -472,7 +493,15 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 }
 .screen[hidden] { display: none; }
 .screen.gone { opacity: 0; pointer-events: none; }
-.screen__inner { display: grid; gap: clamp(14px, 2.6vmin, 26px); justify-items: center; max-width: 44ch; }
+/* min() with 100% or a centred grid item sizes to the ch value even when the
+   viewport is narrower, and overflows off the right edge. */
+.screen__inner {
+  display: grid;
+  gap: clamp(14px, 2.6vmin, 26px);
+  justify-items: center;
+  max-width: min(44ch, 100%);
+}
+.screen .prose { max-width: min(46ch, 100%); }
 .screen .eyebrow { color: var(--ochre); }
 .screen p { color: var(--paper); }
 /* On the dark ground the default ink stroke and shadow both disappear. */
@@ -554,7 +583,7 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
 /* Portrait phones: cells are tall, so keep type and padding tighter. */
 @media (max-width: 620px) {
   .sheet { border-width: 0; box-shadow: none; }
-  .stage { padding: 0; }
+  :root { --pad: 0px; }
   .sticker { max-width: 58vw; }
   .steps { display: none; }
 
@@ -596,8 +625,13 @@ body.keys .cell:focus-visible { box-shadow: inset 0 0 0 4px var(--green); }
   .edge svg { height: 15px; }
   .edge--up svg, .edge--down svg { margin: 0; }
 
-  /* Clear both the controller row and the HUD. */
-  .cell { padding-bottom: 112px; }
+  /* No side lanes needed: the arrows live in the controller row, so only the
+     bottom has to be reserved. */
+  .cell {
+    --lane-x: 16px;
+    --lane-y: 18px;
+    --lane-bottom: 112px;
+  }
 }
 </style>
 </head>
