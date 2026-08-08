@@ -1,0 +1,306 @@
+{
+  "fetchedAt": "2026-08-08T13:13:34.726Z",
+  "performerId": 2590315,
+  "performerUrl": "https://goout.net/en/kolekce-parchant/pzpmtpg/",
+  "productions": [
+    {
+      "gooutEventId": 3242569,
+      "title": "Hra lásky a náhody",
+      "url": "https://goout.net/en/hra-lasky-a-nahody/eztcnhi/",
+      "images": [
+        "https://goout.net/i/134/1345645-%%%.jpg",
+        "https://goout.net/i/134/1345646-%%%.jpg",
+        "https://goout.net/i/134/1345647-%%%.jpg",
+        "https://goout.net/i/134/1345648-%%%.jpg",
+        "https://goout.net/i/134/1345649-%%%.jpg",
+        "https://goout.net/i/134/1345650-%%%.jpg"
+      ]
+    },
+    {
+      "gooutEventId": 3304956,
+      "title": "Audience (Pivařská Odyssea)",
+      "url": "https://goout.net/en/audience-pivarska-odyssea/ezgxmli/",
+      "images": [
+        "https://goout.net/i/132/1325650-%%%.jpg"
+      ]
+    }
+  ],
+  "dates": [
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-05-02T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "SOLD_OUT",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/sztcrtx/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-05-09T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szscrtx/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-06-13T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szokyux/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-06-15T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/sznkyux/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-09-06T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szaexwx/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-09-09T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "SOLD_OUT",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szydxwx/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2025-10-25T20:00:00+02:00",
+      "cancelled": true,
+      "ticketingState": "CANCELLED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szalyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-10-28T15:00:00+01:00",
+      "cancelled": true,
+      "ticketingState": "CANCELLED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szblyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-11-01T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szelyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-11-25T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szflyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-12-02T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szglyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2025-12-11T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szhlyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2025-12-13T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szulyby/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2026-01-15T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szqhafy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-01-16T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szshafy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-01-22T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szrhafy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-02-10T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szisyfy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2026-02-17T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szgsyfy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-02-24T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szhsyfy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-04-10T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/sznbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2026-04-11T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szpbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-05-02T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szmbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3304956,
+      "start": "2026-05-23T20:00:00+02:00",
+      "cancelled": true,
+      "ticketingState": "CANCELLED",
+      "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szekoiy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    }
+  ]
+}
