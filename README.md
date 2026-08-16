@@ -4,93 +4,85 @@ Prototype site for the theatre company Kolekce Parchant (Studio Citadela, Prague
 Not live anywhere yet. This repo holds the visual direction, the GoOut integration,
 and the photo pipeline.
 
-## Two prototypes
+## The page
 
-- `prototype/canvas.html` — **the live direction.** A pannable 2x2 comic map you
-  move across instead of scrolling, zooming into each production and actor.
-  Framed as half an adventure game.
-- `prototype/index.html` — the earlier scrolling version, kept for comparison.
+`prototype/index.html` — a single scrolling page, no build step, no
+dependencies. Seven colour bands you scroll through, in the order the client
+asked for: program, repertoár, soubor, o nás, o prostoru, fotky.
+
+`prototype/canvas.html` — the superseded direction: a pannable 2x2 comic map
+you moved across instead of scrolling. Kept as a record, still published at
+`/canvas.html`. Two things retired it: the client asked for a burger menu over
+six named sections, which is a scroll-page structure and not a spatial one, and
+the inspiration boards she then shared pointed at mid-century circus poster
+rather than Foglar comic. The reasoning is in
+`specs/2026-08-16-poster-press-scroll-design.md`.
 
 ## Run it
 
 ```bash
-node scripts/fetch-goout.mjs        # refresh data/goout.json from GoOut
-node scripts/embed-data.mjs         # bake those dates into canvas.html
+node scripts/fetch-fonts.mjs                  # download the four woff2 subsets
 node scripts/redraw-photos.mjs ~/Downloads/parchant   # redraw photos as inked panels (~$0.04 each)
-node scripts/inline.mjs canvas      # build/parchant-canvas.html, self-contained
-node scripts/inline.mjs             # build/parchant.html (scrolling version)
-open -a "Brave Browser" prototype/canvas.html
+node scripts/check.mjs                        # assertions: contrast, overflow, content, metadata
+node scripts/shot.mjs "file://$PWD/prototype/index.html" /tmp/kp.png 390 844
+./scripts/publish-docs.sh                     # assemble docs/ for GitHub Pages
+open -a "Brave Browser" prototype/index.html
 ```
 
-`make-panels.sh` takes an optional source directory as `$1` if the raw photos move.
-`embed-data.mjs` writes between `/* GOOUT:START */` markers; `inline.mjs` writes
-between `/* ASSETS:START */` markers and turns every panel into a data URI, so the
-built file works from `file://` and from a host that blocks external requests.
-
-## Navigation model
-
-Each canvas declares its own grid, so content is never padded to fit a shape:
-the root and each production are 2x2, an actor is 2x1.
-
-| Canvas | Cells |
-|---|---|
-| root | Úvod, Inscenace / O nás, Soubor |
-| production | O inscenaci, Obsazení / Galerie, Termíny |
-| actor | Profil, Hraje v |
-
-Movement: swipe, mouse drag, trackpad, arrow keys, or the edge arrows. Zoom in by
-clicking a tile; out via Escape, the Zpět button, the breadcrumb, or browser back.
-
-Every cell has its own hash route (`#/inscenace/rychle-sipy/terminy`), which is
-what makes browser back and forward work and makes any cell linkable. A deep link
-skips the title card, so a shared link lands on the content, not a splash screen.
-
-Three devices exist specifically to stop people getting lost in a zoomable
-canvas, which is its main failure mode: the mini-map, the breadcrumb, and
-redundant exits.
-
-### Adventure framing
-
-- A title card on first visit per session (`sessionStorage`), skipped on deep links.
-- A HUD along the bottom: back, breadcrumb, step counter, restart.
-- A game-over card on genuine dead ends only. It never blocks anyone: the exits
-  from it are GoOut and restart. Copy adapts — a run that finished says
-  *Dohráno* with the tally, one that never ran says *Žádné termíny*.
-
-Deliberately not a real fail state. A screen that ejects someone looking for
-tickets would be hostile.
+`check.mjs` is the test suite. There is no framework: it drives a real headless
+Brave over the DevTools protocol, so assertions run against computed styles and
+real layout rather than a parsed string. `publish-docs.sh` refuses to publish a
+page that does not pass it.
 
 ## Design direction
 
-Comic page, drawn in the company's own language rather than an imported one.
-The palette is lifted from their hand-drawn *Rychlé šípy* poster:
+Poster press. The page is a stack of printed posters, so each section is a
+colour band and scrolling reads as flipping through a pile. Circus appears as
+structure only — perforated ticket edges, notched ribbon section heads, arrow
+signs, star dividers — never as drawn tents or masks.
 
-| Token | Hex | Where it comes from |
+Palette, taken from the two colour boards the client shared, which propose the
+same idea independently:
+
+| Token | Hex | Where it goes |
 |---|---|---|
-| paper | `#F2E3B8` | the poster's waxy ochre ground |
-| ink | `#241A12` | crayon brown-black outline |
-| red | `#C4241E` | the hand-lettered title |
-| green | `#2E6B3A` | the KLUBOVNA cardboard sign |
-| ochre | `#E8A317` | the poster's saturated yellow |
-| card | `#C8703A` | cardboard brown |
+| paper | `#FFFECD` | cream bands; text on deep red |
+| ground | `#B0BC68` | olive bands |
+| ground light | `#CDD78A` | lime bands |
+| punch red | `#EB313F` | KP monogram, display type |
+| cherry | `#AA0A27` | red body text and links |
+| ink | `#1E1B14` | body text |
 
-The comic treatment is justified by the material, not just taste: *Rychlé šípy* is
-itself one of the most recognisable Czech comics (Foglar and Fischer), and the
-company stages it. The five arrows that drive across their poster — *rychlé šípy*
-means rapid arrows — are reused as the site's wayfinding device.
+Two reds, deliberately. Punch red on cream is about 4.2:1 — enough for large
+display type, short of the 4.5:1 body text needs — so it is display-only and
+cherry carries anything small. Cream never sits on olive, which is about 2:1.
+`check.mjs` enforces both rules and fails the build rather than trusting anyone
+to remember them.
 
-Deliberately single-theme. A comic page is paper, so there is no dark mode.
+Outlined display type is exempt from the ratio check, because the ratio model
+does not describe it: legibility comes from a hard ink edge on all sides. The
+exemption is paid for by asserting the outline is actually present.
 
-No webfonts: the display face is a system stack (`Arial Black` first) given
-hand-drawn character through per-letter jitter applied in script. This avoids a
-font dependency entirely. Trade-off: on a machine without Arial Black the
-masthead falls back to Helvetica/Impact and loses some weight.
+Deliberately single-theme. A printed poster is paper, so there is no dark mode.
 
-Photos are ink-posterized to two colours. This is not only styling — the source
-images are phone shots with audience heads across the bottom third, and reducing
-them to two inks makes amateur capture read as deliberate print.
+Type is self-hosted Archivo Black and Archivo — two woff2 subsets each, latin
+and latin-ext. latin-ext is the requirement that eliminates most display faces:
+`ě š č ř ž ů ť ď ň` live in U+0100–017F and are usually the first glyphs a
+display font drops. `check.mjs` measures whether they actually render rather
+than trusting the subset declaration.
+
+Photos are redrawn by an image model rather than filtered. The previous
+pipeline posterized phone shots to two inks to make amateur capture read as
+deliberate print; redrawing reinterprets instead, which is what actually fixes
+the source material — phone photos with audience heads across the bottom third.
 
 ## GoOut integration
+
+**GoOut is no longer the source of truth.** The client's feedback of 2026-08-11
+says the account is not under their management and they will arrange their own.
+The page renders from `data/program.json`, which is ours. `fetch-goout.mjs`
+stays as an optional refresh and nothing on the page depends on it running. The
+rest of this section is kept because the API notes are hard-won and still true.
 
 `Kolekce Parchant` is performer **2590315** on GoOut
 (<https://goout.net/en/kolekce-parchant/pzpmtpg/>).
@@ -150,20 +142,28 @@ Two consequences that drove the design:
   sign, shorts, the comic book). Which production the other shots belong to is
   unknown, so the Audience panel deliberately shows a "photo pending" state
   rather than misattributing someone else's production.
-- **Cast spelling.** The eleven names in `prototype/index.html` were read off the
-  poster photo. Check them against the company's own list before publishing.
+- **Cast list.** Now compiled from the company's i-divadlo profile rather than
+  read off a photograph of a poster, which corrected two spellings (Maxmilián
+  Kocek, Matouš Vyšata) and removed one name that appears nowhere on the
+  profile (Mikuláš Polák). Still needs confirming against the company's own
+  list, along with Aliska's full billing name. `robots.txt` disallows
+  everything until it is confirmed.
 
-## Placeholder content
+## Still her words to write
 
-Everything below needs replacing with her words. It is written to be plausible
-and to show how much room the layout gives, not to be correct.
+Two things on the page are still holding space, both marked `data-placeholder`
+in the markup so they are greppable:
 
-- The pitch bubble on page one.
-- All three production blurbs.
-- The "O nás" prose panel (marked in italics in the page).
+- the claim under the logo, which is empty rather than invented
+- the *O nás* prose
 
-Facts on the page that **are** true: three productions, 23 performances, one
-venue, two sold-out dates, premiere 30. 1. 2026, and the credits on the poster.
+Everything else is her own text or verbatim from the company's i-divadlo
+profile. Facts on the page that are true: two productions, one venue, premieres
+30. 1. 2026 and 2. 5. 2025, 75 minutes without an interval, 6+.
+
+One word to check before launch: her *Rychlé šípy* blurb reads "v nové size",
+which is almost certainly meant to be "v nové verzi". It is left as she wrote
+it.
 
 ## Next
 

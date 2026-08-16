@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# Rebuild both prototypes and assemble docs/ for GitHub Pages.
+# Assemble docs/ for GitHub Pages.
 # Pages serves from main:/docs, so docs/ is committed while build/ stays ignored.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-node scripts/embed-data.mjs
-node scripts/inline.mjs canvas
-node scripts/inline.mjs
+# Fail rather than publish a page that does not pass its own checks.
+node scripts/check.mjs "file://$ROOT/prototype/index.html"
 
 rm -rf docs
 mkdir -p docs
 
-# The canvas is the live direction, so it is the landing page.
-cp build/parchant-canvas.html docs/index.html
-# The earlier scrolling version, kept reachable for comparison.
-cp build/parchant.html docs/scroll.html
+# The scroll page is the direction. Assets are copied as-is: the page loads
+# them relatively, so what is served is byte-identical to what was checked.
+cp prototype/index.html docs/index.html
+cp -R prototype/assets docs/assets
+
+# The superseded canvas direction, kept reachable for comparison.
+node scripts/inline.mjs canvas
+cp build/parchant-canvas.html docs/canvas.html
 
 # Skip Jekyll: these are plain files and underscore-prefixed names would be eaten.
 touch docs/.nojekyll
@@ -28,4 +31,4 @@ Disallow: /
 EOF
 
 echo "docs/ assembled:"
-ls -la docs | awk 'NR>3 {printf "%9d  %s\n", $5, $9}'
+find docs -type f | sort
