@@ -4,3 +4,4 @@ inspiration/
 .worktrees/
 .superpowers/
 dist/
+.astro/
