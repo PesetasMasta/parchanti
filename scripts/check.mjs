@@ -258,6 +258,28 @@ check(
   },
 );
 
+check(
+  'program shows its empty state when there are no future dates',
+  `(() => {
+    const band = document.querySelector('#program');
+    const empty = band.querySelector('.program__empty');
+    return JSON.stringify({
+      hasHeading: Boolean(band.querySelector('.band__heading')),
+      emptyVisible: Boolean(empty) && getComputedStyle(empty).display !== 'none',
+      emptyMentionsGoOut: (empty?.textContent ?? '').includes('GoOut'),
+      ticketCount: band.querySelectorAll('.ticket').length,
+    });
+  })()`,
+  (raw) => {
+    const program = JSON.parse(raw);
+    if (!program.hasHeading) return 'no section heading';
+    if (!program.emptyVisible) return 'empty state is not visible';
+    if (!program.emptyMentionsGoOut) return 'empty state should say where dates get announced';
+    if (program.ticketCount !== 0) return `expected no tickets, got ${program.ticketCount}`;
+    return null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {

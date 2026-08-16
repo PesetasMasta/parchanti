@@ -247,6 +247,65 @@ body {
   letter-spacing: 0.1em;
   font-size: 0.85rem;
 }
+
+.band__heading {
+  margin: 0 0 2.5rem;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+}
+
+/* Notched ribbon: the circus vocabulary is structural, so a section head is a
+   banner rather than an illustration of one. */
+.ribbon {
+  display: inline-block;
+  padding: 0.4em 1.4em;
+  color: var(--cream);
+  background: var(--cherry);
+  clip-path: polygon(
+    0 0, 100% 0, calc(100% - 0.8em) 50%, 100% 100%,
+    0 100%, 0.8em 50%
+  );
+}
+
+.link {
+  color: var(--cherry);
+  font-weight: 700;
+  text-underline-offset: 0.2em;
+}
+
+.program__empty {
+  max-width: var(--measure);
+  padding: 2rem;
+  border: 3px dashed var(--ink);
+}
+
+.program__empty-title {
+  margin: 0 0 1rem;
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  color: var(--cherry);
+}
+
+/* Perforated ticket stub. The mask is a row of half-circles bitten out of the
+   left edge, which is what makes a rectangle read as a torn ticket. */
+.ticket {
+  --notch: 0.6rem;
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.5rem 1.5rem 1.5rem 2.5rem;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  mask-image: radial-gradient(var(--notch) at left, #0000 98%, #000);
+  mask-size: 100% calc(var(--notch) * 3);
+  mask-repeat: repeat-y;
+}
+
+.ticket__date {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  color: var(--cherry);
+}
+
+.ticket[data-state="sold_out"] { opacity: 0.55; }
 </style>
 </head>
 <body>
@@ -292,7 +351,28 @@ body {
       </p>
     </div>
   </section>
-  <section class="band" id="program" data-ground="cream"><div class="band__inner"></div></section>
+  <section class="band" id="program" data-ground="cream">
+    <div class="band__inner">
+      <h2 class="band__heading display">
+        <span class="ribbon">Program</span>
+      </h2>
+
+      <!-- No upcoming dates as of 2026-08-16; the last performance was
+           2026-05-23. This is the normal state at launch, not a fallback.
+           Add .ticket cards here from data/program.json as dates are published. -->
+      <div class="program__empty">
+        <p class="program__empty-title display">Zatím žádný vypsaný termín</p>
+        <p>
+          Nové termíny vypisujeme na GoOut. Jakmile se objeví tam, najdete je i tady.
+        </p>
+        <p>
+          <a class="link" href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">
+            Sledovat na GoOut
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
   <section class="band" id="repertoar" data-ground="lime"><div class="band__inner"></div></section>
   <section class="band" id="soubor" data-ground="cream"><div class="band__inner"></div></section>
   <section class="band" id="o-nas" data-ground="olive"><div class="band__inner"></div></section>

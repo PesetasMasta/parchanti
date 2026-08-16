@@ -1,0 +1,5 @@
+{
+  "updated": "2026-08-16",
+  "note": "Locally controlled. GoOut is no longer the source of truth; scripts/fetch-goout.mjs is an optional refresh and nothing on the page depends on it.",
+  "dates": []
+}
