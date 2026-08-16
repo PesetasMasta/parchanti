@@ -210,6 +210,33 @@ check(
   },
 );
 
+check(
+  'hero carries the masthead, the pitch and an empty claim slot',
+  `(() => {
+    const hero = document.querySelector('#hero');
+    return JSON.stringify({
+      masthead: hero.querySelector('.hero__title')?.textContent.trim(),
+      pitchStart: hero.querySelector('.hero__pitch')?.textContent.trim().slice(0, 24),
+      claimIsPlaceholder: hero.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
+      claimIsEmpty: (hero.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
+    });
+  })()`,
+  (raw) => {
+    const hero = JSON.parse(raw);
+    if (hero.masthead !== 'Kolekce Parchant') return `masthead was ${JSON.stringify(hero.masthead)}`;
+    // NOTE: the brief's markdown had this literal without a trailing space,
+    // but slice(0, 24) on the trimmed pitch always includes the space before
+    // "se" (it sits mid-line in the client's copy, not at a wrap point) —
+    // 'Divadelní soubor, který' is 23 chars, so a 24-char slice can never
+    // equal it. Most likely a trailing space stripped when the brief was
+    // saved. Restored here so the check tests what it evidently intended.
+    if (hero.pitchStart !== 'Divadelní soubor, který ') return `pitch was ${JSON.stringify(hero.pitchStart)}`;
+    if (!hero.claimIsPlaceholder) return 'claim slot is not marked data-placeholder';
+    if (!hero.claimIsEmpty) return 'claim slot should stay empty until Zuzka sends it';
+    return null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {

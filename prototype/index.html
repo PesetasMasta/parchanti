@@ -210,6 +210,43 @@ body {
 
 .nav__link:hover,
 .nav__link:focus-visible { color: var(--lime); }
+
+.band--hero {
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+}
+
+.hero__eyebrow {
+  margin: 0 0 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.8rem;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: clamp(3rem, 17vw, 9rem);
+}
+
+.hero__claim:empty { display: none; }
+
+.hero__pitch {
+  max-width: var(--measure);
+  margin: 2.5rem 0 0;
+  font-size: clamp(1.15rem, 1rem + 1vw, 1.6rem);
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.hero__venue {
+  margin: 2.5rem 0 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+}
 </style>
 </head>
 <body>
@@ -234,7 +271,27 @@ body {
 </nav>
 
 <main>
-  <section class="band" id="hero" data-ground="olive"><div class="band__inner"></div></section>
+  <section class="band band--hero" id="hero" data-ground="olive">
+    <div class="band__inner">
+      <p class="hero__eyebrow">Nezávislé divadlo &middot; Praha</p>
+
+      <h1 class="hero__title display display--shadow">Kolekce Parchant</h1>
+
+      <!-- The short claim under the logo is still pending from Zuzka. It is
+           deliberately separate from the pitch below: the backlog lists them as
+           two different items. Leave empty rather than inventing one. -->
+      <p class="hero__claim" data-placeholder></p>
+
+      <p class="hero__pitch">
+        Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali
+        hranice a vytvářeli nezapomenutelné zážitky!
+      </p>
+
+      <p class="hero__venue">
+        Studio Citadela &middot; Klimentská 16 &middot; Praha 1
+      </p>
+    </div>
+  </section>
   <section class="band" id="program" data-ground="cream"><div class="band__inner"></div></section>
   <section class="band" id="repertoar" data-ground="lime"><div class="band__inner"></div></section>
   <section class="band" id="soubor" data-ground="cream"><div class="band__inner"></div></section>
