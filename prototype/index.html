@@ -6,6 +6,41 @@
 <!-- Cast names are still unverified against the company's own list. -->
 <meta name="robots" content="noindex, nofollow" />
 <title>Kolekce Parchant</title>
+<meta name="description" content="Kolekce Parchant je nezávislý divadelní soubor ze Studia Citadela v Praze. Rychlé šípy a záhada klubovny, Hra lásky a náhody." />
+
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="cs_CZ" />
+<meta property="og:site_name" content="Kolekce Parchant" />
+<meta property="og:title" content="Kolekce Parchant" />
+<meta property="og:description" content="Divadelní soubor, který se nebojí provokovat. Studio Citadela, Klimentská 16, Praha 1." />
+<!-- Relative path on purpose: the domain is not live yet. Change to an
+     absolute https://kolekceparchant.cz/... URL at launch, since most
+     scrapers will not resolve a relative one. -->
+<meta property="og:image" content="assets/panels/hero.png" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TheaterGroup",
+  "name": "Kolekce Parchant",
+  "url": "https://kolekceparchant.cz",
+  "location": {
+    "@type": "PerformingArtsTheater",
+    "name": "Studio Citadela",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Klimentská 16",
+      "addressLocality": "Praha 1",
+      "addressCountry": "CZ"
+    }
+  },
+  "sameAs": [
+    "https://www.instagram.com/kolekce_parchant",
+    "https://www.i-divadlo.cz/divadlo/kolekce-parchant"
+  ]
+}
+</script>
 <style>
 @font-face {
   font-family: "Archivo Black";
@@ -453,6 +488,72 @@ body {
 }
 
 .prose p { margin: 0 0 1em; text-wrap: pretty; }
+
+.gallery {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(78vw, 26rem);
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1rem;
+  /* The strip scrolls inside itself; the page never scrolls sideways. */
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+}
+
+.gallery__item {
+  margin: 0;
+  scroll-snap-align: start;
+}
+
+.gallery__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 3px solid var(--ink);
+}
+
+.gallery__item figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.footer {
+  padding: var(--band-padding) var(--gutter);
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.footer__mark {
+  margin: 0 0 1.5rem;
+  font-size: 3rem;
+  color: var(--red);
+}
+
+.footer__links {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.footer__links a {
+  color: var(--cream);
+  font-weight: 700;
+  text-underline-offset: 0.2em;
+}
+
+.footer__address {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
 </style>
 </head>
 <body>
@@ -687,8 +788,46 @@ body {
       </dl>
     </div>
   </section>
-  <section class="band" id="fotky" data-ground="lime"><div class="band__inner"></div></section>
+  <section class="band" id="fotky" data-ground="lime">
+    <div class="band__inner">
+      <h2 class="band__heading display"><span class="ribbon">Fotky</span></h2>
+
+      <!-- Only the Rychlé šípy photographs are identifiable. Nothing else may be
+           captioned with a production name; misattributing someone else's
+           production is worse than an uncaptioned photo. -->
+      <div class="gallery">
+        <figure class="gallery__item">
+          <img src="assets/panels/sipy-1.png" alt="Scéna z inscenace Rychlé šípy a záhada klubovny" loading="lazy" width="1200" height="800" />
+          <figcaption>Rychlé šípy a záhada klubovny</figcaption>
+        </figure>
+        <figure class="gallery__item">
+          <img src="assets/panels/sipy-2.png" alt="Scéna z inscenace Rychlé šípy a záhada klubovny" loading="lazy" width="1200" height="800" />
+          <figcaption>Rychlé šípy a záhada klubovny</figcaption>
+        </figure>
+        <figure class="gallery__item">
+          <img src="assets/panels/sipy-3.png" alt="Scéna z inscenace Rychlé šípy a záhada klubovny" loading="lazy" width="1200" height="800" />
+          <figcaption>Rychlé šípy a záhada klubovny</figcaption>
+        </figure>
+        <figure class="gallery__item">
+          <img src="assets/panels/ensemble.png" alt="Herci Kolekce Parchant na jevišti" loading="lazy" width="1200" height="800" />
+          <figcaption>Soubor</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 </main>
+
+<footer class="footer">
+  <div class="band__inner">
+    <p class="footer__mark display">KP</p>
+    <ul class="footer__links">
+      <li><a href="https://www.instagram.com/kolekce_parchant">Instagram</a></li>
+      <li><a href="https://www.i-divadlo.cz/divadlo/kolekce-parchant">i-divadlo.cz</a></li>
+      <li><a href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">Vstupenky na GoOut</a></li>
+    </ul>
+    <p class="footer__address">Studio Citadela &middot; Klimentská 16 &middot; Praha 1</p>
+  </div>
+</footer>
 
 <script>
 // Burger nav. The overlay is the entire navigation model, so it has to be

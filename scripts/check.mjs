@@ -344,6 +344,44 @@ check(
   },
 );
 
+check(
+  'social metadata is present and content is visible without JavaScript',
+  `JSON.stringify({
+    ogTitle: document.querySelector('meta[property="og:title"]')?.content ?? null,
+    ogDescription: (document.querySelector('meta[property="og:description"]')?.content ?? '').length,
+    ogImage: Boolean(document.querySelector('meta[property="og:image"]')),
+    description: (document.querySelector('meta[name="description"]')?.content ?? '').length,
+    schemaType: JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}')['@type'] ?? null,
+    instagram: Boolean(document.querySelector('.footer a[href*="instagram.com/kolekce_parchant"]')),
+  })`,
+  (raw) => {
+    const meta = JSON.parse(raw);
+    if (meta.ogTitle !== 'Kolekce Parchant') return `og:title was ${JSON.stringify(meta.ogTitle)}`;
+    if (meta.ogDescription < 40) return 'og:description is missing or too short';
+    if (!meta.ogImage) return 'og:image is missing, so shares preview blank';
+    if (meta.description < 40) return 'meta description is missing or too short';
+    if (meta.schemaType !== 'TheaterGroup') return `schema @type was ${JSON.stringify(meta.schemaType)}`;
+    if (!meta.instagram) return 'footer is missing the Instagram link';
+    return null;
+  },
+);
+
+check(
+  'every band has real markup rather than script-built content',
+  `(() => {
+    // Social scrapers never run JS. If a band is empty in the served markup it
+    // is invisible to them, however it looks in a browser.
+    const thin = [...document.querySelectorAll('section.band')]
+      .filter((band) => band.textContent.trim().length < 40)
+      .map((band) => band.id);
+    return JSON.stringify(thin);
+  })()`,
+  (raw) => {
+    const thin = JSON.parse(raw);
+    return thin.length ? `these bands have almost no text: ${thin.join(', ')}` : null;
+  },
+);
+
 // Run the whole suite at both the narrowest phone still in real use (320px,
 // iPhone SE) and the previous baseline (390px). A regression that only shows
 // up at one width - like a ribbon that fits at 390px but clips at 320px -
