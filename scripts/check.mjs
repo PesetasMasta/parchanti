@@ -25,6 +25,44 @@ check(
   (title) => (title && title.trim().length > 0 ? null : `title was ${JSON.stringify(title)}`),
 );
 
+check(
+  'Czech diacritics render in the display face',
+  `(async () => {
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;font-size:64px;white-space:pre';
+    document.body.append(probe);
+    const widthOf = (text, family) => {
+      probe.style.fontFamily = family;
+      probe.textContent = text;
+      return probe.getBoundingClientRect().width;
+    };
+    // If the face lacks a glyph the browser substitutes from the fallback, and
+    // the substituted run measures differently from the same string rendered
+    // in the fallback alone only when the face DOES have it. Comparing the
+    // diacritic string against a plain one in both families catches the swap.
+    //
+    // Nothing else on the page references these families before this probe
+    // does, so without an explicit load the first measurement always races
+    // the async @font-face fetch and reads fallback metrics regardless of
+    // whether the face actually has the glyphs. document.fonts.load() forces
+    // the font to be fetched and ready before we measure.
+    const result = {};
+    for (const family of ['"Archivo Black"', '"Archivo"']) {
+      await document.fonts.load('64px ' + family, 'ěščřžůťďň');
+      const withDiacritics = widthOf('ěščřžůťďň', family + ', monospace');
+      const fallbackOnly = widthOf('ěščřžůťďň', 'monospace');
+      result[family] = withDiacritics !== fallbackOnly;
+    }
+    probe.remove();
+    return JSON.stringify(result);
+  })()`,
+  (raw) => {
+    const result = JSON.parse(raw);
+    const missing = Object.entries(result).filter(([, ok]) => !ok).map(([family]) => family);
+    return missing.length ? `no Czech glyphs in ${missing.join(', ')}` : null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {
