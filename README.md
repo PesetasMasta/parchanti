@@ -16,7 +16,7 @@ and the photo pipeline.
 ```bash
 node scripts/fetch-goout.mjs        # refresh data/goout.json from GoOut
 node scripts/embed-data.mjs         # bake those dates into canvas.html
-./scripts/make-panels.sh            # re-ink the photos from ~/Downloads/parchant
+node scripts/redraw-photos.mjs ~/Downloads/parchant   # redraw photos as inked panels (~$0.04 each)
 node scripts/inline.mjs canvas      # build/parchant-canvas.html, self-contained
 node scripts/inline.mjs             # build/parchant.html (scrolling version)
 open -a "Brave Browser" prototype/canvas.html
