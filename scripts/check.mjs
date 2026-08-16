@@ -154,12 +154,27 @@ check(
       return false;
     };
 
+    // window.innerWidth is not a safe yardstick: when content that cannot
+    // wrap (an unbreakable word) is wider than the viewport, mobile browsers
+    // silently widen the layout viewport to fit it, so innerWidth grows right
+    // along with the overflow and the comparison below would never fire.
+    // document.documentElement.clientWidth stays pinned to the real,
+    // requested viewport width regardless, so it is the trustworthy measure.
+    const clientWidth = document.documentElement.clientWidth;
+    const scrollWidth = document.documentElement.scrollWidth;
+
     const problems = [];
+    // Catches the case above directly: if the document itself can scroll
+    // sideways, something overflowed even if no single element's own rect
+    // appears to cross the (possibly widened) edge.
+    if (scrollWidth > clientWidth + 1) {
+      problems.push('document scrolls horizontally: scrollWidth ' + scrollWidth + ' > clientWidth ' + clientWidth);
+    }
     for (const el of document.querySelectorAll('body *')) {
       const box = el.getBoundingClientRect();
       if (box.width === 0 && box.height === 0) continue;
       if (inScroller(el)) continue;
-      if (box.right > innerWidth + 1) problems.push((el.className || el.tagName) + ' right+' + Math.round(box.right - innerWidth));
+      if (box.right > clientWidth + 1) problems.push((el.className || el.tagName) + ' right+' + Math.round(box.right - clientWidth));
       if (box.left < -1) problems.push((el.className || el.tagName) + ' left' + Math.round(box.left));
     }
     return JSON.stringify([...new Set(problems)].slice(0, 10));
