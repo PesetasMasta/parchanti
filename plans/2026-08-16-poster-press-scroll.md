@@ -279,10 +279,14 @@ Create `prototype/index.html` with just enough to pass. It is replaced wholesale
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kolekce Parchant</title>
+<style>
+</style>
 </head>
 <body></body>
 </html>
 ```
+
+The empty `<style>` element is deliberate: Task 2 pastes the `@font-face` block into it, and every later task appends rules to it.
 
 - [ ] **Step 5: Run the check to verify it passes**
 
@@ -577,10 +581,20 @@ check(
 check(
   'nothing overflows horizontally at 390px',
   `(() => {
+    // Content inside something that scrolls sideways on purpose - the photo
+    // strip - is not overflow. Only content with nothing to scroll it counts.
+    const inScroller = (el) => {
+      for (let node = el.parentElement; node; node = node.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+      }
+      return false;
+    };
+
     const problems = [];
     for (const el of document.querySelectorAll('body *')) {
       const box = el.getBoundingClientRect();
       if (box.width === 0 && box.height === 0) continue;
+      if (inScroller(el)) continue;
       if (box.right > innerWidth + 1) problems.push((el.className || el.tagName) + ' right+' + Math.round(box.right - innerWidth));
       if (box.left < -1) problems.push((el.className || el.tagName) + ' left' + Math.round(box.left));
     }
