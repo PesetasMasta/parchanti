@@ -408,6 +408,51 @@ body {
 }
 
 .press__source { margin: 0; font-size: 0.82rem; }
+
+.ensemble {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ensemble__person {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1rem;
+  background: var(--lime);
+  border: 3px solid var(--ink);
+}
+
+.ensemble__name {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.ensemble__role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ensemble__note {
+  margin: 1.5rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.prose {
+  max-width: var(--measure);
+  font-size: clamp(1.05rem, 1rem + 0.5vw, 1.25rem);
+}
+
+.prose p { margin: 0 0 1em; text-wrap: pretty; }
 </style>
 </head>
 <body>
@@ -580,9 +625,68 @@ body {
       </article>
     </div>
   </section>
-  <section class="band" id="soubor" data-ground="cream"><div class="band__inner"></div></section>
-  <section class="band" id="o-nas" data-ground="olive"><div class="band__inner"></div></section>
-  <section class="band" id="o-prostoru" data-ground="cream"><div class="band__inner"></div></section>
+  <section class="band" id="soubor" data-ground="cream">
+    <div class="band__inner">
+      <h2 class="band__heading display"><span class="ribbon">Soubor</span></h2>
+
+      <!-- Compiled from the two productions' credits on i-divadlo. This is a
+           better source than the previous list, which was read off a photograph
+           of a poster, but it is still not the company's own list. Three
+           corrections against the old prototype: Maxmilián not Maximilián Kocek,
+           Vyšata not Višata, and Mikuláš Polák removed - he appears nowhere on
+           i-divadlo. Confirm all of this with the company before launch. -->
+      <ul class="ensemble">
+        <li class="ensemble__person"><span class="ensemble__name">Prokop Zach</span><span class="ensemble__role">režie, scéna, hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Zuzana Matušková</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Ondřej Stupka</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Maximilián Dolanský</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Maxmilián Kocek</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Matouš Vyšata</span><span class="ensemble__role">alternace</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Aliska</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Jiří Dlouhý</span><span class="ensemble__role">hraje</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Šimon Fikar</span><span class="ensemble__role">alternace</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Šimon Lorko</span><span class="ensemble__role">text</span></li>
+        <li class="ensemble__person"><span class="ensemble__name">Marek Cimbál</span><span class="ensemble__role">hudba</span></li>
+      </ul>
+
+      <p class="ensemble__note">
+        Archivní nahrávky &middot; Tomáš Turek, Roman Zach
+      </p>
+    </div>
+  </section>
+
+  <section class="band" id="o-nas" data-ground="olive">
+    <div class="band__inner">
+      <h2 class="band__heading display"><span class="ribbon">O nás</span></h2>
+
+      <!-- Her own text is still pending. This holds the space so the layout can
+           be judged; replace it wholesale, do not edit around it. -->
+      <div class="prose" data-placeholder>
+        <p>
+          Sem patří text o souboru &mdash; kdo jste, jak jste začali, proč
+          Parchant. Zatím drží místo, aby bylo vidět, kolik ho na stránce je.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="o-prostoru" data-ground="cream">
+    <div class="band__inner">
+      <h2 class="band__heading display"><span class="ribbon">O prostoru</span></h2>
+
+      <div class="prose">
+        <p>
+          Hrajeme ve Studiu Citadela v suterénu na Klimentské. Publikum sedí metr
+          od nás &mdash; a to je celý ten trik.
+        </p>
+      </div>
+
+      <dl class="credits">
+        <dt>Adresa</dt><dd>Studio Citadela, Klimentská 16, Praha 1</dd>
+        <dt>Tramvaj</dt><dd>6, 8, 15, 26 &mdash; zastávka Dlouhá třída</dd>
+      </dl>
+    </div>
+  </section>
   <section class="band" id="fotky" data-ground="lime"><div class="band__inner"></div></section>
 </main>
 

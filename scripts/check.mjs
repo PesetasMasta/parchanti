@@ -326,6 +326,24 @@ check(
   },
 );
 
+check(
+  'ensemble, about and venue bands carry their content',
+  `JSON.stringify({
+    people: document.querySelectorAll('#soubor .ensemble__person').length,
+    aboutIsPlaceholder: Boolean(document.querySelector('#o-nas [data-placeholder]')),
+    venueHasAddress: document.querySelector('#o-prostoru').textContent.includes('Klimentská 16'),
+    venueHasTrams: document.querySelector('#o-prostoru').textContent.includes('Dlouhá třída'),
+  })`,
+  (raw) => {
+    const s = JSON.parse(raw);
+    if (s.people !== 11) return `expected 11 ensemble members, got ${s.people}`;
+    if (!s.aboutIsPlaceholder) return 'O nás prose is still pending and must be marked data-placeholder';
+    if (!s.venueHasAddress) return 'venue band is missing the address';
+    if (!s.venueHasTrams) return 'venue band is missing the tram stop';
+    return null;
+  },
+);
+
 // Run the whole suite at both the narrowest phone still in real use (320px,
 // iPhone SE) and the previous baseline (390px). A regression that only shows
 // up at one width - like a ribbon that fits at 390px but clips at 320px -
