@@ -7,18 +7,25 @@
 //
 // About $0.04 per image on gemini-2.5-flash-image, roughly 9 seconds each.
 //
-//   node scripts/redraw-photos.mjs ~/Downloads/parchant [out-dir]
+//   node scripts/redraw-photos.mjs ~/Downloads/parchant [out-dir] [--force]
+//
+// By default an existing file at the destination is left alone and skipped,
+// since the default out-dir is the site's live panels folder. Pass --force
+// to overwrite.
 
-import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readdir, readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const MODEL = 'google/gemini-2.5-flash-image';
 
-const source = process.argv[2];
-const outDir = process.argv[3] ?? new URL('../prototype/assets/panels/', import.meta.url).pathname;
+const force = process.argv.includes('--force');
+const positional = process.argv.slice(2).filter((arg) => arg !== '--force');
+const source = positional[0];
+const outDir = positional[1] ?? fileURLToPath(new URL('../prototype/assets/panels/', import.meta.url));
 
 if (!source) {
-  console.error('usage: node scripts/redraw-photos.mjs <source-dir> [out-dir]');
+  console.error('usage: node scripts/redraw-photos.mjs <source-dir> [out-dir] [--force]');
   process.exit(1);
 }
 if (!process.env.OPENROUTER_API_TOKEN) {
@@ -26,14 +33,26 @@ if (!process.env.OPENROUTER_API_TOKEN) {
   process.exit(1);
 }
 
+const files = (await readdir(source))
+  .filter((name) => /\.(jpe?g|png)$/i.test(name))
+  .sort();
+
+if (files.length === 0) {
+  console.error(`no images in ${source}`);
+  process.exit(1);
+}
+
 // The palette is named explicitly so redrawn panels sit inside the page's own
 // colour world rather than arriving with their own.
 const PROMPT = [
-  'Redraw this stage photograph as a hand-inked poster panel.',
+  'Redraw this stage photograph as a flat two-colour screen-print or woodcut poster panel.',
   'Two colours only: a pale cream ground (#FFFECD) and a near-black ink line (#1E1B14).',
-  'Bold uneven brush outlines, hatching for shadow, no grey tones, no gradients.',
+  'Hard, decisive edges. Large untouched areas of flat cream and large areas of solid unhatched ink.',
+  'Where shadow needs marking, use sparse, widely-spaced hatching only, at most two crossing line directions, never a dense or fine weave.',
+  'Marks must stay individually legible at normal viewing size, not blend into a mid-tone.',
+  'No fine cross-hatching, no stippling, no engraving texture, no gradients, no grey tones.',
   'Keep every figure, their poses and their costumes exactly as photographed.',
-  'Mid-century printed poster, slightly off-register.',
+  'Mid-century screen-printed poster, slightly off-register, not a pen-and-ink illustration.',
   'Do not add a border, a caption, lettering or a signature.',
 ].join(' ');
 
@@ -67,20 +86,26 @@ async function redraw(path) {
   return { png: Buffer.from(url.split(',')[1], 'base64'), cost: body.usage?.cost ?? 0 };
 }
 
-await mkdir(outDir, { recursive: true });
-
-const files = (await readdir(source))
-  .filter((name) => /\.(jpe?g|png)$/i.test(name))
-  .sort();
-
-if (files.length === 0) {
-  console.error(`no images in ${source}`);
-  process.exit(1);
+async function exists(path) {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
+
+await mkdir(outDir, { recursive: true });
 
 let spent = 0;
 for (const file of files) {
   const out = join(outDir, `${basename(file, extname(file))}.png`);
+
+  if (!force && await exists(out)) {
+    console.log(`${out}  SKIPPED (already exists, pass --force to overwrite)`);
+    continue;
+  }
+
   try {
     const { png, cost } = await redraw(join(source, file));
     await writeFile(out, png);
