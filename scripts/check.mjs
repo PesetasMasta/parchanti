@@ -160,6 +160,12 @@ check(
     // along with the overflow and the comparison below would never fire.
     // document.documentElement.clientWidth stays pinned to the real,
     // requested viewport width regardless, so it is the trustworthy measure.
+    //
+    // This still can't see paint-only overflow from text-shadow, box-shadow,
+    // or filter: drop-shadow - those paint outside the layout box without
+    // affecting it or scrollWidth, so they're invisible to both checks below.
+    // Deliberate: paint overflow cannot cause horizontal scrolling, which is
+    // the one thing this guard exists to catch.
     const clientWidth = document.documentElement.clientWidth;
     const scrollWidth = document.documentElement.scrollWidth;
 
