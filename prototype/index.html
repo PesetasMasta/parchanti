@@ -243,7 +243,7 @@ body {
   <section class="band" id="fotky" data-ground="lime"><div class="band__inner"></div></section>
 </main>
 
-<script type="module">
+<script>
 // Burger nav. The overlay is the entire navigation model, so it has to be
 // keyboard-operable: Escape closes it and focus returns to the button.
 const burger = document.querySelector('.burger');
@@ -268,6 +268,23 @@ document.addEventListener('keydown', (event) => {
 // Following a link must close the overlay, or the target scrolls behind it.
 nav.addEventListener('click', (event) => {
   if (event.target.closest('.nav__link')) setNav(false);
+});
+
+// Trap Tab inside the overlay while it is open. The overlay is full-bleed, so
+// letting focus escape to the monogram or burger underneath makes it invisible
+// to a sighted keyboard user.
+nav.addEventListener('keydown', (event) => {
+  if (event.key !== 'Tab') return;
+  const links = [...nav.querySelectorAll('.nav__link')];
+  const index = links.indexOf(document.activeElement);
+  if (index === -1) return;
+  if (event.shiftKey && index === 0) {
+    event.preventDefault();
+    links[links.length - 1].focus();
+  } else if (!event.shiftKey && index === links.length - 1) {
+    event.preventDefault();
+    links[0].focus();
+  }
 });
 </script>
 </body>
