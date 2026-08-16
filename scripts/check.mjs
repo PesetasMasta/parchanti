@@ -280,6 +280,22 @@ check(
   },
 );
 
+check(
+  'scroll-padding-top clears the sticky masthead for anchor jumps',
+  `(() => {
+    const masthead = document.querySelector('.masthead');
+    const mastheadHeight = masthead.getBoundingClientRect().height;
+    const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    return JSON.stringify({ mastheadHeight, scrollPaddingTop });
+  })()`,
+  (raw) => {
+    const { mastheadHeight, scrollPaddingTop } = JSON.parse(raw);
+    return scrollPaddingTop >= mastheadHeight
+      ? null
+      : `scroll-padding-top ${scrollPaddingTop}px is less than masthead height ${mastheadHeight}px`;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {

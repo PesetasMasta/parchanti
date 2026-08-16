@@ -78,6 +78,14 @@
 
 * { box-sizing: border-box; }
 
+/* The masthead is sticky, so an in-page anchor jump (nav links, and any
+   future anchor) needs the scrolling container itself to reserve space for
+   it - otherwise the target heading lands underneath the bar. 5rem covers
+   the masthead's measured ~74-77px height with headroom. */
+html {
+  scroll-padding-top: 5rem;
+}
+
 body {
   margin: 0;
   background: var(--cream);
