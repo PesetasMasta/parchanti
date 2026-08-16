@@ -296,6 +296,36 @@ check(
   },
 );
 
+check(
+  'repertoire holds exactly the two approved productions with correct press treatment',
+  `(() => {
+    const productions = [...document.querySelectorAll('#repertoar .production')];
+    return JSON.stringify({
+      slugs: productions.map((p) => p.dataset.slug),
+      sipyQuotes: document.querySelectorAll('[data-slug="rychle-sipy-a-zahada-klubovny"] .press blockquote').length,
+      hraQuotes: document.querySelectorAll('[data-slug="hra-lasky-a-nahody"] .press blockquote').length,
+      hraScore: document.querySelector('[data-slug="hra-lasky-a-nahody"] .press__score')?.textContent.trim(),
+      mentionsAudience: document.body.textContent.includes('Pivařská'),
+      castCorrect: document.querySelector('[data-slug="hra-lasky-a-nahody"]').textContent.includes('Aliska'),
+      staleCast: document.body.textContent.includes('Aneta Kalertová')
+        || document.body.textContent.includes('Mikuláš Polák')
+        || document.body.textContent.includes('Višata'),
+    });
+  })()`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
+    if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
+    if (r.sipyQuotes !== 2) return `Rychlé šípy should show 2 pull quotes, got ${r.sipyQuotes}`;
+    if (r.hraQuotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
+    if (r.hraScore !== '90 %') return `Hra lásky score badge was ${JSON.stringify(r.hraScore)}`;
+    if (r.mentionsAudience) return 'Audience / Pivařská odysea must not appear';
+    if (!r.castCorrect) return 'Aliska is missing from the Hra lásky cast';
+    if (r.staleCast) return 'a corrected-away name is still on the page';
+    return null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {

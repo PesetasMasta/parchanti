@@ -314,6 +314,93 @@ body {
 }
 
 .ticket[data-state="sold_out"] { opacity: 0.55; }
+
+.production {
+  padding-block: clamp(2rem, 6vw, 3.5rem);
+  border-top: 3px solid var(--ink);
+}
+
+.production:first-of-type { border-top: 0; padding-top: 0; }
+
+/* Stacked mixed-size title, the poster move: the memorable half is set large
+   and the qualifier runs small underneath. */
+.production__title {
+  margin: 0 0 1.5rem;
+  display: grid;
+}
+
+.production__title-lead { font-size: clamp(2.25rem, 11vw, 5rem); }
+
+.production__title-rest {
+  font-size: clamp(1rem, 4.2vw, 2rem);
+  color: var(--cherry);
+}
+
+.production__blurb {
+  max-width: var(--measure);
+  font-size: clamp(1.05rem, 1rem + 0.5vw, 1.3rem);
+  font-weight: 600;
+}
+
+.production__annotation {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.credits {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 2rem 0 0;
+  font-size: 0.9rem;
+}
+
+.credits dt {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  padding-top: 0.22em;
+}
+
+.credits dd { margin: 0; }
+
+.press {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+}
+
+.press__score {
+  margin: 0 0 1rem;
+  font-family: var(--display);
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1;
+  color: var(--cherry);
+}
+
+.press blockquote {
+  margin: 0 0 1.25rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--red);
+}
+
+.press blockquote p {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-style: italic;
+  text-wrap: pretty;
+}
+
+.press blockquote footer {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.press__source { margin: 0; font-size: 0.82rem; }
 </style>
 </head>
 <body>
@@ -381,7 +468,110 @@ body {
       </div>
     </div>
   </section>
-  <section class="band" id="repertoar" data-ground="lime"><div class="band__inner"></div></section>
+  <section class="band" id="repertoar" data-ground="lime">
+    <div class="band__inner">
+      <h2 class="band__heading display"><span class="ribbon">Repertoár</span></h2>
+
+      <article class="production" data-slug="rychle-sipy-a-zahada-klubovny">
+        <h3 class="production__title display">
+          <span class="production__title-lead">Rychlé šípy</span>
+          <span class="production__title-rest">a záhada klubovny</span>
+        </h3>
+
+        <p class="production__blurb">
+          Záhada slavných Foglarových Rychlých šípů v nové size od designera
+          Šimona Lorka.
+        </p>
+        <!-- The client wrote "v nové size". Almost certainly meant "v nové
+             verzi", but these are her words: ask before changing them. -->
+
+        <p class="production__annotation">
+          Napínavá a hravá autorská inscenace plná humoru a dobrodružství, která
+          přináší svěží pohled na legendární příběh a zároveň dokazuje, že hodnoty
+          Rychlých šípů jsou nadčasové. Mirek Dušín, Jarka Metelka, Jindra Hojer,
+          Červenáček a Rychlonožka se vracejí do své klubovny, ale čeká je šok
+          &ndash; jejich útočiště je obsazené někým cizím. Kdo vetřelcem je? Jak se
+          do klubovny dostal?
+        </p>
+
+        <dl class="credits">
+          <dt>Napsal</dt><dd>Šimon Lorko, na motivy knih Jaroslava Foglara</dd>
+          <dt>Režie a scéna</dt><dd>Prokop Zach</dd>
+          <dt>Hudba</dt><dd>Marek Cimbál</dd>
+          <!-- Cast per i-divadlo, not yet confirmed against the company's own
+               list. Note Maxmilián Kocek and Matouš Vyšata: the earlier
+               prototype misspelled both, having read them off a poster photo. -->
+          <dt>Hrají</dt><dd>Prokop Zach, Maxmilián Kocek / Matouš Vyšata, Ondřej Stupka, Zuzana Matušková, Maximilián Dolanský</dd>
+          <dt>Archivní nahrávky</dt><dd>Tomáš Turek, Roman Zach</dd>
+          <dt>Premiéra</dt><dd>30. 1. 2026</dd>
+          <dt>Délka</dt><dd>1 h 15 min, bez přestávky</dd>
+          <dt>Přístupnost</dt><dd>6+</dd>
+        </dl>
+
+        <div class="press">
+          <p class="press__score">87 %</p>
+          <blockquote>
+            <p>
+              Uvolněné představení, které mnohé přenese zpět do mladých let, nebo
+              alespoň budou pociťovat silnou nostalgii. Děj byl volný, dialogy
+              vtipné, kde se to hodilo. Vyvrcholení hry bylo velkým překvapením.
+            </p>
+            <footer>Hessy &middot; 90 % &middot; 20. 3. 2026</footer>
+          </blockquote>
+          <blockquote>
+            <p>
+              Úžasný! &hellip; Určitě doporučuji všem věkovým kategoriím.
+            </p>
+            <footer>Mariematenova &middot; 100 % &middot; 20. 2. 2026</footer>
+          </blockquote>
+          <p class="press__source">
+            Hodnocení diváků na
+            <a class="link" href="https://www.i-divadlo.cz/divadlo/kolekce-parchant/rychle-sipy-a-zahada-klubovny">i-divadlo.cz</a>
+          </p>
+        </div>
+      </article>
+
+      <article class="production" data-slug="hra-lasky-a-nahody">
+        <h3 class="production__title display">
+          <span class="production__title-lead">Hra lásky</span>
+          <span class="production__title-rest">a náhody</span>
+        </h3>
+
+        <p class="production__blurb">
+          Klasická francouzská komedie z roku 1730 od Marivauxe v novém českém
+          designu od Kolekce Parchant.
+        </p>
+
+        <p class="production__annotation">
+          Slavná komedie francouzského klasika. Ona předstírá, že je služka. On
+          dělá, že je sluha. Oba chtějí &bdquo;nenápadně&ldquo; zjistit, koho si
+          mají vzít. Výsledek? Láska na první pohled mezi dvěma lidmi, kteří si
+          myslí, že milují úplně někoho jiného. Zkrátka romantika, chaos a
+          převleky. Ať žije láska! A záměny!
+        </p>
+
+        <dl class="credits">
+          <dt>Autor</dt><dd>Pierre de Marivaux</dd>
+          <dt>Režie</dt><dd>Prokop Zach</dd>
+          <dt>Hudba</dt><dd>Marek Cimbál</dd>
+          <!-- The client asked for Aliska in place of Aneta Kalertová.
+               i-divadlo still lists the old name; ours to apply, theirs to fix. -->
+          <dt>Hrají</dt><dd>Aliska, Jiří Dlouhý / Šimon Fikar, Ondřej Stupka, Zuzana Matušková, Maximilián Dolanský, Prokop Zach</dd>
+          <dt>Premiéra</dt><dd>2. 5. 2025</dd>
+        </dl>
+
+        <div class="press">
+          <!-- One 90% rating with no review text, so a badge and nothing more.
+               Inventing a quote here would be fabricating a review. -->
+          <p class="press__score">90 %</p>
+          <p class="press__source">
+            Hodnocení diváků na
+            <a class="link" href="https://www.i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody">i-divadlo.cz</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
   <section class="band" id="soubor" data-ground="cream"><div class="band__inner"></div></section>
   <section class="band" id="o-nas" data-ground="olive"><div class="band__inner"></div></section>
   <section class="band" id="o-prostoru" data-ground="cream"><div class="band__inner"></div></section>
