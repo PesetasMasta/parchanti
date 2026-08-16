@@ -123,9 +123,115 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem var(--gutter);
+  background: var(--cream);
+  border-bottom: 3px solid var(--ink);
+}
+
+.masthead__monogram {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--red);
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+
+.burger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  cursor: pointer;
+}
+
+/* The bars are drawn rather than three elements: fewer nodes, and the open
+   state only has to swap one gradient. */
+.burger__bars {
+  width: 1.25rem;
+  height: 0.75rem;
+  background:
+    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
+}
+
+.burger[aria-expanded="true"] .burger__bars {
+  background:
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
+}
+
+.nav {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  place-content: center;
+  padding: var(--gutter);
+  background: var(--cherry);
+  /* Set here, not only on .nav__link, so the <li> wrappers - which the
+     contrast check also measures - never fall back to the inherited ink
+     body colour against this cherry background. */
+  color: var(--cream);
+}
+
+.nav[data-open] { display: grid; }
+
+.nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: clamp(0.5rem, 2vw, 1rem);
+}
+
+.nav__link {
+  font-size: clamp(2rem, 11vw, 4.5rem);
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.nav__link:hover,
+.nav__link:focus-visible { color: var(--lime); }
 </style>
 </head>
 <body>
+
+<header class="masthead">
+  <a class="masthead__monogram" href="#hero" aria-label="Kolekce Parchant, na začátek">KP</a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="nav">
+    <span class="burger__label">Menu</span>
+    <span class="burger__bars" aria-hidden="true"></span>
+  </button>
+</header>
+
+<nav class="nav" id="nav" aria-label="Hlavní navigace">
+  <ul class="nav__list">
+    <li><a class="nav__link display" href="#program">Program</a></li>
+    <li><a class="nav__link display" href="#repertoar">Repertoár</a></li>
+    <li><a class="nav__link display" href="#soubor">Soubor</a></li>
+    <li><a class="nav__link display" href="#o-nas">O nás</a></li>
+    <li><a class="nav__link display" href="#o-prostoru">O prostoru</a></li>
+    <li><a class="nav__link display" href="#fotky">Fotky</a></li>
+  </ul>
+</nav>
 
 <main>
   <section class="band" id="hero" data-ground="olive"><div class="band__inner"></div></section>
@@ -137,5 +243,32 @@ body {
   <section class="band" id="fotky" data-ground="lime"><div class="band__inner"></div></section>
 </main>
 
+<script type="module">
+// Burger nav. The overlay is the entire navigation model, so it has to be
+// keyboard-operable: Escape closes it and focus returns to the button.
+const burger = document.querySelector('.burger');
+const nav = document.querySelector('#nav');
+
+function setNav(open) {
+  burger.setAttribute('aria-expanded', String(open));
+  nav.toggleAttribute('data-open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+  if (open) nav.querySelector('.nav__link').focus();
+  else burger.focus();
+}
+
+burger.addEventListener('click', () => {
+  setNav(burger.getAttribute('aria-expanded') === 'false');
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') setNav(false);
+});
+
+// Following a link must close the overlay, or the target scrolls behind it.
+nav.addEventListener('click', (event) => {
+  if (event.target.closest('.nav__link')) setNav(false);
+});
+</script>
 </body>
 </html>

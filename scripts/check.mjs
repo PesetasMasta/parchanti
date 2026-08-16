@@ -170,6 +170,46 @@ check(
   },
 );
 
+check(
+  'burger nav lists the six sections and every target exists',
+  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
+     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()
+        + '|' + Boolean(document.querySelector(a.getAttribute('href')))))`,
+  (raw) => {
+    const expected = [
+      '#program|Program|true',
+      '#repertoar|Repertoár|true',
+      '#soubor|Soubor|true',
+      '#o-nas|O nás|true',
+      '#o-prostoru|O prostoru|true',
+      '#fotky|Fotky|true',
+    ];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected)
+      ? null
+      : `got ${JSON.stringify(actual)}`;
+  },
+);
+
+check(
+  'nav is closed at rest, opens on click, closes on Escape',
+  `(() => {
+    const burger = document.querySelector('.burger');
+    const nav = document.querySelector('#nav');
+    const closed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    burger.click();
+    const opened = burger.getAttribute('aria-expanded') === 'true' && nav.hasAttribute('data-open');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    return JSON.stringify({ closed, opened, reclosed });
+  })()`,
+  (raw) => {
+    const state = JSON.parse(raw);
+    const bad = Object.entries(state).filter(([, ok]) => !ok).map(([name]) => name);
+    return bad.length ? `failed: ${bad.join(', ')}` : null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {
