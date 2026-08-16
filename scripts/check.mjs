@@ -1,32 +1,82 @@
-// Assertion harness for the prototype page.
+// Assertion harness for the built site.
 //
-// There is no test framework here on purpose: the deliverable is one static
-// HTML file with no dependencies, and a runner that needs npm install would be
-// heavier than the thing it tests. This drives a real browser instead, so the
-// assertions run against computed styles and real layout rather than a parsed
-// string.
+// No test framework on purpose: the deliverable is static HTML and the only
+// dependency worth having is a real browser. The suite builds the site so it
+// can never check a stale dist/, discovers every generated page, and runs
+// every generic check against every page at both 320px (narrowest phone in
+// real use) and 390px. Page-specific checks ride along on their route.
 //
-//   node scripts/check.mjs [url]
+//   node scripts/check.mjs
 
-import { withPage } from './lib/browser.mjs';
+import { execFileSync } from 'node:child_process';
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { staticServer } from './serve.mjs';
+import { withBrowser } from './lib/browser.mjs';
 
-const url = process.argv[2]
-  ?? new URL('../prototype/index.html', import.meta.url).href;
+const DIST = new URL('../dist', import.meta.url).pathname;
+const PORT = 4517;
 
-const checks = [];
+// --- 1. Build. A check suite that trusts a pre-existing dist/ can pass on
+// stale output; building here makes that impossible.
+execFileSync('npx', ['astro', 'build'], { stdio: 'inherit' });
 
-function check(name, expression, verify) {
-  checks.push({ name, expression, verify });
+// --- 2. Discover routes from what the build actually emitted.
+function discoverRoutes(dir, prefix = '/') {
+  const routes = [];
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) {
+      routes.push(...discoverRoutes(path, `${prefix}${entry}/`));
+    } else if (entry === 'index.html') {
+      routes.push(prefix);
+    } else if (entry === '404.html') {
+      routes.push('/404.html');
+    }
+  }
+  return routes.sort();
 }
 
-check(
+// The full expected set. Astro generates pages, so a route can silently
+// disappear while every remaining page still passes - this list is the guard.
+// Page tasks extend it as routes land; by the last page task it is complete.
+const EXPECTED_ROUTES = [
+  '/',
+].sort();
+
+const actualRoutes = discoverRoutes(DIST);
+if (JSON.stringify(actualRoutes) !== JSON.stringify(EXPECTED_ROUTES)) {
+  const missing = EXPECTED_ROUTES.filter((route) => !actualRoutes.includes(route));
+  const extra = actualRoutes.filter((route) => !EXPECTED_ROUTES.includes(route));
+  console.error('FAIL  route set mismatch');
+  if (missing.length) console.error(`      missing: ${missing.join(' ')}`);
+  if (extra.length) console.error(`      unexpected: ${extra.join(' ')}`);
+  process.exit(1);
+}
+console.log(`pass  route set matches (${actualRoutes.length} routes)`);
+
+// --- 3. Checks. Same shape as the previous suite: an expression evaluated in
+// the page, a verify function that returns null (pass) or a problem string.
+
+const GENERIC_CHECKS = [];
+function generic(name, expression, verify) {
+  GENERIC_CHECKS.push({ name, expression, verify });
+}
+
+// Page-specific checks, keyed by route. Extended by later tasks.
+const PAGE_CHECKS = {};
+function onPage(route, name, expression, verify) {
+  (PAGE_CHECKS[route] ??= []).push({ name, expression, verify });
+}
+
+generic(
   'page has a title',
   `document.title`,
   (title) => (title && title.trim().length > 0 ? null : `title was ${JSON.stringify(title)}`),
 );
 
-check(
-  'Czech diacritics render in the display face',
+generic(
+  'Czech diacritics render in both faces',
   `(async () => {
     const probe = document.createElement('span');
     probe.style.cssText = 'position:absolute;visibility:hidden;font-size:64px;white-space:pre';
@@ -36,18 +86,13 @@ check(
       probe.textContent = text;
       return probe.getBoundingClientRect().width;
     };
-    // If the face lacks a glyph the browser substitutes from the fallback, and
-    // the substituted run measures differently from the same string rendered
-    // in the fallback alone only when the face DOES have it. Comparing the
-    // diacritic string against a plain one in both families catches the swap.
-    //
-    // Nothing else on the page references these families before this probe
-    // does, so without an explicit load the first measurement always races
-    // the async @font-face fetch and reads fallback metrics regardless of
-    // whether the face actually has the glyphs. document.fonts.load() forces
-    // the font to be fetched and ready before we measure.
+    // If the face lacks a glyph the browser substitutes from the fallback;
+    // comparing the diacritic string in face+fallback against fallback alone
+    // catches the swap. document.fonts.load() forces the fetch first -
+    // without it this measurement races the async @font-face load and always
+    // reads fallback metrics.
     const result = {};
-    for (const family of ['"Archivo Black"', '"Archivo"']) {
+    for (const family of ['"DM Serif Display"', '"Archivo"']) {
       await document.fonts.load('64px ' + family, 'ěščřžůťďň');
       const withDiacritics = widthOf('ěščřžůťďň', family + ', monospace');
       const fallbackOnly = widthOf('ěščřžůťďň', 'monospace');
@@ -63,24 +108,8 @@ check(
   },
 );
 
-check(
-  'all seven bands exist in the right order with the right grounds',
-  `JSON.stringify([...document.querySelectorAll('section.band')]
-     .map((band) => band.id + ':' + band.dataset.ground))`,
-  (raw) => {
-    const expected = [
-      'hero:olive', 'program:cream', 'repertoar:lime', 'soubor:cream',
-      'o-nas:olive', 'o-prostoru:cream', 'fotky:lime',
-    ];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected)
-      ? null
-      : `got ${JSON.stringify(actual)}`;
-  },
-);
-
-check(
-  'text meets 4.5:1 against its band, and punch red is never body text',
+generic(
+  'text meets WCAG contrast against its ground',
   `(() => {
     const channel = (value) => {
       const c = value / 255;
@@ -103,30 +132,11 @@ check(
     };
 
     const problems = [];
-    for (const el of document.querySelectorAll('p, li, a, dd, dt, figcaption, small, span, h1, h2, h3')) {
+    for (const el of document.querySelectorAll('p, li, a, dd, dt, figcaption, small, span, h1, h2, h3, button, blockquote, footer')) {
       if (!el.textContent.trim()) continue;
-      if (el.querySelector('p, li, h1, h2, h3')) continue; // containers, not leaves
+      if (el.querySelector('p, li, h1, h2, h3, blockquote')) continue; // containers, not leaves
       const style = getComputedStyle(el);
-
-      // Outlined display type is exempt from the ratio, because the ratio model
-      // does not describe it: legibility comes from a hard ink edge on all
-      // sides, not from the fill against the ground. Banning it outright would
-      // ban the central poster technique. The exemption is paid for by
-      // requiring the outline actually to be there.
-      if (el.classList.contains('display--shadow')) {
-        // A shadow layer only counts as a real outline if it is both ink-
-        // coloured AND actually offset from the glyph. A no-op
-        // 'text-shadow: 0 0 0 var(--ink)' would match a bare colour check
-        // while providing zero legibility, so require a non-zero x or y
-        // offset on at least one ink-coloured layer.
-        const inkLayers = [...style.textShadow.matchAll(/rgb\\(30, 27, 20\\)\\s*(-?[\\d.]+)px\\s*(-?[\\d.]+)px/g)];
-        const hasRealOutline = inkLayers.some(([, x, y]) => Number(x) !== 0 || Number(y) !== 0);
-        if (!hasRealOutline) {
-          problems.push(el.tagName + '.' + (el.className || '?') + ' is display--shadow with no ink outline');
-        }
-        continue;
-      }
-
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
       const size = parseFloat(style.fontSize);
       const weight = Number(style.fontWeight) || 400;
       // WCAG large text: 24px, or 18.66px at 700+.
@@ -135,10 +145,6 @@ check(
       const needed = isLarge ? 3 : 4.5;
       if (contrast < needed) {
         problems.push(el.tagName + '.' + (el.className || '?') + ' ' + contrast.toFixed(2) + ':1 needs ' + needed);
-      }
-      // The spec's own rule, stricter than WCAG: punch red is display-only.
-      if (/235, 49, 63/.test(style.color) && !isLarge) {
-        problems.push(el.tagName + '.' + (el.className || '?') + ' uses --red at ' + size + 'px');
       }
     }
     return JSON.stringify([...new Set(problems)].slice(0, 10));
@@ -149,37 +155,22 @@ check(
   },
 );
 
-check(
+generic(
   'nothing overflows horizontally',
   `(() => {
-    // Content inside something that scrolls sideways on purpose - the photo
-    // strip - is not overflow. Only content with nothing to scroll it counts.
     const inScroller = (el) => {
       for (let node = el.parentElement; node; node = node.parentElement) {
         if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
       }
       return false;
     };
-
-    // window.innerWidth is not a safe yardstick: when content that cannot
-    // wrap (an unbreakable word) is wider than the viewport, mobile browsers
-    // silently widen the layout viewport to fit it, so innerWidth grows right
-    // along with the overflow and the comparison below would never fire.
-    // document.documentElement.clientWidth stays pinned to the real,
-    // requested viewport width regardless, so it is the trustworthy measure.
-    //
-    // This still can't see paint-only overflow from text-shadow, box-shadow,
-    // or filter: drop-shadow - those paint outside the layout box without
-    // affecting it or scrollWidth, so they're invisible to both checks below.
-    // Deliberate: paint overflow cannot cause horizontal scrolling, which is
-    // the one thing this guard exists to catch.
+    // innerWidth is not a safe yardstick: browsers silently widen the layout
+    // viewport to absorb unbreakable overflow, so innerWidth grows with the
+    // bug. documentElement.clientWidth stays pinned to the requested width.
     const clientWidth = document.documentElement.clientWidth;
     const scrollWidth = document.documentElement.scrollWidth;
 
     const problems = [];
-    // Catches the case above directly: if the document itself can scroll
-    // sideways, something overflowed even if no single element's own rect
-    // appears to cross the (possibly widened) edge.
     if (scrollWidth > clientWidth + 1) {
       problems.push('document scrolls horizontally: scrollWidth ' + scrollWidth + ' > clientWidth ' + clientWidth);
     }
@@ -198,262 +189,90 @@ check(
   },
 );
 
-check(
-  'burger nav lists the six sections and every target exists',
-  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
-     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()
-        + '|' + Boolean(document.querySelector(a.getAttribute('href')))))`,
+generic(
+  'no forbidden name or undisclosed premiere appears',
+  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Mikuláš Polák', 'Višata', 'červánky', 'Hančilová']
+     .filter((needle) => document.documentElement.textContent.includes(needle)))`,
   (raw) => {
-    const expected = [
-      '#program|Program|true',
-      '#repertoar|Repertoár|true',
-      '#soubor|Soubor|true',
-      '#o-nas|O nás|true',
-      '#o-prostoru|O prostoru|true',
-      '#fotky|Fotky|true',
-    ];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected)
-      ? null
-      : `got ${JSON.stringify(actual)}`;
+    const found = JSON.parse(raw);
+    return found.length
+      ? `forbidden on this page: ${found.join(', ')} — removed names must stay removed and the October premiere must not be announced`
+      : null;
   },
 );
 
-check(
-  'nav is closed at rest, opens on click, closes on Escape',
-  `(() => {
-    const burger = document.querySelector('.burger');
-    const nav = document.querySelector('#nav');
-    const closed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
-    burger.click();
-    const opened = burger.getAttribute('aria-expanded') === 'true' && nav.hasAttribute('data-open');
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
-    return JSON.stringify({ closed, opened, reclosed });
-  })()`,
-  (raw) => {
-    const state = JSON.parse(raw);
-    const bad = Object.entries(state).filter(([, ok]) => !ok).map(([name]) => name);
-    return bad.length ? `failed: ${bad.join(', ')}` : null;
-  },
+generic(
+  'page carries real static markup, not script-built content',
+  `document.querySelector('main')?.textContent.trim().length ?? document.body.textContent.trim().length`,
+  (length) => (length >= 40 ? null : `main text is ${length} chars — social scrapers never run JS, so thin markup previews blank`),
 );
 
-check(
-  'hero carries the masthead, the pitch and an empty claim slot',
-  `(() => {
-    const hero = document.querySelector('#hero');
-    return JSON.stringify({
-      masthead: hero.querySelector('.hero__title')?.textContent.trim(),
-      pitchStart: hero.querySelector('.hero__pitch')?.textContent.trim().slice(0, 24),
-      claimIsPlaceholder: hero.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
-      claimIsEmpty: (hero.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
+generic(
+  'every internal link resolves to a generated route',
+  `JSON.stringify([...document.querySelectorAll('a[href^="/"]')]
+     .map((a) => a.getAttribute('href').split('#')[0]))`,
+  (raw) => {
+    const hrefs = JSON.parse(raw);
+    const known = new Set(EXPECTED_ROUTES);
+    const dead = [...new Set(hrefs)].filter((href) => {
+      const normalised = href.endsWith('/') || href.includes('.') ? href : `${href}/`;
+      return !known.has(normalised);
     });
-  })()`,
-  (raw) => {
-    const hero = JSON.parse(raw);
-    if (hero.masthead !== 'Kolekce Parchant') return `masthead was ${JSON.stringify(hero.masthead)}`;
-    // NOTE: the brief's markdown had this literal without a trailing space,
-    // but slice(0, 24) on the trimmed pitch always includes the space before
-    // "se" (it sits mid-line in the client's copy, not at a wrap point) —
-    // 'Divadelní soubor, který' is 23 chars, so a 24-char slice can never
-    // equal it. Most likely a trailing space stripped when the brief was
-    // saved. Restored here so the check tests what it evidently intended.
-    if (hero.pitchStart !== 'Divadelní soubor, který ') return `pitch was ${JSON.stringify(hero.pitchStart)}`;
-    if (!hero.claimIsPlaceholder) return 'claim slot is not marked data-placeholder';
-    if (!hero.claimIsEmpty) return 'claim slot should stay empty until Zuzka sends it';
-    return null;
+    return dead.length ? `dead internal links: ${dead.join(' ')}` : null;
   },
 );
 
-check(
-  'program shows its empty state when there are no future dates',
-  `(() => {
-    const band = document.querySelector('#program');
-    const empty = band.querySelector('.program__empty');
-    return JSON.stringify({
-      hasHeading: Boolean(band.querySelector('.band__heading')),
-      emptyVisible: Boolean(empty) && getComputedStyle(empty).display !== 'none',
-      emptyMentionsGoOut: (empty?.textContent ?? '').includes('GoOut'),
-      ticketCount: band.querySelectorAll('.ticket').length,
-    });
-  })()`,
-  (raw) => {
-    const program = JSON.parse(raw);
-    if (!program.hasHeading) return 'no section heading';
-    if (!program.emptyVisible) return 'empty state is not visible';
-    if (!program.emptyMentionsGoOut) return 'empty state should say where dates get announced';
-    if (program.ticketCount !== 0) return `expected no tickets, got ${program.ticketCount}`;
-    return null;
-  },
-);
-
-check(
-  'scroll-padding-top clears the sticky masthead for anchor jumps',
-  `(() => {
-    const masthead = document.querySelector('.masthead');
-    const mastheadHeight = masthead.getBoundingClientRect().height;
-    const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-    return JSON.stringify({ mastheadHeight, scrollPaddingTop });
-  })()`,
-  (raw) => {
-    const { mastheadHeight, scrollPaddingTop } = JSON.parse(raw);
-    return scrollPaddingTop >= mastheadHeight
-      ? null
-      : `scroll-padding-top ${scrollPaddingTop}px is less than masthead height ${mastheadHeight}px`;
-  },
-);
-
-check(
-  'repertoire holds exactly the two approved productions with correct press treatment',
-  `(() => {
-    const productions = [...document.querySelectorAll('#repertoar .production')];
-    return JSON.stringify({
-      slugs: productions.map((p) => p.dataset.slug),
-      sipyQuotes: document.querySelectorAll('[data-slug="rychle-sipy-a-zahada-klubovny"] .press blockquote').length,
-      hraQuotes: document.querySelectorAll('[data-slug="hra-lasky-a-nahody"] .press blockquote').length,
-      hraScore: document.querySelector('[data-slug="hra-lasky-a-nahody"] .press__score')?.textContent.trim(),
-      mentionsAudience: document.body.textContent.includes('Pivařská'),
-      castCorrect: document.querySelector('[data-slug="hra-lasky-a-nahody"]').textContent.includes('Aliska'),
-      staleCast: document.body.textContent.includes('Aneta Kalertová')
-        || document.body.textContent.includes('Mikuláš Polák')
-        || document.body.textContent.includes('Višata'),
-    });
-  })()`,
-  (raw) => {
-    const r = JSON.parse(raw);
-    const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
-    if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
-    if (r.sipyQuotes !== 2) return `Rychlé šípy should show 2 pull quotes, got ${r.sipyQuotes}`;
-    if (r.hraQuotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
-    if (r.hraScore !== '90 %') return `Hra lásky score badge was ${JSON.stringify(r.hraScore)}`;
-    if (r.mentionsAudience) return 'Audience / Pivařská odysea must not appear';
-    if (!r.castCorrect) return 'Aliska is missing from the Hra lásky cast';
-    if (r.staleCast) return 'a corrected-away name is still on the page';
-    return null;
-  },
-);
-
-check(
-  'the client\'s own wording is preserved and the undisclosed premiere stays unannounced',
+generic(
+  'social metadata is present',
   `JSON.stringify({
-    hasClientWording: document.body.textContent.includes('v nové size'),
-    mentionsCervanky: document.body.textContent.includes('červánky'),
-    mentionsHancilova: document.body.textContent.includes('Hančilová'),
-  })`,
-  (raw) => {
-    const r = JSON.parse(raw);
-    if (!r.hasClientWording) {
-      return 'the exact string "v nové size" is missing — this is the client\'s own wording (a likely typo for "verzi") and must not be silently corrected without asking her first';
-    }
-    if (r.mentionsCervanky || r.mentionsHancilova) {
-      return 'the October 2026 premiere ("Červánky", Barbora Hančilová) appears on the page — the client never mentioned it and it must not be announced for her';
-    }
-    return null;
-  },
-);
-
-check(
-  'ensemble, about and venue bands carry their content',
-  `JSON.stringify({
-    people: document.querySelectorAll('#soubor .ensemble__person').length,
-    aboutIsPlaceholder: Boolean(document.querySelector('#o-nas [data-placeholder]')),
-    venueHasAddress: document.querySelector('#o-prostoru').textContent.includes('Klimentská 16'),
-    venueHasTrams: document.querySelector('#o-prostoru').textContent.includes('Dlouhá třída'),
-  })`,
-  (raw) => {
-    const s = JSON.parse(raw);
-    if (s.people !== 11) return `expected 11 ensemble members, got ${s.people}`;
-    if (!s.aboutIsPlaceholder) return 'O nás prose is still pending and must be marked data-placeholder';
-    if (!s.venueHasAddress) return 'venue band is missing the address';
-    if (!s.venueHasTrams) return 'venue band is missing the tram stop';
-    return null;
-  },
-);
-
-check(
-  'social metadata is present and content is visible without JavaScript',
-  `JSON.stringify({
-    ogTitle: document.querySelector('meta[property="og:title"]')?.content ?? null,
-    ogDescription: (document.querySelector('meta[property="og:description"]')?.content ?? '').length,
-    ogImage: Boolean(document.querySelector('meta[property="og:image"]')),
+    ogTitle: (document.querySelector('meta[property="og:title"]')?.content ?? '').length,
     description: (document.querySelector('meta[name="description"]')?.content ?? '').length,
-    schemaType: JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}')['@type'] ?? null,
-    instagram: Boolean(document.querySelector('.footer a[href*="instagram.com/kolekce_parchant"]')),
+    robots: document.querySelector('meta[name="robots"]')?.content ?? null,
   })`,
   (raw) => {
     const meta = JSON.parse(raw);
-    if (meta.ogTitle !== 'Kolekce Parchant') return `og:title was ${JSON.stringify(meta.ogTitle)}`;
-    if (meta.ogDescription < 40) return 'og:description is missing or too short';
-    if (!meta.ogImage) return 'og:image is missing, so shares preview blank';
-    if (meta.description < 40) return 'meta description is missing or too short';
-    if (meta.schemaType !== 'TheaterGroup') return `schema @type was ${JSON.stringify(meta.schemaType)}`;
-    if (!meta.instagram) return 'footer is missing the Instagram link';
+    if (meta.ogTitle < 5) return 'og:title missing';
+    if (meta.description < 40) return 'meta description missing or too short';
+    if (!/noindex/.test(meta.robots ?? '')) return 'robots noindex is missing — cast list is not confirmed yet';
     return null;
   },
 );
 
-check(
-  'every band has real markup rather than script-built content',
-  `(() => {
-    // Social scrapers never run JS. If a band is empty in the served markup it
-    // is invisible to them, however it looks in a browser.
-    const thin = [...document.querySelectorAll('section.band')]
-      .filter((band) => band.textContent.trim().length < 40)
-      .map((band) => band.id);
-    return JSON.stringify(thin);
-  })()`,
-  (raw) => {
-    const thin = JSON.parse(raw);
-    return thin.length ? `these bands have almost no text: ${thin.join(', ')}` : null;
-  },
-);
-
-check(
-  'arrow signs, dividers and the animation hook are in place',
-  `JSON.stringify({
-    navArrows: document.querySelectorAll('#nav .nav__link .arrow').length,
-    arrowsHidden: [...document.querySelectorAll('.arrow')].every((a) => a.getAttribute('aria-hidden') === 'true'),
-    dividers: document.querySelectorAll('.divider').length,
-    animateHook: document.querySelectorAll('[data-animate]').length,
-  })`,
-  (raw) => {
-    const o = JSON.parse(raw);
-    if (o.navArrows !== 6) return `expected an arrow on each of the 6 nav links, got ${o.navArrows}`;
-    if (!o.arrowsHidden) return 'arrows are decorative and must be aria-hidden';
-    if (o.dividers !== 6) return `expected 6 dividers between 7 bands, got ${o.dividers}`;
-    if (o.animateHook !== 1) return `expected exactly one data-animate hook, got ${o.animateHook}`;
-    return null;
-  },
-);
-
-// Run the whole suite at both the narrowest phone still in real use (320px,
-// iPhone SE) and the previous baseline (390px). A regression that only shows
-// up at one width - like a ribbon that fits at 390px but clips at 320px -
-// stayed invisible while this ran a single width; running checks twice is
-// cheap next to shipping a check suite that only tests one phone.
+// --- 4. Run everything at both widths, one browser per width.
 const widths = [320, 390];
 const failures = [];
 
-for (const width of widths) {
-  const widthFailures = await withPage(url, { width, height: 844 }, async (evaluate) => {
-    const failed = [];
-    for (const { name, expression, verify } of checks) {
-      let problem;
-      try {
-        problem = verify(await evaluate(expression));
-      } catch (error) {
-        problem = error.message;
+const server = staticServer(DIST);
+await new Promise((resolve) => server.listen(PORT, resolve));
+
+try {
+  for (const width of widths) {
+    await withBrowser(async (visit) => {
+      for (const route of EXPECTED_ROUTES) {
+        const url = `http://127.0.0.1:${PORT}${route}`;
+        const pageChecks = [...GENERIC_CHECKS, ...(PAGE_CHECKS[route] ?? [])];
+        await visit(url, { width, height: 844 }, async (evaluate) => {
+          for (const { name, expression, verify } of pageChecks) {
+            let problem;
+            try {
+              problem = verify(await evaluate(expression));
+            } catch (error) {
+              problem = error.message;
+            }
+            const label = `[${width}px ${route}] ${name}`;
+            console.log(`${problem ? 'FAIL' : 'pass'}  ${label}${problem ? ` — ${problem}` : ''}`);
+            if (problem) failures.push(label);
+          }
+        });
       }
-      console.log(`${problem ? 'FAIL' : 'pass'}  [${width}px] ${name}${problem ? ` — ${problem}` : ''}`);
-      if (problem) failed.push(`${name} @ ${width}px`);
-    }
-    return failed;
-  });
-  failures.push(...widthFailures);
+    });
+  }
+} finally {
+  server.close();
 }
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} check(s) failed`);
   process.exit(1);
 }
-console.log('\nall checks passed at both widths');
+console.log(`\nall checks passed: ${EXPECTED_ROUTES.length} routes x ${widths.length} widths`);

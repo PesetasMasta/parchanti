@@ -66,9 +66,11 @@ class Client {
   }
 }
 
-export async function withPage(url, options, fn) {
-  const { width = 390, height = 844, mobile = true, settle = 600 } = options ?? {};
-
+// One browser, many page visits. The multi-page suite visits ~21 routes per
+// viewport width; spawning Brave per route would dominate the runtime, so the
+// suite spawns once per width and navigates. withPage stays as a wrapper so
+// shot.mjs keeps working unchanged.
+export async function withBrowser(fn) {
   const browser = spawn(BRAVE, [
     '--headless',
     '--disable-gpu',
@@ -88,42 +90,54 @@ export async function withPage(url, options, fn) {
     const client = new Client(socket);
     const { targetId } = await client.send('Target.createTarget', { url: 'about:blank' });
     const { sessionId } = await client.send('Target.attachToTarget', { targetId, flatten: true });
-
-    await client.send('Emulation.setDeviceMetricsOverride', {
-      width, height, deviceScaleFactor: 2, mobile,
-    }, sessionId);
-
     await client.send('Page.enable', {}, sessionId);
-    const loaded = client.once((message) => message.method === 'Page.loadEventFired');
-    await client.send('Page.navigate', { url }, sessionId);
-    await loaded;
-    await wait(settle);
 
-    const evaluate = async (expression) => {
-      const { result, exceptionDetails } = await client.send('Runtime.evaluate', {
-        expression: `(() => { return (${expression}); })()`,
-        returnByValue: true,
-        awaitPromise: true,
+    const visit = async (url, options, pageFn) => {
+      const { width = 390, height = 844, mobile = true, settle = 600, reducedMotion = false } = options ?? {};
+
+      await client.send('Emulation.setDeviceMetricsOverride', {
+        width, height, deviceScaleFactor: 2, mobile,
       }, sessionId);
-      if (exceptionDetails) throw new Error(exceptionDetails.text ?? 'evaluate threw');
-      return result.value;
+      // Emulated, not inherited from the OS, so the reduced-motion checks are
+      // deterministic on any machine.
+      await client.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-motion', value: reducedMotion ? 'reduce' : '' }],
+      }, sessionId);
+
+      const loaded = client.once((message) => message.method === 'Page.loadEventFired');
+      await client.send('Page.navigate', { url }, sessionId);
+      await loaded;
+      await wait(settle);
+
+      const evaluate = async (expression) => {
+        const { result, exceptionDetails } = await client.send('Runtime.evaluate', {
+          expression: `(() => { return (${expression}); })()`,
+          returnByValue: true,
+          awaitPromise: true,
+        }, sessionId);
+        if (exceptionDetails) throw new Error(exceptionDetails.text ?? 'evaluate threw');
+        return result.value;
+      };
+
+      const screenshot = async () => {
+        const { data } = await client.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+        return Buffer.from(data, 'base64');
+      };
+
+      return pageFn(evaluate, screenshot);
     };
 
-    const screenshot = async () => {
-      const { data } = await client.send('Page.captureScreenshot', { format: 'png' }, sessionId);
-      return Buffer.from(data, 'base64');
-    };
-
-    return await fn(evaluate, screenshot);
+    return await fn(visit);
   } finally {
     // Wait for the process to actually exit, not just for the kill signal to
-    // be sent. Without this, a caller that runs withPage() twice in a row
-    // (checking multiple viewport widths, say) can have the second launch
-    // race the first browser's shutdown for the shared --user-data-dir lock
-    // and fail with "Failed to open a new tab". A short timeout is a
-    // fallback only, in case the process ever fails to emit 'exit'.
+    // be sent: a second launch would race this one for the shared
+    // --user-data-dir lock. Timeout is a fallback if 'exit' never fires.
     const exited = new Promise((resolve) => browser.once('exit', resolve));
     browser.kill();
     await Promise.race([exited, wait(2000)]);
   }
+}
+
+export function withPage(url, options, fn) {
+  return withBrowser((visit) => visit(url, options, fn));
 }
