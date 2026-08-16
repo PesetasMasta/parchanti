@@ -63,6 +63,113 @@ check(
   },
 );
 
+check(
+  'all seven bands exist in the right order with the right grounds',
+  `JSON.stringify([...document.querySelectorAll('section.band')]
+     .map((band) => band.id + ':' + band.dataset.ground))`,
+  (raw) => {
+    const expected = [
+      'hero:olive', 'program:cream', 'repertoar:lime', 'soubor:cream',
+      'o-nas:olive', 'o-prostoru:cream', 'fotky:lime',
+    ];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected)
+      ? null
+      : `got ${JSON.stringify(actual)}`;
+  },
+);
+
+check(
+  'text meets 4.5:1 against its band, and punch red is never body text',
+  `(() => {
+    const channel = (value) => {
+      const c = value / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const luminance = (rgb) => {
+      const [r, g, b] = rgb.match(/\\d+/g).map(Number);
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    const ratio = (a, b) => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    const backdrop = (el) => {
+      for (let node = el; node; node = node.parentElement) {
+        const bg = getComputedStyle(node).backgroundColor;
+        if (bg && !/rgba\\(0, 0, 0, 0\\)|transparent/.test(bg)) return bg;
+      }
+      return 'rgb(255, 255, 255)';
+    };
+
+    const problems = [];
+    for (const el of document.querySelectorAll('p, li, a, dd, dt, figcaption, small, span, h1, h2, h3')) {
+      if (!el.textContent.trim()) continue;
+      if (el.querySelector('p, li, h1, h2, h3')) continue; // containers, not leaves
+      const style = getComputedStyle(el);
+
+      // Outlined display type is exempt from the ratio, because the ratio model
+      // does not describe it: legibility comes from a hard ink edge on all
+      // sides, not from the fill against the ground. Banning it outright would
+      // ban the central poster technique. The exemption is paid for by
+      // requiring the outline actually to be there.
+      if (el.classList.contains('display--shadow')) {
+        if (!/rgb\\(30, 27, 20\\)/.test(style.textShadow)) {
+          problems.push(el.tagName + '.' + (el.className || '?') + ' is display--shadow with no ink outline');
+        }
+        continue;
+      }
+
+      const size = parseFloat(style.fontSize);
+      const weight = Number(style.fontWeight) || 400;
+      // WCAG large text: 24px, or 18.66px at 700+.
+      const isLarge = size >= 24 || (size >= 18.66 && weight >= 700);
+      const contrast = ratio(style.color, backdrop(el));
+      const needed = isLarge ? 3 : 4.5;
+      if (contrast < needed) {
+        problems.push(el.tagName + '.' + (el.className || '?') + ' ' + contrast.toFixed(2) + ':1 needs ' + needed);
+      }
+      // The spec's own rule, stricter than WCAG: punch red is display-only.
+      if (/235, 49, 63/.test(style.color) && !isLarge) {
+        problems.push(el.tagName + '.' + (el.className || '?') + ' uses --red at ' + size + 'px');
+      }
+    }
+    return JSON.stringify([...new Set(problems)].slice(0, 10));
+  })()`,
+  (raw) => {
+    const problems = JSON.parse(raw);
+    return problems.length ? problems.join('; ') : null;
+  },
+);
+
+check(
+  'nothing overflows horizontally at 390px',
+  `(() => {
+    // Content inside something that scrolls sideways on purpose - the photo
+    // strip - is not overflow. Only content with nothing to scroll it counts.
+    const inScroller = (el) => {
+      for (let node = el.parentElement; node; node = node.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+      }
+      return false;
+    };
+
+    const problems = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 && box.height === 0) continue;
+      if (inScroller(el)) continue;
+      if (box.right > innerWidth + 1) problems.push((el.className || el.tagName) + ' right+' + Math.round(box.right - innerWidth));
+      if (box.left < -1) problems.push((el.className || el.tagName) + ' left' + Math.round(box.left));
+    }
+    return JSON.stringify([...new Set(problems)].slice(0, 10));
+  })()`,
+  (raw) => {
+    const problems = JSON.parse(raw);
+    return problems.length ? problems.join('; ') : null;
+  },
+);
+
 const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
   const failed = [];
   for (const { name, expression, verify } of checks) {

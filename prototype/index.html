@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Cast names are still unverified against the company's own list. -->
+<meta name="robots" content="noindex, nofollow" />
 <title>Kolekce Parchant</title>
 <style>
 @font-face {
@@ -40,7 +42,101 @@
   src: url("assets/fonts/archivo-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
+/* ---------------------------------------------------------------------------
+   Poster press. The page is a stack of printed posters, so each section is a
+   colour band and scrolling reads as flipping through a pile.
+
+   Palette comes from the two colour boards the client shared, which propose
+   the same idea independently: yellow-green ground, a red, and cream.
+
+   Two reds, for a measured reason. #EB313F on cream is about 4.2:1 - enough
+   for large display type, short of the 4.5:1 body text needs. So punch red is
+   display-only and cherry carries anything small. Cream never sits on olive
+   (about 2:1); those bands take ink. scripts/check.mjs enforces both.
+
+   Deliberately single-theme: a printed poster is paper, so there is no dark
+   mode.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: only light;
+
+  --cream:  #FFFECD;
+  --olive:  #B0BC68;
+  --lime:   #CDD78A;
+  --red:    #EB313F;
+  --cherry: #AA0A27;
+  --ink:    #1E1B14;
+
+  --display: "Archivo Black", "Helvetica Neue", Impact, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --measure: 34rem;
+  --band-padding: clamp(3rem, 9vw, 6rem);
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+.band {
+  padding: var(--band-padding) var(--gutter);
+}
+
+.band[data-ground="cream"] { background: var(--cream); }
+.band[data-ground="olive"] { background: var(--olive); }
+.band[data-ground="lime"]  { background: var(--lime); }
+
+.band__inner {
+  max-width: 68rem;
+  margin-inline: auto;
+}
+
+/* Poster display type: the layered offset shadow does the mid-century work,
+   so it holds on any heavy face rather than depending on one exact font. */
+.display {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.display--shadow {
+  color: var(--cream);
+  text-shadow:
+    2px 2px 0 var(--ink),
+    4px 4px 0 var(--red),
+    6px 6px 0 var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
 </style>
 </head>
-<body></body>
+<body>
+
+<main>
+  <section class="band" id="hero" data-ground="olive"><div class="band__inner"></div></section>
+  <section class="band" id="program" data-ground="cream"><div class="band__inner"></div></section>
+  <section class="band" id="repertoar" data-ground="lime"><div class="band__inner"></div></section>
+  <section class="band" id="soubor" data-ground="cream"><div class="band__inner"></div></section>
+  <section class="band" id="o-nas" data-ground="olive"><div class="band__inner"></div></section>
+  <section class="band" id="o-prostoru" data-ground="cream"><div class="band__inner"></div></section>
+  <section class="band" id="fotky" data-ground="lime"><div class="band__inner"></div></section>
+</main>
+
+</body>
 </html>
+</content>
