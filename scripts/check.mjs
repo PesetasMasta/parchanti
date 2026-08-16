@@ -382,6 +382,24 @@ check(
   },
 );
 
+check(
+  'arrow signs, dividers and the animation hook are in place',
+  `JSON.stringify({
+    navArrows: document.querySelectorAll('#nav .nav__link .arrow').length,
+    arrowsHidden: [...document.querySelectorAll('.arrow')].every((a) => a.getAttribute('aria-hidden') === 'true'),
+    dividers: document.querySelectorAll('.divider').length,
+    animateHook: document.querySelectorAll('[data-animate]').length,
+  })`,
+  (raw) => {
+    const o = JSON.parse(raw);
+    if (o.navArrows !== 6) return `expected an arrow on each of the 6 nav links, got ${o.navArrows}`;
+    if (!o.arrowsHidden) return 'arrows are decorative and must be aria-hidden';
+    if (o.dividers !== 6) return `expected 6 dividers between 7 bands, got ${o.dividers}`;
+    if (o.animateHook !== 1) return `expected exactly one data-animate hook, got ${o.animateHook}`;
+    return null;
+  },
+);
+
 // Run the whole suite at both the narrowest phone still in real use (320px,
 // iPhone SE) and the previous baseline (390px). A regression that only shows
 // up at one width - like a ribbon that fits at 390px but clips at 320px -

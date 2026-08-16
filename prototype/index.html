@@ -554,6 +554,35 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+
+.nav__link {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.arrow {
+  display: inline-block;
+  width: 0.9em;
+  flex: none;
+}
+
+.arrow svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: currentColor;
+}
+
+/* A row of ink diamonds on the boundary between two bands, so the seam reads
+   as a printer's rule rather than a colour change. */
+.divider {
+  height: 1.25rem;
+  background:
+    conic-gradient(from 45deg at 50% 50%, var(--ink) 0 90deg, #0000 0 100%)
+    0 0 / 1.25rem 1.25rem repeat-x;
+  background-color: var(--cream);
+}
 </style>
 </head>
 <body>
@@ -568,12 +597,12 @@ body {
 
 <nav class="nav" id="nav" aria-label="Hlavní navigace">
   <ul class="nav__list">
-    <li><a class="nav__link display" href="#program">Program</a></li>
-    <li><a class="nav__link display" href="#repertoar">Repertoár</a></li>
-    <li><a class="nav__link display" href="#soubor">Soubor</a></li>
-    <li><a class="nav__link display" href="#o-nas">O nás</a></li>
-    <li><a class="nav__link display" href="#o-prostoru">O prostoru</a></li>
-    <li><a class="nav__link display" href="#fotky">Fotky</a></li>
+    <li><a class="nav__link display" href="#program">Program<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
+    <li><a class="nav__link display" href="#repertoar">Repertoár<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
+    <li><a class="nav__link display" href="#soubor">Soubor<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
+    <li><a class="nav__link display" href="#o-nas">O nás<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
+    <li><a class="nav__link display" href="#o-prostoru">O prostoru<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
+    <li><a class="nav__link display" href="#fotky">Fotky<span class="arrow" aria-hidden="true"><svg viewBox="0 0 40 24" focusable="false"><path d="M0 8h24V0l16 12-16 12v-8H0z" /></svg></span></a></li>
   </ul>
 </nav>
 
@@ -599,6 +628,7 @@ body {
       </p>
     </div>
   </section>
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="program" data-ground="cream">
     <div class="band__inner">
       <h2 class="band__heading display">
@@ -621,6 +651,7 @@ body {
       </div>
     </div>
   </section>
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="repertoar" data-ground="lime">
     <div class="band__inner">
       <h2 class="band__heading display"><span class="ribbon">Repertoár</span></h2>
@@ -726,6 +757,7 @@ body {
       </article>
     </div>
   </section>
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="soubor" data-ground="cream">
     <div class="band__inner">
       <h2 class="band__heading display"><span class="ribbon">Soubor</span></h2>
@@ -756,6 +788,7 @@ body {
     </div>
   </section>
 
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="o-nas" data-ground="olive">
     <div class="band__inner">
       <h2 class="band__heading display"><span class="ribbon">O nás</span></h2>
@@ -771,6 +804,7 @@ body {
     </div>
   </section>
 
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="o-prostoru" data-ground="cream">
     <div class="band__inner">
       <h2 class="band__heading display"><span class="ribbon">O prostoru</span></h2>
@@ -788,6 +822,7 @@ body {
       </dl>
     </div>
   </section>
+  <div class="divider" aria-hidden="true"></div>
   <section class="band" id="fotky" data-ground="lime">
     <div class="band__inner">
       <h2 class="band__heading display"><span class="ribbon">Fotky</span></h2>
@@ -796,7 +831,7 @@ body {
            captioned with a production name; misattributing someone else's
            production is worse than an uncaptioned photo. -->
       <div class="gallery">
-        <figure class="gallery__item">
+        <figure class="gallery__item" data-animate="hero">
           <img src="assets/panels/sipy-1.png" alt="Scéna z inscenace Rychlé šípy a záhada klubovny" loading="lazy" width="1200" height="800" />
           <figcaption>Rychlé šípy a záhada klubovny</figcaption>
         </figure>
