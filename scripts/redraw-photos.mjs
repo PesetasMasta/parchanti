@@ -56,6 +56,15 @@ const PROMPT = [
   'Do not add a border, a caption, lettering or a signature.',
 ].join(' ');
 
+// The model can refuse to draw an image: the response comes back with
+// choices[0].finish_reason === 'content_filter' and no image, instead of an
+// HTTP error. This is not charged. It is non-deterministic — the same photo
+// can be refused once and pass on a later run — and stage photographs that
+// include a prop weapon are the likely trigger for this company's material.
+// Flagged distinctly below (REFUSED, not FAILED) so a batch run makes clear
+// which frames are worth simply re-running.
+class ContentFilterRefusal extends Error {}
+
 async function redraw(path) {
   const image = await readFile(path);
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -81,7 +90,12 @@ async function redraw(path) {
   if (!response.ok) throw new Error(JSON.stringify(body).slice(0, 300));
 
   const url = body.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!url) throw new Error(`no image came back: ${JSON.stringify(body).slice(0, 300)}`);
+  if (!url) {
+    if (body.choices?.[0]?.finish_reason === 'content_filter') {
+      throw new ContentFilterRefusal('refused by the model\'s content filter (not charged) — safe to retry, may pass next time');
+    }
+    throw new Error(`no image came back: ${JSON.stringify(body).slice(0, 300)}`);
+  }
 
   return { png: Buffer.from(url.split(',')[1], 'base64'), cost: body.usage?.cost ?? 0 };
 }
@@ -113,7 +127,8 @@ for (const file of files) {
     console.log(`${out}  $${cost.toFixed(4)}`);
   } catch (error) {
     // One bad frame must not lose the rest of the run, each of which cost money.
-    console.error(`${file}  FAILED  ${error.message}`);
+    const label = error instanceof ContentFilterRefusal ? 'REFUSED' : 'FAILED';
+    console.error(`${file}  ${label}  ${error.message}`);
   }
 }
 
