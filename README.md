@@ -39,7 +39,7 @@ page that does not pass it.
 Poster press. The page is a stack of printed posters, so each section is a
 colour band and scrolling reads as flipping through a pile. Circus appears as
 structure only — perforated ticket edges, notched ribbon section heads, arrow
-signs, star dividers — never as drawn tents or masks.
+signs, diamond dividers — never as drawn tents or masks.
 
 Palette, taken from the two colour boards the client shared, which propose the
 same idea independently:
@@ -140,8 +140,8 @@ Two consequences that drove the design:
   If yes, the stability risk above disappears.
 - **Photo attribution.** Only the Rychlé šípy photos are identifiable (KLUBOVNA
   sign, shorts, the comic book). Which production the other shots belong to is
-  unknown, so the Audience panel deliberately shows a "photo pending" state
-  rather than misattributing someone else's production.
+  unknown, so the gallery captions them with a safe, production-less caption
+  ("Soubor") rather than misattributing someone else's production.
 - **Cast list.** Now compiled from the company's i-divadlo profile rather than
   read off a photograph of a poster, which corrected two spellings (Maxmilián
   Kocek, Matouš Vyšata) and removed one name that appears nowhere on the

@@ -58,15 +58,27 @@ const PROMPT = [
 
 // The model can refuse to draw an image: the response comes back with
 // choices[0].finish_reason === 'content_filter' and no image, instead of an
-// HTTP error. This is not charged. It is non-deterministic — the same photo
-// can be refused once and pass on a later run — and stage photographs that
-// include a prop weapon are the likely trigger for this company's material.
-// Flagged distinctly below (REFUSED, not FAILED) so a batch run makes clear
-// which frames are worth simply re-running.
+// HTTP error. This appears not to be charged — inferred from the response's
+// own cost field reading 0 on a refusal, not confirmed against actual
+// billing — so treat that as a working assumption, not a fact. It is also
+// non-deterministic — the same photo can be refused once and pass on a later
+// run — and stage photographs that include a prop weapon are the likely
+// trigger for this company's material. Flagged distinctly below (REFUSED,
+// not FAILED) so a batch run makes clear which frames are worth simply
+// re-running.
 class ContentFilterRefusal extends Error {}
+
+const MIME_TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png' };
+
+function mimeTypeFor(path) {
+  const type = MIME_TYPES[extname(path).toLowerCase()];
+  if (!type) throw new Error(`unrecognised image extension: ${path}`);
+  return type;
+}
 
 async function redraw(path) {
   const image = await readFile(path);
+  const mimeType = mimeTypeFor(path);
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -80,7 +92,7 @@ async function redraw(path) {
         role: 'user',
         content: [
           { type: 'text', text: PROMPT },
-          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image.toString('base64')}` } },
+          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${image.toString('base64')}` } },
         ],
       }],
     }),
@@ -112,6 +124,7 @@ async function exists(path) {
 await mkdir(outDir, { recursive: true });
 
 let spent = 0;
+let written = 0;
 for (const file of files) {
   const out = join(outDir, `${basename(file, extname(file))}.png`);
 
@@ -124,6 +137,7 @@ for (const file of files) {
     const { png, cost } = await redraw(join(source, file));
     await writeFile(out, png);
     spent += cost;
+    written += 1;
     console.log(`${out}  $${cost.toFixed(4)}`);
   } catch (error) {
     // One bad frame must not lose the rest of the run, each of which cost money.
@@ -132,4 +146,7 @@ for (const file of files) {
   }
 }
 
-console.log(`\ntotal $${spent.toFixed(2)} across ${files.length} image(s)`);
+// Four decimal places, matching the per-image line above: a small batch at
+// ~$0.04 each would round to $0.00 at two decimal places and look like
+// nothing was spent.
+console.log(`\ntotal $${spent.toFixed(4)} across ${written} image(s) written (${files.length} considered)`);
