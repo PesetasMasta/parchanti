@@ -116,6 +116,14 @@ export async function withPage(url, options, fn) {
 
     return await fn(evaluate, screenshot);
   } finally {
+    // Wait for the process to actually exit, not just for the kill signal to
+    // be sent. Without this, a caller that runs withPage() twice in a row
+    // (checking multiple viewport widths, say) can have the second launch
+    // race the first browser's shutdown for the shared --user-data-dir lock
+    // and fail with "Failed to open a new tab". A short timeout is a
+    // fallback only, in case the process ever fails to emit 'exit'.
+    const exited = new Promise((resolve) => browser.once('exit', resolve));
     browser.kill();
+    await Promise.race([exited, wait(2000)]);
   }
 }

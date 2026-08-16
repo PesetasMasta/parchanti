@@ -265,7 +265,14 @@ body {
    banner rather than an illustration of one. */
 .ribbon {
   display: inline-block;
-  padding: 0.4em 1.4em;
+  /* Horizontal padding scales with viewport width rather than a fixed 1.4em,
+     because a fixed value that comfortably fits "Program" pushes the longer
+     "Repertoár" past a 320px viewport. clamp(2rem, 4vw, 2.8rem) sits at its
+     2rem floor for the whole 320-390px phone range this file is checked at,
+     and reaches its 2.8rem ceiling - the original 1.4em at the ribbon's
+     32px font-size - from roughly tablet width up, so the wide-viewport
+     banner is unchanged. */
+  padding: 0.4em clamp(2rem, 4vw, 2.8rem);
   color: var(--cream);
   background: var(--cherry);
   clip-path: polygon(
@@ -515,6 +522,7 @@ body {
               Uvolněné představení, které mnohé přenese zpět do mladých let, nebo
               alespoň budou pociťovat silnou nostalgii. Děj byl volný, dialogy
               vtipné, kde se to hodilo. Vyvrcholení hry bylo velkým překvapením.
+              &hellip;
             </p>
             <footer>Hessy &middot; 90 % &middot; 20. 3. 2026</footer>
           </blockquote>

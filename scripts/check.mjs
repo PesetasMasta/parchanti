@@ -326,23 +326,34 @@ check(
   },
 );
 
-const failures = await withPage(url, { width: 390, height: 844 }, async (evaluate) => {
-  const failed = [];
-  for (const { name, expression, verify } of checks) {
-    let problem;
-    try {
-      problem = verify(await evaluate(expression));
-    } catch (error) {
-      problem = error.message;
+// Run the whole suite at both the narrowest phone still in real use (320px,
+// iPhone SE) and the previous baseline (390px). A regression that only shows
+// up at one width - like a ribbon that fits at 390px but clips at 320px -
+// stayed invisible while this ran a single width; running checks twice is
+// cheap next to shipping a check suite that only tests one phone.
+const widths = [320, 390];
+const failures = [];
+
+for (const width of widths) {
+  const widthFailures = await withPage(url, { width, height: 844 }, async (evaluate) => {
+    const failed = [];
+    for (const { name, expression, verify } of checks) {
+      let problem;
+      try {
+        problem = verify(await evaluate(expression));
+      } catch (error) {
+        problem = error.message;
+      }
+      console.log(`${problem ? 'FAIL' : 'pass'}  [${width}px] ${name}${problem ? ` — ${problem}` : ''}`);
+      if (problem) failed.push(`${name} @ ${width}px`);
     }
-    console.log(`${problem ? 'FAIL' : 'pass'}  ${name}${problem ? ` — ${problem}` : ''}`);
-    if (problem) failed.push(name);
-  }
-  return failed;
-});
+    return failed;
+  });
+  failures.push(...widthFailures);
+}
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} check(s) failed`);
   process.exit(1);
 }
-console.log('\nall checks passed');
+console.log('\nall checks passed at both widths');
