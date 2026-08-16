@@ -1,0 +1,54 @@
+/* ---------------------------------------------------------------------------
+   One visual system for the whole site, so it lives in one file.
+
+   Palette from the client's colour boards: Lime Sherbet ground family plus
+   Barbados Cherry. One red only - the previous punch red #EB313F is dropped
+   (spec 2026-08-17). Cherry on cream is ~7.3:1 and passes at any size.
+   Cream never sits on lime or olive (~2:1); those grounds take ink.
+   scripts/check.mjs enforces the contrast on every page.
+
+   Deliberately single-theme: printed poster, paper, no dark mode.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: only light;
+
+  --cream:  #FFFECD;
+  --lime:   #CDD78A;
+  --olive:  #B0BC68;
+  --cherry: #AA0A27;
+  --ink:    #1E1B14;
+
+  --display: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --band-padding: clamp(2.5rem, 8vw, 5rem);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-padding-top: 4rem; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; height: auto; }
+
+.display {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
