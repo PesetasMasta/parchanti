@@ -14,7 +14,7 @@ const productions = (await getCollection('productions'))
         <article class="production" data-slug={production.id}>
           <h2 class="display production__title">
             <a href={`/repertoar/${production.id}/`}>
-              {production.data.titleLead}
+              {production.data.titleLead}{' '}
               <span class="production__title-rest">{production.data.titleRest}</span>
             </a>
           </h2>

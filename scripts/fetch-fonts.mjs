@@ -66,4 +66,4 @@ for (const { query, family, weight, file } of FAMILIES) {
   }
 }
 
-console.log(`\nPaste into prototype/index.html:\n\n${faces.join('\n\n')}\n`);
+console.log(`\nPaste into src/styles/global.css:\n\n${faces.join('\n\n')}\n`);

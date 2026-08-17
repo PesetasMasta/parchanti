@@ -80,8 +80,9 @@ export async function withBrowser(fn) {
     'about:blank',
   ], { stdio: 'ignore' });
 
+  let socket;
   try {
-    const socket = new WebSocket(await debuggerUrl());
+    socket = new WebSocket(await debuggerUrl());
     await new Promise((resolve, reject) => {
       socket.addEventListener('open', resolve);
       socket.addEventListener('error', reject);
@@ -129,6 +130,9 @@ export async function withBrowser(fn) {
 
     return await fn(visit);
   } finally {
+    // The CDP WebSocket is a lingering handle of its own: closing the browser
+    // process does not close our end of the socket.
+    socket?.close();
     // Wait for the process to actually exit, not just for the kill signal to
     // be sent: a second launch would race this one for the shared
     // --user-data-dir lock. Timeout is a fallback if 'exit' never fires.

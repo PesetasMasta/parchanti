@@ -701,6 +701,7 @@ try {
   });
 } finally {
   server.close();
+  server.closeAllConnections?.();
 }
 
 if (failures.length > 0) {

@@ -30,7 +30,15 @@ export function staticServer(rootDir) {
   const root = resolve(rootDir);
 
   return createServer(async (request, response) => {
-    let pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+    let pathname;
+    try {
+      pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+    } catch {
+      // Malformed percent-escape (e.g. a lone '%' or a truncated sequence).
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.end('bad request');
+      return;
+    }
     if (pathname.endsWith('/')) pathname += 'index.html';
     // A directory URL without the trailing slash still resolves, matching how
     // real static hosts redirect; no extension means it can't be a file.
