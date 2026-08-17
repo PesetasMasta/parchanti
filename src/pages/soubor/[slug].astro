@@ -1,0 +1,75 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const people = await getCollection('people');
+  return people.map((person) => ({
+    params: { slug: person.id },
+    props: { person },
+  }));
+}
+
+const { person } = Astro.props;
+
+// Involvement is queried, not maintained: cast groups plus any credit row
+// that names this person. Both directions of the cross-linking fall out of
+// the production data.
+const productions = (await getCollection('productions'))
+  .filter((production) =>
+    production.data.cast.flat().includes(person.id)
+    || [...production.data.creditsBefore, ...production.data.creditsAfter]
+      .some((row) => row.parts.some((part) => part.slug === person.id)))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const title = `${person.data.name} — Kolekce Parchant`;
+const description = `${person.data.name} (${person.data.role}) — Kolekce Parchant, nezávislý divadelní soubor ze Studia Citadela v Praze.`;
+---
+<Base title={title} description={description}>
+  <article class="page">
+    <div class="page__inner">
+      <h1 class="display page-heading">{person.data.name}</h1>
+      <p class="person__role">{person.data.role}</p>
+
+      <h2 class="person__subheading">V inscenacích</h2>
+      <ul class="person__productions">
+        {productions.map((production) => (
+          <li>
+            <a class="link" href={`/repertoar/${production.id}/`}>
+              {production.data.titleLead} {production.data.titleRest}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <p><a class="link" href="/soubor/">Zpět na soubor</a></p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .person__role {
+    margin: 0 0 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.85rem;
+  }
+
+  .person__subheading {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--cherry);
+  }
+
+  .person__productions {
+    margin: 0 0 2rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+</style>

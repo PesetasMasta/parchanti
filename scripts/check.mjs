@@ -1,32 +1,95 @@
-// Assertion harness for the prototype page.
+// Assertion harness for the built site.
 //
-// There is no test framework here on purpose: the deliverable is one static
-// HTML file with no dependencies, and a runner that needs npm install would be
-// heavier than the thing it tests. This drives a real browser instead, so the
-// assertions run against computed styles and real layout rather than a parsed
-// string.
+// No test framework on purpose: the deliverable is static HTML and the only
+// dependency worth having is a real browser. The suite builds the site so it
+// can never check a stale dist/, discovers every generated page, and runs
+// every generic check against every page at both 320px (narrowest phone in
+// real use) and 390px. Page-specific checks ride along on their route.
 //
-//   node scripts/check.mjs [url]
+//   node scripts/check.mjs
 
-import { withPage } from './lib/browser.mjs';
+import { execFileSync } from 'node:child_process';
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { staticServer } from './serve.mjs';
+import { withBrowser } from './lib/browser.mjs';
 
-const url = process.argv[2]
-  ?? new URL('../prototype/index.html', import.meta.url).href;
+const DIST = new URL('../dist', import.meta.url).pathname;
+const PORT = 4517;
 
-const checks = [];
+// --- 1. Build. A check suite that trusts a pre-existing dist/ can pass on
+// stale output; building here makes that impossible.
+execFileSync('npx', ['astro', 'build'], { stdio: 'inherit' });
 
-function check(name, expression, verify) {
-  checks.push({ name, expression, verify });
+// --- 2. Discover routes from what the build actually emitted.
+function discoverRoutes(dir, prefix = '/') {
+  const routes = [];
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) {
+      routes.push(...discoverRoutes(path, `${prefix}${entry}/`));
+    } else if (entry === 'index.html') {
+      routes.push(prefix);
+    } else if (entry === '404.html') {
+      routes.push('/404.html');
+    }
+  }
+  return routes.sort();
 }
 
-check(
+// The full expected set. Astro generates pages, so a route can silently
+// disappear while every remaining page still passes - this list is the guard.
+// Page tasks extend it as routes land; by the last page task it is complete.
+const EXPECTED_ROUTES = [
+  '/',
+  '/program/',
+  '/repertoar/',
+  '/soubor/',
+  '/o-nas/',
+  '/o-prostoru/',
+  '/fotky/',
+  '/repertoar/rychle-sipy-a-zahada-klubovny/',
+  '/repertoar/hra-lasky-a-nahody/',
+  '/soubor/prokop-zach/', '/soubor/zuzana-matuskova/', '/soubor/ondrej-stupka/',
+  '/soubor/maximilian-dolansky/', '/soubor/maxmilian-kocek/', '/soubor/matous-vysata/',
+  '/soubor/aliska/', '/soubor/jiri-dlouhy/', '/soubor/simon-fikar/',
+  '/soubor/simon-lorko/', '/soubor/marek-cimbal/',
+  '/404.html',
+].sort();
+
+const actualRoutes = discoverRoutes(DIST);
+if (JSON.stringify(actualRoutes) !== JSON.stringify(EXPECTED_ROUTES)) {
+  const missing = EXPECTED_ROUTES.filter((route) => !actualRoutes.includes(route));
+  const extra = actualRoutes.filter((route) => !EXPECTED_ROUTES.includes(route));
+  console.error('FAIL  route set mismatch');
+  if (missing.length) console.error(`      missing: ${missing.join(' ')}`);
+  if (extra.length) console.error(`      unexpected: ${extra.join(' ')}`);
+  process.exit(1);
+}
+console.log(`pass  route set matches (${actualRoutes.length} routes)`);
+
+// --- 3. Checks. Same shape as the previous suite: an expression evaluated in
+// the page, a verify function that returns null (pass) or a problem string.
+
+const GENERIC_CHECKS = [];
+function generic(name, expression, verify) {
+  GENERIC_CHECKS.push({ name, expression, verify });
+}
+
+// Page-specific checks, keyed by route. Extended by later tasks.
+const PAGE_CHECKS = {};
+function onPage(route, name, expression, verify) {
+  (PAGE_CHECKS[route] ??= []).push({ name, expression, verify });
+}
+
+generic(
   'page has a title',
   `document.title`,
   (title) => (title && title.trim().length > 0 ? null : `title was ${JSON.stringify(title)}`),
 );
 
-check(
-  'Czech diacritics render in the display face',
+generic(
+  'Czech diacritics render in both faces',
   `(async () => {
     const probe = document.createElement('span');
     probe.style.cssText = 'position:absolute;visibility:hidden;font-size:64px;white-space:pre';
@@ -36,18 +99,13 @@ check(
       probe.textContent = text;
       return probe.getBoundingClientRect().width;
     };
-    // If the face lacks a glyph the browser substitutes from the fallback, and
-    // the substituted run measures differently from the same string rendered
-    // in the fallback alone only when the face DOES have it. Comparing the
-    // diacritic string against a plain one in both families catches the swap.
-    //
-    // Nothing else on the page references these families before this probe
-    // does, so without an explicit load the first measurement always races
-    // the async @font-face fetch and reads fallback metrics regardless of
-    // whether the face actually has the glyphs. document.fonts.load() forces
-    // the font to be fetched and ready before we measure.
+    // If the face lacks a glyph the browser substitutes from the fallback;
+    // comparing the diacritic string in face+fallback against fallback alone
+    // catches the swap. document.fonts.load() forces the fetch first -
+    // without it this measurement races the async @font-face load and always
+    // reads fallback metrics.
     const result = {};
-    for (const family of ['"Archivo Black"', '"Archivo"']) {
+    for (const family of ['"DM Serif Display"', '"Archivo"']) {
       await document.fonts.load('64px ' + family, 'ěščřžůťďň');
       const withDiacritics = widthOf('ěščřžůťďň', family + ', monospace');
       const fallbackOnly = widthOf('ěščřžůťďň', 'monospace');
@@ -63,24 +121,8 @@ check(
   },
 );
 
-check(
-  'all seven bands exist in the right order with the right grounds',
-  `JSON.stringify([...document.querySelectorAll('section.band')]
-     .map((band) => band.id + ':' + band.dataset.ground))`,
-  (raw) => {
-    const expected = [
-      'hero:olive', 'program:cream', 'repertoar:lime', 'soubor:cream',
-      'o-nas:olive', 'o-prostoru:cream', 'fotky:lime',
-    ];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected)
-      ? null
-      : `got ${JSON.stringify(actual)}`;
-  },
-);
-
-check(
-  'text meets 4.5:1 against its band, and punch red is never body text',
+generic(
+  'text meets WCAG contrast against its ground',
   `(() => {
     const channel = (value) => {
       const c = value / 255;
@@ -103,30 +145,11 @@ check(
     };
 
     const problems = [];
-    for (const el of document.querySelectorAll('p, li, a, dd, dt, figcaption, small, span, h1, h2, h3')) {
+    for (const el of document.querySelectorAll('p, li, a, dd, dt, figcaption, small, span, h1, h2, h3, button, blockquote, footer')) {
       if (!el.textContent.trim()) continue;
-      if (el.querySelector('p, li, h1, h2, h3')) continue; // containers, not leaves
+      if (el.querySelector('p, li, h1, h2, h3, blockquote')) continue; // containers, not leaves
       const style = getComputedStyle(el);
-
-      // Outlined display type is exempt from the ratio, because the ratio model
-      // does not describe it: legibility comes from a hard ink edge on all
-      // sides, not from the fill against the ground. Banning it outright would
-      // ban the central poster technique. The exemption is paid for by
-      // requiring the outline actually to be there.
-      if (el.classList.contains('display--shadow')) {
-        // A shadow layer only counts as a real outline if it is both ink-
-        // coloured AND actually offset from the glyph. A no-op
-        // 'text-shadow: 0 0 0 var(--ink)' would match a bare colour check
-        // while providing zero legibility, so require a non-zero x or y
-        // offset on at least one ink-coloured layer.
-        const inkLayers = [...style.textShadow.matchAll(/rgb\\(30, 27, 20\\)\\s*(-?[\\d.]+)px\\s*(-?[\\d.]+)px/g)];
-        const hasRealOutline = inkLayers.some(([, x, y]) => Number(x) !== 0 || Number(y) !== 0);
-        if (!hasRealOutline) {
-          problems.push(el.tagName + '.' + (el.className || '?') + ' is display--shadow with no ink outline');
-        }
-        continue;
-      }
-
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
       const size = parseFloat(style.fontSize);
       const weight = Number(style.fontWeight) || 400;
       // WCAG large text: 24px, or 18.66px at 700+.
@@ -135,10 +158,6 @@ check(
       const needed = isLarge ? 3 : 4.5;
       if (contrast < needed) {
         problems.push(el.tagName + '.' + (el.className || '?') + ' ' + contrast.toFixed(2) + ':1 needs ' + needed);
-      }
-      // The spec's own rule, stricter than WCAG: punch red is display-only.
-      if (/235, 49, 63/.test(style.color) && !isLarge) {
-        problems.push(el.tagName + '.' + (el.className || '?') + ' uses --red at ' + size + 'px');
       }
     }
     return JSON.stringify([...new Set(problems)].slice(0, 10));
@@ -149,37 +168,22 @@ check(
   },
 );
 
-check(
+generic(
   'nothing overflows horizontally',
   `(() => {
-    // Content inside something that scrolls sideways on purpose - the photo
-    // strip - is not overflow. Only content with nothing to scroll it counts.
     const inScroller = (el) => {
       for (let node = el.parentElement; node; node = node.parentElement) {
         if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
       }
       return false;
     };
-
-    // window.innerWidth is not a safe yardstick: when content that cannot
-    // wrap (an unbreakable word) is wider than the viewport, mobile browsers
-    // silently widen the layout viewport to fit it, so innerWidth grows right
-    // along with the overflow and the comparison below would never fire.
-    // document.documentElement.clientWidth stays pinned to the real,
-    // requested viewport width regardless, so it is the trustworthy measure.
-    //
-    // This still can't see paint-only overflow from text-shadow, box-shadow,
-    // or filter: drop-shadow - those paint outside the layout box without
-    // affecting it or scrollWidth, so they're invisible to both checks below.
-    // Deliberate: paint overflow cannot cause horizontal scrolling, which is
-    // the one thing this guard exists to catch.
+    // innerWidth is not a safe yardstick: browsers silently widen the layout
+    // viewport to absorb unbreakable overflow, so innerWidth grows with the
+    // bug. documentElement.clientWidth stays pinned to the requested width.
     const clientWidth = document.documentElement.clientWidth;
     const scrollWidth = document.documentElement.scrollWidth;
 
     const problems = [];
-    // Catches the case above directly: if the document itself can scroll
-    // sideways, something overflowed even if no single element's own rect
-    // appears to cross the (possibly widened) edge.
     if (scrollWidth > clientWidth + 1) {
       problems.push('document scrolls horizontally: scrollWidth ' + scrollWidth + ' > clientWidth ' + clientWidth);
     }
@@ -198,262 +202,510 @@ check(
   },
 );
 
-check(
-  'burger nav lists the six sections and every target exists',
-  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
-     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()
-        + '|' + Boolean(document.querySelector(a.getAttribute('href')))))`,
+generic(
+  'no forbidden name or undisclosed premiere appears',
+  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Mikuláš Polák', 'Višata', 'červánky', 'Hančilová']
+     .filter((needle) => document.documentElement.textContent.includes(needle)))`,
   (raw) => {
-    const expected = [
-      '#program|Program|true',
-      '#repertoar|Repertoár|true',
-      '#soubor|Soubor|true',
-      '#o-nas|O nás|true',
-      '#o-prostoru|O prostoru|true',
-      '#fotky|Fotky|true',
-    ];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected)
-      ? null
-      : `got ${JSON.stringify(actual)}`;
+    const found = JSON.parse(raw);
+    return found.length
+      ? `forbidden on this page: ${found.join(', ')} — removed names must stay removed and the October premiere must not be announced`
+      : null;
   },
 );
 
-check(
-  'nav is closed at rest, opens on click, closes on Escape',
-  `(() => {
+generic(
+  'page carries real static markup, not script-built content',
+  `document.querySelector('main')?.textContent.trim().length ?? document.body.textContent.trim().length`,
+  (length) => (length >= 40 ? null : `main text is ${length} chars — social scrapers never run JS, so thin markup previews blank`),
+);
+
+generic(
+  'every internal link resolves to a generated route',
+  `JSON.stringify([...document.querySelectorAll('a[href^="/"]')]
+     .map((a) => a.getAttribute('href').split('#')[0]))`,
+  (raw) => {
+    const hrefs = JSON.parse(raw);
+    const known = new Set(EXPECTED_ROUTES);
+    const dead = [...new Set(hrefs)].filter((href) => {
+      const normalised = href.endsWith('/') || href.includes('.') ? href : `${href}/`;
+      return !known.has(normalised);
+    });
+    return dead.length ? `dead internal links: ${dead.join(' ')}` : null;
+  },
+);
+
+generic(
+  'social metadata is present',
+  `JSON.stringify({
+    ogTitle: (document.querySelector('meta[property="og:title"]')?.content ?? '').length,
+    description: (document.querySelector('meta[name="description"]')?.content ?? '').length,
+    robots: document.querySelector('meta[name="robots"]')?.content ?? null,
+  })`,
+  (raw) => {
+    const meta = JSON.parse(raw);
+    if (meta.ogTitle < 5) return 'og:title missing';
+    if (meta.description < 40) return 'meta description missing or too short';
+    if (!/noindex/.test(meta.robots ?? '')) return 'robots noindex is missing — cast list is not confirmed yet';
+    return null;
+  },
+);
+
+onPage('/',
+  'nav overlay: closed at rest, opens, Escape closes, focus traps',
+  `(async () => {
     const burger = document.querySelector('.burger');
     const nav = document.querySelector('#nav');
     const closed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
     burger.click();
     const opened = burger.getAttribute('aria-expanded') === 'true' && nav.hasAttribute('data-open');
+    const dialog = nav.getAttribute('role') === 'dialog' && nav.getAttribute('aria-modal') === 'true';
+    const links = [...nav.querySelectorAll('.nav__link')];
+    // Trap: Tab on the last link wraps to the first, Shift+Tab on the first
+    // wraps to the last. The overlay is the entire navigation model.
+    links[links.length - 1].focus();
+    nav.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    const wrapsForward = document.activeElement === links[0];
+    links[0].focus();
+    nav.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    const wrapsBack = document.activeElement === links[links.length - 1];
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
-    return JSON.stringify({ closed, opened, reclosed });
+    const focusReturned = document.activeElement === burger;
+    return JSON.stringify({ closed, opened, dialog, wrapsForward, wrapsBack, reclosed, focusReturned });
   })()`,
   (raw) => {
-    const state = JSON.parse(raw);
-    const bad = Object.entries(state).filter(([, ok]) => !ok).map(([name]) => name);
+    const bad = Object.entries(JSON.parse(raw)).filter(([, ok]) => !ok).map(([name]) => name);
     return bad.length ? `failed: ${bad.join(', ')}` : null;
   },
 );
 
-check(
-  'hero carries the masthead, the pitch and an empty claim slot',
-  `(() => {
-    const hero = document.querySelector('#hero');
-    return JSON.stringify({
-      masthead: hero.querySelector('.hero__title')?.textContent.trim(),
-      pitchStart: hero.querySelector('.hero__pitch')?.textContent.trim().slice(0, 24),
-      claimIsPlaceholder: hero.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
-      claimIsEmpty: (hero.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
-    });
+onPage('/',
+  'nav lists the six section pages in order',
+  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
+     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()))`,
+  (raw) => {
+    const expected = [
+      '/program/|Program', '/repertoar/|Repertoár', '/soubor/|Soubor',
+      '/o-nas/|O nás', '/o-prostoru/|O prostoru', '/fotky/|Fotky',
+    ];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
+  },
+);
+
+onPage('/',
+  'masthead condenses on scroll and anchors clear the condensed bar',
+  `(async () => {
+    const masthead = document.querySelector('.masthead');
+    const name = document.querySelector('.masthead__name');
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    // The page may be short while under construction; the behaviour under
+    // test is scroll-driven, so guarantee there is somewhere to scroll to.
+    document.body.style.minHeight = '300vh';
+    window.scrollTo(0, 0);
+    await frame(); await frame();
+    const fullHeight = masthead.getBoundingClientRect().height;
+    const nameVisibleAtTop = getComputedStyle(name).display !== 'none';
+    window.scrollTo(0, 600);
+    await frame(); await frame(); await new Promise((resolve) => setTimeout(resolve, 350));
+    const condensed = masthead.hasAttribute('data-condensed');
+    const condensedHeight = masthead.getBoundingClientRect().height;
+    const nameHiddenAfterScroll = getComputedStyle(name).display === 'none';
+    const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    window.scrollTo(0, 0);
+    document.body.style.minHeight = '';
+    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensed, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop });
   })()`,
+  (raw) => {
+    const s = JSON.parse(raw);
+    if (!s.nameVisibleAtTop) return 'the full lockup name is not visible at the top';
+    if (!s.condensed) return 'masthead never gained data-condensed after scrolling';
+    if (!s.nameHiddenAfterScroll) return 'the name did not drop away when condensed';
+    if (s.condensedHeight >= s.fullHeight) return `condensed ${s.condensedHeight}px is not smaller than full ${s.fullHeight}px`;
+    // The offset that matters is the condensed height - that is the state in
+    // effect once the page has scrolled to an anchor.
+    if (s.scrollPaddingTop < s.condensedHeight) return `scroll-padding-top ${s.scrollPaddingTop}px is under the condensed masthead ${s.condensedHeight}px`;
+    return null;
+  },
+);
+
+onPage('/',
+  'footer carries the three links and the address, no Facebook',
+  `JSON.stringify({
+    instagram: Boolean(document.querySelector('.footer a[href*="instagram.com/kolekce_parchant"]')),
+    idivadlo: Boolean(document.querySelector('.footer a[href*="i-divadlo.cz/divadlo/kolekce-parchant"]')),
+    goout: Boolean(document.querySelector('.footer a[href*="goout.net"]')),
+    facebook: Boolean(document.querySelector('a[href*="facebook"]')),
+    address: document.querySelector('.footer').textContent.includes('Klimentská 16'),
+  })`,
+  (raw) => {
+    const f = JSON.parse(raw);
+    if (!f.instagram || !f.idivadlo || !f.goout) return 'a footer link is missing';
+    if (f.facebook) return 'Facebook link present — the client never requested one';
+    if (!f.address) return 'address missing from footer';
+    return null;
+  },
+);
+
+onPage('/',
+  'homepage carries TheaterGroup JSON-LD and a favicon link',
+  `JSON.stringify({
+    schemaType: JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}')['@type'] ?? null,
+    favicon: document.querySelector('link[rel="icon"]')?.getAttribute('href') ?? null,
+  })`,
+  (raw) => {
+    const m = JSON.parse(raw);
+    if (m.schemaType !== 'TheaterGroup') return `schema @type was ${JSON.stringify(m.schemaType)}`;
+    if (m.favicon !== '/favicon.svg') return `favicon href was ${JSON.stringify(m.favicon)}`;
+    return null;
+  },
+);
+
+onPage('/',
+  'hero: name, empty claim slot, verbatim pitch, Program CTA, photo',
+  `JSON.stringify({
+    title: document.querySelector('.hero__title')?.textContent.trim(),
+    claimIsPlaceholder: document.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
+    claimIsEmpty: (document.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
+    pitch: document.querySelector('.hero__pitch')?.textContent.trim(),
+    cta: document.querySelector('.hero a.button')?.getAttribute('href'),
+    photo: Boolean(document.querySelector('.hero img[src*="/assets/panels/"]')),
+  })`,
   (raw) => {
     const hero = JSON.parse(raw);
-    if (hero.masthead !== 'Kolekce Parchant') return `masthead was ${JSON.stringify(hero.masthead)}`;
-    // NOTE: the brief's markdown had this literal without a trailing space,
-    // but slice(0, 24) on the trimmed pitch always includes the space before
-    // "se" (it sits mid-line in the client's copy, not at a wrap point) —
-    // 'Divadelní soubor, který' is 23 chars, so a 24-char slice can never
-    // equal it. Most likely a trailing space stripped when the brief was
-    // saved. Restored here so the check tests what it evidently intended.
-    if (hero.pitchStart !== 'Divadelní soubor, který ') return `pitch was ${JSON.stringify(hero.pitchStart)}`;
+    if (hero.title !== 'Kolekce Parchant') return `hero title was ${JSON.stringify(hero.title)}`;
     if (!hero.claimIsPlaceholder) return 'claim slot is not marked data-placeholder';
-    if (!hero.claimIsEmpty) return 'claim slot should stay empty until Zuzka sends it';
+    if (!hero.claimIsEmpty) return 'claim slot must stay empty until the client sends it';
+    // Her verbatim copy, character-exact, including the missing comma.
+    const pitch = 'Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!';
+    if (hero.pitch !== pitch) return `pitch was ${JSON.stringify(hero.pitch)}`;
+    if (hero.cta !== '/program/') return `CTA href was ${JSON.stringify(hero.cta)}`;
+    if (!hero.photo) return 'hero photo is missing';
     return null;
   },
 );
 
-check(
-  'program shows its empty state when there are no future dates',
+onPage('/',
+  'next-performance strip shows its honest empty state below the hero',
   `(() => {
-    const band = document.querySelector('#program');
-    const empty = band.querySelector('.program__empty');
+    const strip = document.querySelector('.next');
+    const hero = document.querySelector('.hero');
     return JSON.stringify({
-      hasHeading: Boolean(band.querySelector('.band__heading')),
-      emptyVisible: Boolean(empty) && getComputedStyle(empty).display !== 'none',
-      emptyMentionsGoOut: (empty?.textContent ?? '').includes('GoOut'),
-      ticketCount: band.querySelectorAll('.ticket').length,
+      exists: Boolean(strip),
+      belowHero: strip && hero
+        ? strip.getBoundingClientRect().top >= hero.getBoundingClientRect().top
+        : false,
+      emptyVisible: Boolean(strip?.querySelector('.next__empty')),
+      mentionsGoOut: (strip?.textContent ?? '').includes('GoOut'),
+      tickets: strip ? strip.querySelectorAll('.ticket').length : -1,
     });
   })()`,
   (raw) => {
-    const program = JSON.parse(raw);
-    if (!program.hasHeading) return 'no section heading';
-    if (!program.emptyVisible) return 'empty state is not visible';
-    if (!program.emptyMentionsGoOut) return 'empty state should say where dates get announced';
-    if (program.ticketCount !== 0) return `expected no tickets, got ${program.ticketCount}`;
+    const s = JSON.parse(raw);
+    if (!s.exists) return 'no .next strip';
+    if (!s.belowHero) return 'the strip must sit below the first screen, not above it';
+    if (!s.emptyVisible) return 'empty state missing — there are no dates, and that must be said honestly';
+    if (!s.mentionsGoOut) return 'empty state should say where dates get announced';
+    if (s.tickets !== 0) return `expected no tickets, got ${s.tickets}`;
     return null;
   },
 );
 
-check(
-  'scroll-padding-top clears the sticky masthead for anchor jumps',
-  `(() => {
-    const masthead = document.querySelector('.masthead');
-    const mastheadHeight = masthead.getBoundingClientRect().height;
-    const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-    return JSON.stringify({ mastheadHeight, scrollPaddingTop });
-  })()`,
+onPage('/',
+  'two production cards in order, linking to their pages',
+  `JSON.stringify([...document.querySelectorAll('.production-card')]
+     .map((card) => card.querySelector('a')?.getAttribute('href')))`,
   (raw) => {
-    const { mastheadHeight, scrollPaddingTop } = JSON.parse(raw);
-    return scrollPaddingTop >= mastheadHeight
-      ? null
-      : `scroll-padding-top ${scrollPaddingTop}px is less than masthead height ${mastheadHeight}px`;
+    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
   },
 );
 
-check(
-  'repertoire holds exactly the two approved productions with correct press treatment',
-  `(() => {
-    const productions = [...document.querySelectorAll('#repertoar .production')];
-    return JSON.stringify({
-      slugs: productions.map((p) => p.dataset.slug),
-      sipyQuotes: document.querySelectorAll('[data-slug="rychle-sipy-a-zahada-klubovny"] .press blockquote').length,
-      hraQuotes: document.querySelectorAll('[data-slug="hra-lasky-a-nahody"] .press blockquote').length,
-      hraScore: document.querySelector('[data-slug="hra-lasky-a-nahody"] .press__score')?.textContent.trim(),
-      mentionsAudience: document.body.textContent.includes('Pivařská'),
-      castCorrect: document.querySelector('[data-slug="hra-lasky-a-nahody"]').textContent.includes('Aliska'),
-      staleCast: document.body.textContent.includes('Aneta Kalertová')
-        || document.body.textContent.includes('Mikuláš Polák')
-        || document.body.textContent.includes('Višata'),
-    });
-  })()`,
+onPage('/program/',
+  'program shows its empty state while there are no dates',
+  `JSON.stringify({
+    heading: document.querySelector('.page-heading')?.textContent.trim(),
+    emptyVisible: Boolean(document.querySelector('.program__empty')),
+    mentionsGoOut: document.body.textContent.includes('GoOut'),
+    goOutLink: Boolean(document.querySelector('a[href*="goout.net/cs/kolekce-parchant"]')),
+    tickets: document.querySelectorAll('.ticket').length,
+  })`,
+  (raw) => {
+    const p = JSON.parse(raw);
+    if (p.heading !== 'Program') return `heading was ${JSON.stringify(p.heading)}`;
+    if (!p.emptyVisible) return 'empty state is not visible';
+    if (!p.mentionsGoOut || !p.goOutLink) return 'empty state must say where dates get announced and link there';
+    if (p.tickets !== 0) return `expected no tickets, got ${p.tickets}`;
+    return null;
+  },
+);
+
+onPage('/repertoar/',
+  'both productions listed in order, blurbs verbatim',
+  `JSON.stringify({
+    slugs: [...document.querySelectorAll('[data-slug]')].map((el) => el.dataset.slug),
+    hasClientWording: document.body.textContent.includes('v nové size'),
+    detailLinks: [...document.querySelectorAll('[data-slug] a')].map((a) => a.getAttribute('href')),
+  })`,
   (raw) => {
     const r = JSON.parse(raw);
     const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
     if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
-    if (r.sipyQuotes !== 2) return `Rychlé šípy should show 2 pull quotes, got ${r.sipyQuotes}`;
-    if (r.hraQuotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
-    if (r.hraScore !== '90 %') return `Hra lásky score badge was ${JSON.stringify(r.hraScore)}`;
-    if (r.mentionsAudience) return 'Audience / Pivařská odysea must not appear';
-    if (!r.castCorrect) return 'Aliska is missing from the Hra lásky cast';
-    if (r.staleCast) return 'a corrected-away name is still on the page';
-    return null;
+    if (!r.hasClientWording) {
+      return "the exact string 'v nové size' is missing — the client's own wording, never silently corrected";
+    }
+    const missing = expected.map((slug) => `/repertoar/${slug}/`)
+      .filter((href) => !r.detailLinks.includes(href));
+    return missing.length ? `no link to ${missing.join(', ')}` : null;
   },
 );
 
-check(
-  'the client\'s own wording is preserved and the undisclosed premiere stays unannounced',
+onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
+  'šípy page: verbatim quotes, score, alternation, credits, gallery',
   `JSON.stringify({
-    hasClientWording: document.body.textContent.includes('v nové size'),
-    mentionsCervanky: document.body.textContent.includes('červánky'),
-    mentionsHancilova: document.body.textContent.includes('Hančilová'),
+    quotes: [...document.querySelectorAll('.press blockquote p')].map((p) => p.textContent.trim()),
+    footers: [...document.querySelectorAll('.press blockquote footer')].map((f) => f.textContent.trim()),
+    score: document.querySelector('.press__score')?.textContent.trim(),
+    castText: document.querySelector('.cast')?.textContent.replace(/\\s+/g, ' ').trim(),
+    castLinks: [...document.querySelectorAll('.cast a')].map((a) => a.getAttribute('href')),
+    foglar: document.body.textContent.includes('na motivy knih Jaroslava Foglara'),
+    premiere: document.body.textContent.includes('30. 1. 2026'),
+    blurb: document.body.textContent.includes('v nové size'),
+    photos: document.querySelectorAll('.gallery img').length,
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    if (!r.hasClientWording) {
-      return 'the exact string "v nové size" is missing — this is the client\'s own wording (a likely typo for "verzi") and must not be silently corrected without asking her first';
+    if (r.quotes.length !== 2) return `expected 2 quotes, got ${r.quotes.length}`;
+    // Quotations from real named people are verbatim and case-exact.
+    if (!r.quotes[1].startsWith('ÚŽASNÝ!')) return "Mariematenova's ÚŽASNÝ! must stay in capitals";
+    if (!r.quotes[1].includes('určitě doporučuji')) return 'quote text altered';
+    if (!r.footers[0].includes('Hessy') || !r.footers[0].includes('90 %')) return `first quote footer was ${JSON.stringify(r.footers[0])}`;
+    if (r.score !== '87 %') return `score was ${JSON.stringify(r.score)}`;
+    if (!r.castText.includes('Maxmilián Kocek / Matouš Vyšata')) return 'alternation must render as "Maxmilián Kocek / Matouš Vyšata"';
+    if (r.castLinks.length !== 6) return `expected 6 cast links, got ${r.castLinks.length}`;
+    if (!r.castLinks.includes('/soubor/maxmilian-kocek/')) return 'cast links do not point at person pages';
+    if (!r.foglar) return 'Foglar credit line missing';
+    if (!r.premiere) return 'premiere date missing';
+    if (!r.blurb) return 'blurb (with "v nové size") missing from the production page';
+    if (r.photos !== 3) return `expected 3 gallery photos, got ${r.photos}`;
+    return null;
+  },
+);
+
+onPage('/repertoar/hra-lasky-a-nahody/',
+  'hra page: badge only, zero quotes, Aliska in cast, no photos',
+  `JSON.stringify({
+    quotes: document.querySelectorAll('.press blockquote').length,
+    score: document.querySelector('.press__score')?.textContent.trim(),
+    aliska: [...document.querySelectorAll('.cast a')].some((a) => a.getAttribute('href') === '/soubor/aliska/'),
+    photos: document.querySelectorAll('.gallery img').length,
+    idivadlo: Boolean(document.querySelector('a[href*="i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody"]')),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.quotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
+    if (r.score !== '90 %') return `score was ${JSON.stringify(r.score)}`;
+    if (!r.aliska) return 'Aliska missing from cast links';
+    if (r.photos !== 0) return "no identifiable photos exist for this production — showing any misattributes someone's work";
+    if (!r.idivadlo) return 'i-divadlo source link missing';
+    return null;
+  },
+);
+
+onPage('/soubor/',
+  'ensemble lists all eleven people, each linking to their page',
+  `JSON.stringify([...document.querySelectorAll('.ensemble a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    const links = JSON.parse(raw);
+    if (links.length !== 11) return `expected 11 person links, got ${links.length}`;
+    for (const slug of ['prokop-zach', 'aliska', 'maxmilian-kocek', 'maximilian-dolansky', 'matous-vysata']) {
+      if (!links.includes(`/soubor/${slug}/`)) return `missing link to /soubor/${slug}/`;
     }
-    if (r.mentionsCervanky || r.mentionsHancilova) {
-      return 'the October 2026 premiere ("Červánky", Barbora Hančilová) appears on the page — the client never mentioned it and it must not be announced for her';
+    return null;
+  },
+);
+
+onPage('/soubor/prokop-zach/',
+  'person page cross-links to every production they are in',
+  `JSON.stringify([...document.querySelectorAll('.person__productions a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    const links = JSON.parse(raw);
+    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    const missing = expected.filter((href) => !links.includes(href));
+    return missing.length ? `missing: ${missing.join(', ')}` : null;
+  },
+);
+
+onPage('/soubor/simon-lorko/',
+  'creative credits count as involvement, not just cast',
+  `JSON.stringify([...document.querySelectorAll('.person__productions a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    // Šimon Lorko wrote šípy but is in neither cast; if his page shows no
+    // productions, credits are not being queried.
+    const links = JSON.parse(raw);
+    return links.includes('/repertoar/rychle-sipy-a-zahada-klubovny/')
+      ? null
+      : "Šimon Lorko's page must list Rychlé šípy via his writing credit";
+  },
+);
+
+onPage('/soubor/aliska/',
+  'Aliska is billed under the name the client asked for',
+  `JSON.stringify({
+    heading: document.querySelector('h1')?.textContent.trim(),
+    hra: [...document.querySelectorAll('.person__productions a')]
+      .some((a) => a.getAttribute('href') === '/repertoar/hra-lasky-a-nahody/'),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.heading !== 'Aliska') return `heading was ${JSON.stringify(r.heading)} — her full billing name is still unconfirmed, use "Aliska"`;
+    if (!r.hra) return 'Hra lásky missing from her productions';
+    return null;
+  },
+);
+
+onPage('/o-nas/',
+  'O nás holds marked placeholder prose, nothing invented',
+  `JSON.stringify({
+    placeholder: Boolean(document.querySelector('[data-placeholder]')),
+    mentionsPending: document.querySelector('[data-placeholder]')?.textContent.includes('drží místo') ?? false,
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.placeholder) return 'O nás prose is still pending from the client and must be marked data-placeholder';
+    if (!r.mentionsPending) return 'placeholder text must say it is holding space, so nobody mistakes it for real copy';
+    return null;
+  },
+);
+
+onPage('/o-prostoru/',
+  'venue page carries the address and the trams',
+  `JSON.stringify({
+    address: document.body.textContent.includes('Klimentská 16'),
+    trams: document.body.textContent.includes('Dlouhá třída'),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.address) return 'address missing';
+    if (!r.trams) return 'tram stop missing';
+    return null;
+  },
+);
+
+onPage('/fotky/',
+  'gallery: four photos, honest captions, one animation hook',
+  `JSON.stringify({
+    captions: [...document.querySelectorAll('.gallery__item figcaption')].map((c) => c.textContent.trim()),
+    animateHooks: document.querySelectorAll('[data-animate]').length,
+    altsDistinct: new Set([...document.querySelectorAll('.gallery__item img')].map((img) => img.alt)).size,
+  })`,
+  (raw) => {
+    const g = JSON.parse(raw);
+    const expected = [
+      'Rychlé šípy a záhada klubovny', 'Rychlé šípy a záhada klubovny',
+      'Rychlé šípy a záhada klubovny', 'Soubor',
+    ];
+    if (JSON.stringify(g.captions) !== JSON.stringify(expected)) {
+      return `captions were ${JSON.stringify(g.captions)} — only šípy photos are identifiable; nothing else may carry a production name`;
     }
+    if (g.animateHooks !== 1) return `expected exactly one data-animate hook, got ${g.animateHooks}`;
+    if (g.altsDistinct !== 4) return 'alt texts must describe each photo, not duplicate the captions';
     return null;
   },
 );
 
-check(
-  'ensemble, about and venue bands carry their content',
+onPage('/404.html',
+  '404 page says so and links home',
   `JSON.stringify({
-    people: document.querySelectorAll('#soubor .ensemble__person').length,
-    aboutIsPlaceholder: Boolean(document.querySelector('#o-nas [data-placeholder]')),
-    venueHasAddress: document.querySelector('#o-prostoru').textContent.includes('Klimentská 16'),
-    venueHasTrams: document.querySelector('#o-prostoru').textContent.includes('Dlouhá třída'),
+    saysNotFound: document.body.textContent.includes('Stránka nenalezena'),
+    homeLink: Boolean(document.querySelector('main a[href="/"]')),
   })`,
   (raw) => {
-    const s = JSON.parse(raw);
-    if (s.people !== 11) return `expected 11 ensemble members, got ${s.people}`;
-    if (!s.aboutIsPlaceholder) return 'O nás prose is still pending and must be marked data-placeholder';
-    if (!s.venueHasAddress) return 'venue band is missing the address';
-    if (!s.venueHasTrams) return 'venue band is missing the tram stop';
+    const r = JSON.parse(raw);
+    if (!r.saysNotFound) return 'no not-found message';
+    if (!r.homeLink) return 'no link home';
     return null;
   },
 );
 
-check(
-  'social metadata is present and content is visible without JavaScript',
-  `JSON.stringify({
-    ogTitle: document.querySelector('meta[property="og:title"]')?.content ?? null,
-    ogDescription: (document.querySelector('meta[property="og:description"]')?.content ?? '').length,
-    ogImage: Boolean(document.querySelector('meta[property="og:image"]')),
-    description: (document.querySelector('meta[name="description"]')?.content ?? '').length,
-    schemaType: JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}')['@type'] ?? null,
-    instagram: Boolean(document.querySelector('.footer a[href*="instagram.com/kolekce_parchant"]')),
-  })`,
+// Generic from here on: declared image intrinsics must match the real files.
+// The scroll page shipped with all four images declaring wrong dimensions;
+// this makes that class of error fail loudly on every page.
+generic(
+  'declared image dimensions match the files',
+  `JSON.stringify([...document.querySelectorAll('img')]
+     .filter((img) => img.complete)
+     .map((img) => ({
+       src: img.getAttribute('src'),
+       attr: img.getAttribute('width') + 'x' + img.getAttribute('height'),
+       real: img.naturalWidth + 'x' + img.naturalHeight,
+     })))`,
   (raw) => {
-    const meta = JSON.parse(raw);
-    if (meta.ogTitle !== 'Kolekce Parchant') return `og:title was ${JSON.stringify(meta.ogTitle)}`;
-    if (meta.ogDescription < 40) return 'og:description is missing or too short';
-    if (!meta.ogImage) return 'og:image is missing, so shares preview blank';
-    if (meta.description < 40) return 'meta description is missing or too short';
-    if (meta.schemaType !== 'TheaterGroup') return `schema @type was ${JSON.stringify(meta.schemaType)}`;
-    if (!meta.instagram) return 'footer is missing the Instagram link';
-    return null;
+    const images = JSON.parse(raw);
+    const wrong = images.filter((img) => img.attr !== img.real);
+    return wrong.length
+      ? wrong.map((img) => `${img.src} declares ${img.attr}, file is ${img.real}`).join('; ')
+      : null;
   },
 );
 
-check(
-  'every band has real markup rather than script-built content',
-  `(() => {
-    // Social scrapers never run JS. If a band is empty in the served markup it
-    // is invisible to them, however it looks in a browser.
-    const thin = [...document.querySelectorAll('section.band')]
-      .filter((band) => band.textContent.trim().length < 40)
-      .map((band) => band.id);
-    return JSON.stringify(thin);
-  })()`,
-  (raw) => {
-    const thin = JSON.parse(raw);
-    return thin.length ? `these bands have almost no text: ${thin.join(', ')}` : null;
-  },
-);
-
-check(
-  'arrow signs, dividers and the animation hook are in place',
-  `JSON.stringify({
-    navArrows: document.querySelectorAll('#nav .nav__link .arrow').length,
-    arrowsHidden: [...document.querySelectorAll('.arrow')].every((a) => a.getAttribute('aria-hidden') === 'true'),
-    dividers: document.querySelectorAll('.divider').length,
-    animateHook: document.querySelectorAll('[data-animate]').length,
-  })`,
-  (raw) => {
-    const o = JSON.parse(raw);
-    if (o.navArrows !== 6) return `expected an arrow on each of the 6 nav links, got ${o.navArrows}`;
-    if (!o.arrowsHidden) return 'arrows are decorative and must be aria-hidden';
-    if (o.dividers !== 6) return `expected 6 dividers between 7 bands, got ${o.dividers}`;
-    if (o.animateHook !== 1) return `expected exactly one data-animate hook, got ${o.animateHook}`;
-    return null;
-  },
-);
-
-// Run the whole suite at both the narrowest phone still in real use (320px,
-// iPhone SE) and the previous baseline (390px). A regression that only shows
-// up at one width - like a ribbon that fits at 390px but clips at 320px -
-// stayed invisible while this ran a single width; running checks twice is
-// cheap next to shipping a check suite that only tests one phone.
+// --- 4. Run everything at both widths, one browser per width.
 const widths = [320, 390];
 const failures = [];
 
-for (const width of widths) {
-  const widthFailures = await withPage(url, { width, height: 844 }, async (evaluate) => {
-    const failed = [];
-    for (const { name, expression, verify } of checks) {
-      let problem;
-      try {
-        problem = verify(await evaluate(expression));
-      } catch (error) {
-        problem = error.message;
+const server = staticServer(DIST);
+await new Promise((resolve) => server.listen(PORT, resolve));
+
+try {
+  for (const width of widths) {
+    await withBrowser(async (visit) => {
+      for (const route of EXPECTED_ROUTES) {
+        const url = `http://127.0.0.1:${PORT}${route}`;
+        const pageChecks = [...GENERIC_CHECKS, ...(PAGE_CHECKS[route] ?? [])];
+        await visit(url, { width, height: 844 }, async (evaluate) => {
+          for (const { name, expression, verify } of pageChecks) {
+            let problem;
+            try {
+              problem = verify(await evaluate(expression));
+            } catch (error) {
+              problem = error.message;
+            }
+            const label = `[${width}px ${route}] ${name}`;
+            console.log(`${problem ? 'FAIL' : 'pass'}  ${label}${problem ? ` — ${problem}` : ''}`);
+            if (problem) failures.push(label);
+          }
+        });
       }
-      console.log(`${problem ? 'FAIL' : 'pass'}  [${width}px] ${name}${problem ? ` — ${problem}` : ''}`);
-      if (problem) failed.push(`${name} @ ${width}px`);
-    }
-    return failed;
+    });
+  }
+
+  // The condense transition must be suppressed under prefers-reduced-motion:
+  // it snaps instead of animating. Separate visit: media emulation is
+  // per-navigation, so this cannot ride inside the main loop. Runs while the
+  // static server is still up, so it lives inside this try before the
+  // finally below closes it.
+  await withBrowser(async (visit) => {
+    await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844, reducedMotion: true }, async (evaluate) => {
+      const duration = await evaluate(
+        `getComputedStyle(document.querySelector('.masthead__home svg')).transitionDuration`,
+      );
+      const problem = /^0s(, 0s)*$/.test(duration) ? null : `transition-duration is ${duration} under reduced motion`;
+      console.log(`${problem ? 'FAIL' : 'pass'}  [reduced-motion /] condense snaps${problem ? ` — ${problem}` : ''}`);
+      if (problem) failures.push('reduced motion');
+    });
   });
-  failures.push(...widthFailures);
+} finally {
+  server.close();
+  server.closeAllConnections?.();
 }
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} check(s) failed`);
   process.exit(1);
 }
-console.log('\nall checks passed at both widths');
+console.log(`\nall checks passed: ${EXPECTED_ROUTES.length} routes x ${widths.length} widths`);

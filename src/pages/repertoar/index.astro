@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const productions = (await getCollection('productions'))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+<Base title="Repertoár — Kolekce Parchant" description="Inscenace souboru Kolekce Parchant: Rychlé šípy a záhada klubovny, Hra lásky a náhody.">
+  <section class="page repertoar">
+    <div class="page__inner">
+      <h1 class="display page-heading">Repertoár</h1>
+
+      {productions.map((production) => (
+        <article class="production" data-slug={production.id}>
+          <h2 class="display production__title">
+            <a href={`/repertoar/${production.id}/`}>
+              {production.data.titleLead}{' '}
+              <span class="production__title-rest">{production.data.titleRest}</span>
+            </a>
+          </h2>
+          <p class="production__blurb">{production.data.blurb}</p>
+          <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
+        </article>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .repertoar { background: var(--lime); }
+
+  .production {
+    padding-block: clamp(2rem, 6vw, 3rem);
+    border-top: 3px solid var(--ink);
+  }
+
+  .production:first-of-type { border-top: 0; padding-top: 0; }
+
+  .production__title { margin: 0 0 1rem; font-size: clamp(2.2rem, 10vw, 4rem); }
+
+  .production__title a { color: var(--ink); text-decoration: none; }
+
+  .production__title-rest { display: block; font-size: 0.5em; color: var(--cherry); }
+
+  .production__blurb {
+    max-width: var(--measure);
+    font-size: clamp(1.05rem, 1rem + 0.5vw, 1.3rem);
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+</style>

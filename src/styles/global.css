@@ -1,0 +1,246 @@
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ---------------------------------------------------------------------------
+   One visual system for the whole site, so it lives in one file.
+
+   Palette from the client's colour boards: Lime Sherbet ground family plus
+   Barbados Cherry. One red only - the previous punch red #EB313F is dropped
+   (spec 2026-08-17). Cherry on cream is ~7.3:1 and passes at any size.
+   Cream never sits on lime or olive (~2:1); those grounds take ink.
+   scripts/check.mjs enforces the contrast on every page.
+
+   Deliberately single-theme: printed poster, paper, no dark mode.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: only light;
+
+  --cream:  #FFFECD;
+  --lime:   #CDD78A;
+  --olive:  #B0BC68;
+  --cherry: #AA0A27;
+  --ink:    #1E1B14;
+
+  --display: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --band-padding: clamp(2.5rem, 8vw, 5rem);
+}
+
+* { box-sizing: border-box; }
+
+/* Must clear the condensed masthead height (.masthead[data-condensed], ~65px)
+   with headroom, since that is the state in effect once a scroll to an
+   anchor has settled. */
+html { scroll-padding-top: 4.5rem; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; height: auto; }
+
+.display {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* --- masthead: full lockup at top, mark + Menu once scrolled ------------- */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem var(--gutter);
+  background: var(--cream);
+  border-bottom: 3px solid var(--ink);
+}
+
+.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+
+.masthead__home svg { height: 2.4rem; width: auto; display: block; transition: height 0.2s ease; }
+
+.masthead__name { font-family: var(--display); font-size: 1.3rem; line-height: 1; color: var(--ink); }
+
+.masthead[data-condensed] { padding-block: 0.45rem; }
+.masthead[data-condensed] .masthead__home svg { height: 1.6rem; }
+.masthead[data-condensed] .masthead__name { display: none; }
+
+/* Sentinel the IntersectionObserver watches; out of flow, invisible. */
+.masthead-sentinel { position: absolute; top: 0; width: 1px; height: 1px; }
+
+.burger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  cursor: pointer;
+}
+
+/* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
+.burger__bars {
+  width: 1.25rem;
+  height: 0.75rem;
+  background:
+    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
+}
+
+.burger[aria-expanded="true"] .burger__bars {
+  background:
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
+}
+
+/* --- full-screen nav overlay --------------------------------------------- */
+.nav {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  place-content: center;
+  padding: var(--gutter);
+  background: var(--cherry);
+  /* On the wrapper, not only the links, so <li> nodes never fall back to the
+     inherited ink body colour against cherry. */
+  color: var(--cream);
+}
+
+.nav[data-open] { display: grid; }
+
+.nav__list { margin: 0; padding: 0; list-style: none; display: grid; gap: clamp(0.5rem, 2vw, 1rem); }
+
+.nav__link {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 10vw, 4.5rem);
+  line-height: 1.15;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.nav__link:hover,
+.nav__link:focus-visible { color: var(--lime); }
+
+.nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* --- page scaffold -------------------------------------------------------- */
+.page { padding: var(--band-padding) var(--gutter); }
+
+.page__inner { max-width: 68rem; margin-inline: auto; }
+
+.page-heading {
+  margin: 0 0 2rem;
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  color: var(--cherry);
+}
+
+.prose { max-width: var(--measure); }
+.prose p { margin: 0 0 1em; text-wrap: pretty; }
+
+.link { color: var(--cherry); font-weight: 700; text-underline-offset: 0.2em; }
+
+.credits {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 2rem 0 0;
+  font-size: 0.9rem;
+}
+
+.credits dt {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  padding-top: 0.22em;
+}
+
+.credits dd { margin: 0; }
+
+/* --- footer ---------------------------------------------------------------- */
+.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--cream); }
+
+.footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
+
+.footer__links { margin: 0 0 1.5rem; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+
+.footer__links a { color: var(--cream); font-weight: 700; text-underline-offset: 0.2em; }
+
+.footer__address { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  text-decoration: none;
+}
+
+/* --- ticket cards: performance-date entries on both /program and the
+   homepage's next-performance strip --------------------------------------- */
+.ticket { padding: 1.5rem; background: var(--cream); border: 3px solid var(--ink); }
+.ticket__date { font-size: 1.5rem; color: var(--cherry); margin: 0 0 0.35rem; }
+.ticket p { margin: 0 0 0.35rem; }
+.ticket[data-state="sold_out"] { opacity: 0.55; }

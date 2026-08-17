@@ -1,0 +1,140 @@
+---
+import '../styles/global.css';
+import KPMark from '../components/KPMark.astro';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+
+const MENU = [
+  { href: '/program/', label: 'Program' },
+  { href: '/repertoar/', label: 'Repertoár' },
+  { href: '/soubor/', label: 'Soubor' },
+  { href: '/o-nas/', label: 'O nás' },
+  { href: '/o-prostoru/', label: 'O prostoru' },
+  { href: '/fotky/', label: 'Fotky' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Cast names are still unverified against the company's own list. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="cs_CZ" />
+  <meta property="og:site_name" content="Kolekce Parchant" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <!-- Relative path on purpose: the domain is not live yet. Change to an
+       absolute https://kolekceparchant.cz/... URL at launch, since most
+       scrapers will not resolve a relative one. -->
+  <meta property="og:image" content="/assets/panels/hero.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <slot name="head" />
+</head>
+<body>
+
+<div class="masthead-sentinel" aria-hidden="true"></div>
+
+<header class="masthead">
+  <a class="masthead__home" href="/" aria-label="Kolekce Parchant, domů">
+    <KPMark />
+    <span class="masthead__name">Kolekce Parchant</span>
+  </a>
+  <button class="burger" type="button" aria-expanded="false" aria-controls="nav">
+    <span class="burger__label">Menu</span>
+    <span class="burger__bars" aria-hidden="true"></span>
+  </button>
+</header>
+
+<nav class="nav" id="nav" role="dialog" aria-modal="true" aria-label="Hlavní navigace">
+  <ul class="nav__list">
+    {MENU.map((item) => (
+      <li>
+        <a
+          class="nav__link"
+          href={item.href}
+          aria-current={currentPath === item.href ? 'page' : undefined}
+        >{item.label}</a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<main>
+  <slot />
+</main>
+
+<footer class="footer">
+  <div class="page__inner">
+    <KPMark />
+    <ul class="footer__links">
+      <li><a href="https://www.instagram.com/kolekce_parchant">Instagram</a></li>
+      <li><a href="https://www.i-divadlo.cz/divadlo/kolekce-parchant">i-divadlo.cz</a></li>
+      <li><a href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">Vstupenky na GoOut</a></li>
+    </ul>
+    <p class="footer__address">Studio Citadela &middot; Klimentská 16 &middot; Praha 1</p>
+  </div>
+</footer>
+
+<script>
+  // Burger nav. The overlay is the entire navigation model, so it has to be
+  // keyboard-operable: Escape closes it and focus returns to the button.
+  const burger = document.querySelector('.burger');
+  const nav = document.querySelector('#nav');
+
+  function setNav(open) {
+    burger.setAttribute('aria-expanded', String(open));
+    nav.toggleAttribute('data-open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (open) nav.querySelector('.nav__link').focus();
+    else burger.focus();
+  }
+
+  burger.addEventListener('click', () => {
+    setNav(burger.getAttribute('aria-expanded') === 'false');
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') setNav(false);
+  });
+
+  // Trap Tab inside the overlay while it is open. The overlay is full-bleed,
+  // so letting focus escape underneath makes it invisible to a sighted
+  // keyboard user.
+  nav.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const links = [...nav.querySelectorAll('.nav__link')];
+    const index = links.indexOf(document.activeElement);
+    if (index === -1) return;
+    if (event.shiftKey && index === 0) {
+      event.preventDefault();
+      links[links.length - 1].focus();
+    } else if (!event.shiftKey && index === links.length - 1) {
+      event.preventDefault();
+      links[0].focus();
+    }
+  });
+
+  // Condense the masthead once the page scrolls: the name drops away and the
+  // mark steps down (CSS handles both off data-condensed). The transition is
+  // killed globally under prefers-reduced-motion, so it snaps there.
+  const masthead = document.querySelector('.masthead');
+  new IntersectionObserver(([entry]) => {
+    masthead.toggleAttribute('data-condensed', !entry.isIntersecting);
+  }).observe(document.querySelector('.masthead-sentinel'));
+</script>
+</body>
+</html>

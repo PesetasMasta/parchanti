@@ -13,14 +13,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
   + 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-const OUT = new URL('../prototype/assets/fonts/', import.meta.url);
+const OUT = new URL('../public/fonts/', import.meta.url);
 
 // Czech needs latin-ext (ě š č ř ž ů ť ď ň live in U+0100-017F) as well as
 // latin. Every other subset the endpoint offers is dropped.
 const WANTED = ['latin', 'latin-ext'];
 
 const FAMILIES = [
-  { query: 'Archivo+Black', family: 'Archivo Black', weight: '400', file: 'archivo-black' },
+  // DM Serif Display replaces Archivo Black as the display face
+  // (spec 2026-08-17). It ships latin-ext, which Prata - the closest match
+  // to the client's board - does not; Czech display type is why that matters.
+  { query: 'DM+Serif+Display', family: 'DM Serif Display', weight: '400', file: 'dm-serif-display' },
   { query: 'Archivo:wght@400..700', family: 'Archivo', weight: '400 700', file: 'archivo' },
 ];
 
@@ -56,11 +59,11 @@ for (const { query, family, weight, file } of FAMILIES) {
       + `  font-style: normal;\n`
       + `  font-weight: ${weight};\n`
       + `  font-display: swap;\n`
-      + `  src: url("assets/fonts/${name}") format("woff2");\n`
+      + `  src: url("/fonts/${name}") format("woff2");\n`
       + `  unicode-range: ${range};\n`
       + `}`,
     );
   }
 }
 
-console.log(`\nPaste into prototype/index.html:\n\n${faces.join('\n\n')}\n`);
+console.log(`\nPaste into src/styles/global.css:\n\n${faces.join('\n\n')}\n`);

@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import program from '../../data/program.json';
+---
+<Base title="Program — Kolekce Parchant" description="Termíny představení souboru Kolekce Parchant ve Studiu Citadela v Praze. Nové termíny vypisujeme na GoOut.">
+  <section class="page">
+    <div class="page__inner">
+      <h1 class="display page-heading">Program</h1>
+
+      {program.dates.length === 0 ? (
+        <div class="program__empty">
+          <p class="program__empty-title display">Zatím žádný vypsaný termín</p>
+          <p>Nové termíny vypisujeme na GoOut. Jakmile se objeví tam, najdete je i tady.</p>
+          <p><a class="link" href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">Sledovat na GoOut</a></p>
+        </div>
+      ) : (
+        <div class="program__list">
+          {program.dates.map((date) => (
+            <article class="ticket" data-state={date.state}>
+              <p class="ticket__date display">{date.when}</p>
+              <p>{date.title}</p>
+              <p><a class="link" href={date.url}>Vstupenky na GoOut</a></p>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .program__empty {
+    max-width: var(--measure);
+    padding: 2rem;
+    border: 3px dashed var(--ink);
+  }
+
+  .program__empty p { margin: 0 0 1rem; }
+  .program__empty p:last-child { margin-bottom: 0; }
+
+  .program__empty-title {
+    font-size: clamp(1.35rem, 5vw, 2rem);
+    color: var(--cherry);
+  }
+
+  .program__list { display: grid; gap: 1rem; max-width: var(--measure); }
+</style>

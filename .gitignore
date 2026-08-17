@@ -3,3 +3,5 @@ node_modules/
 inspiration/
 .worktrees/
 .superpowers/
+dist/
+.astro/
