@@ -48,6 +48,8 @@ const EXPECTED_ROUTES = [
   '/o-nas/',
   '/o-prostoru/',
   '/fotky/',
+  '/repertoar/rychle-sipy-a-zahada-klubovny/',
+  '/repertoar/hra-lasky-a-nahody/',
 ].sort();
 
 const actualRoutes = discoverRoutes(DIST);
@@ -431,6 +433,78 @@ onPage('/program/',
     if (!p.emptyVisible) return 'empty state is not visible';
     if (!p.mentionsGoOut || !p.goOutLink) return 'empty state must say where dates get announced and link there';
     if (p.tickets !== 0) return `expected no tickets, got ${p.tickets}`;
+    return null;
+  },
+);
+
+onPage('/repertoar/',
+  'both productions listed in order, blurbs verbatim',
+  `JSON.stringify({
+    slugs: [...document.querySelectorAll('[data-slug]')].map((el) => el.dataset.slug),
+    hasClientWording: document.body.textContent.includes('v nové size'),
+    detailLinks: [...document.querySelectorAll('[data-slug] a')].map((a) => a.getAttribute('href')),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
+    if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
+    if (!r.hasClientWording) {
+      return "the exact string 'v nové size' is missing — the client's own wording, never silently corrected";
+    }
+    const missing = expected.map((slug) => `/repertoar/${slug}/`)
+      .filter((href) => !r.detailLinks.includes(href));
+    return missing.length ? `no link to ${missing.join(', ')}` : null;
+  },
+);
+
+onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
+  'šípy page: verbatim quotes, score, alternation, credits, gallery',
+  `JSON.stringify({
+    quotes: [...document.querySelectorAll('.press blockquote p')].map((p) => p.textContent.trim()),
+    footers: [...document.querySelectorAll('.press blockquote footer')].map((f) => f.textContent.trim()),
+    score: document.querySelector('.press__score')?.textContent.trim(),
+    castText: document.querySelector('.cast')?.textContent.replace(/\\s+/g, ' ').trim(),
+    castLinks: [...document.querySelectorAll('.cast a')].map((a) => a.getAttribute('href')),
+    foglar: document.body.textContent.includes('na motivy knih Jaroslava Foglara'),
+    premiere: document.body.textContent.includes('30. 1. 2026'),
+    blurb: document.body.textContent.includes('v nové size'),
+    photos: document.querySelectorAll('.gallery img').length,
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.quotes.length !== 2) return `expected 2 quotes, got ${r.quotes.length}`;
+    // Quotations from real named people are verbatim and case-exact.
+    if (!r.quotes[1].startsWith('ÚŽASNÝ!')) return "Mariematenova's ÚŽASNÝ! must stay in capitals";
+    if (!r.quotes[1].includes('určitě doporučuji')) return 'quote text altered';
+    if (!r.footers[0].includes('Hessy') || !r.footers[0].includes('90 %')) return `first quote footer was ${JSON.stringify(r.footers[0])}`;
+    if (r.score !== '87 %') return `score was ${JSON.stringify(r.score)}`;
+    if (!r.castText.includes('Maxmilián Kocek / Matouš Vyšata')) return 'alternation must render as "Maxmilián Kocek / Matouš Vyšata"';
+    if (r.castLinks.length !== 6) return `expected 6 cast links, got ${r.castLinks.length}`;
+    if (!r.castLinks.includes('/soubor/maxmilian-kocek/')) return 'cast links do not point at person pages';
+    if (!r.foglar) return 'Foglar credit line missing';
+    if (!r.premiere) return 'premiere date missing';
+    if (!r.blurb) return 'blurb (with "v nové size") missing from the production page';
+    if (r.photos !== 3) return `expected 3 gallery photos, got ${r.photos}`;
+    return null;
+  },
+);
+
+onPage('/repertoar/hra-lasky-a-nahody/',
+  'hra page: badge only, zero quotes, Aliska in cast, no photos',
+  `JSON.stringify({
+    quotes: document.querySelectorAll('.press blockquote').length,
+    score: document.querySelector('.press__score')?.textContent.trim(),
+    aliska: [...document.querySelectorAll('.cast a')].some((a) => a.getAttribute('href') === '/soubor/aliska/'),
+    photos: document.querySelectorAll('.gallery img').length,
+    idivadlo: Boolean(document.querySelector('a[href*="i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody"]')),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.quotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
+    if (r.score !== '90 %') return `score was ${JSON.stringify(r.score)}`;
+    if (!r.aliska) return 'Aliska missing from cast links';
+    if (r.photos !== 0) return "no identifiable photos exist for this production — showing any misattributes someone's work";
+    if (!r.idivadlo) return 'i-divadlo source link missing';
     return null;
   },
 );

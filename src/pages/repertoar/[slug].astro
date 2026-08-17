@@ -1,0 +1,151 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const productions = await getCollection('productions');
+  return productions.map((production) => ({
+    params: { slug: production.id },
+    props: { production },
+  }));
+}
+
+const { production } = Astro.props;
+const data = production.data;
+
+// Names come from the people collection; data holds only slugs, so a renamed
+// person changes everywhere at once.
+const people = await getCollection('people');
+const nameOf = new Map(people.map((person) => [person.id, person.data.name]));
+
+const title = `${data.titleLead} ${data.titleRest} — Kolekce Parchant`;
+---
+<Base title={title} description={data.blurb}>
+  <article class="page">
+    <div class="page__inner">
+      <h1 class="display page-heading production__title">
+        {data.titleLead}
+        <span class="production__title-rest">{data.titleRest}</span>
+      </h1>
+
+      <p class="production__blurb">{data.blurb}</p>
+
+      <p class="prose production__annotation">{data.annotation}</p>
+
+      <dl class="credits">
+        {data.creditsBefore.map((row) => (
+          <>
+            <dt>{row.label}</dt>
+            <dd>
+              {row.parts.map((part, index) => (
+                <>
+                  {index > 0 && ', '}
+                  {part.slug
+                    ? <a class="link" href={`/soubor/${part.slug}/`}>{part.text}</a>
+                    : part.text}
+                </>
+              ))}
+            </dd>
+          </>
+        ))}
+
+        <dt>Hrají</dt>
+        <dd class="cast">
+          {data.cast.map((group, groupIndex) => (
+            <>
+              {groupIndex > 0 && ', '}
+              {group.map((slug, slugIndex) => (
+                <>
+                  {slugIndex > 0 && ' / '}
+                  <a class="link" href={`/soubor/${slug}/`}>{nameOf.get(slug)}</a>
+                </>
+              ))}
+            </>
+          ))}
+        </dd>
+
+        {data.creditsAfter.map((row) => (
+          <>
+            <dt>{row.label}</dt>
+            <dd>
+              {row.parts.map((part, index) => (
+                <>
+                  {index > 0 && ', '}
+                  {part.slug
+                    ? <a class="link" href={`/soubor/${part.slug}/`}>{part.text}</a>
+                    : part.text}
+                </>
+              ))}
+            </dd>
+          </>
+        ))}
+      </dl>
+
+      <div class="press">
+        <p class="press__score display">{data.score}</p>
+        {data.quotes.map((quote) => (
+          <blockquote>
+            <p>{quote.text}</p>
+            <footer>{quote.author} &middot; {quote.rating} &middot; {quote.date}</footer>
+          </blockquote>
+        ))}
+        <p class="press__source">
+          Hodnocení diváků na <a class="link" href={data.idivadlo}>i-divadlo.cz</a>
+        </p>
+      </div>
+
+      {data.photos.length > 0 && (
+        <div class="gallery">
+          {data.photos.map((photo) => (
+            <figure class="gallery__item">
+              <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" />
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
+  </article>
+</Base>
+
+<style>
+  .production__title { font-size: clamp(2.4rem, 11vw, 4.5rem); color: var(--ink); }
+
+  .production__title-rest { display: block; font-size: 0.5em; color: var(--cherry); }
+
+  .production__blurb {
+    max-width: var(--measure);
+    font-size: clamp(1.05rem, 1rem + 0.5vw, 1.3rem);
+    font-weight: 600;
+  }
+
+  .press {
+    margin-top: 2.5rem;
+    padding: 1.5rem;
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    max-width: var(--measure);
+  }
+
+  .press__score { margin: 0 0 1rem; font-size: clamp(2rem, 8vw, 3rem); color: var(--cherry); }
+
+  .press blockquote { margin: 0 0 1.25rem; padding-left: 1rem; border-left: 3px solid var(--cherry); }
+
+  .press blockquote p { margin: 0 0 0.5rem; font-style: italic; text-wrap: pretty; }
+
+  .press blockquote footer {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .press__source { margin: 0; font-size: 0.82rem; }
+
+  .gallery { display: grid; gap: 1rem; margin-top: 2.5rem; }
+
+  @media (min-width: 48rem) { .gallery { grid-template-columns: 1fr 1fr; } }
+
+  .gallery__item { margin: 0; }
+
+  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); }
+</style>
