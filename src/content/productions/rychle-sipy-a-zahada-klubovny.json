@@ -1,0 +1,49 @@
+{
+  "titleLead": "Rychlé šípy",
+  "titleRest": "a záhada klubovny",
+  "blurb": "Záhada slavných Foglarových Rychlých šípů v nové size od designera Šimona Lorka.",
+  "annotation": "Napínavá a hravá autorská inscenace plná humoru a dobrodružství, která přináší svěží pohled na legendární příběh a zároveň dokazuje, že hodnoty Rychlých šípů jsou nadčasové. Mirek Dušín, Jarka Metelka, Jindra Hojer, Červenáček a Rychlonožka se vracejí do své klubovny, ale čeká je šok – jejich útočiště je obsazené někým cizím. Kdo vetřelcem je? Jak se do klubovny dostal?",
+  "creditsBefore": [
+    { "label": "Napsal", "parts": [
+      { "text": "Šimon Lorko", "slug": "simon-lorko" },
+      { "text": "na motivy knih Jaroslava Foglara" }
+    ] },
+    { "label": "Režie a scéna", "parts": [{ "text": "Prokop Zach", "slug": "prokop-zach" }] },
+    { "label": "Hudba", "parts": [{ "text": "Marek Cimbál", "slug": "marek-cimbal" }] }
+  ],
+  "cast": [
+    ["prokop-zach"],
+    ["maxmilian-kocek", "matous-vysata"],
+    ["ondrej-stupka"],
+    ["zuzana-matuskova"],
+    ["maximilian-dolansky"]
+  ],
+  "creditsAfter": [
+    { "label": "Archivní nahrávky", "parts": [{ "text": "Tomáš Turek" }, { "text": "Roman Zach" }] },
+    { "label": "Premiéra", "parts": [{ "text": "30. 1. 2026" }] },
+    { "label": "Délka", "parts": [{ "text": "1 h 15 min, bez přestávky" }] },
+    { "label": "Přístupnost", "parts": [{ "text": "6+" }] }
+  ],
+  "score": "87 %",
+  "quotes": [
+    {
+      "text": "Uvolněné představení, které mnohé přenese zpět do mladých let, nebo alespoň budou pociťovat silnou nostalgii. Děj byl volný, dialogy vtipné, kde se to hodilo. Vyvrcholení hry bylo velkým překvapením. …",
+      "author": "Hessy",
+      "rating": "90 %",
+      "date": "20. 3. 2026"
+    },
+    {
+      "text": "ÚŽASNÝ! … určitě doporučuji všem věkovým kategoriím.",
+      "author": "Mariematenova",
+      "rating": "100 %",
+      "date": "20. 2. 2026"
+    }
+  ],
+  "idivadlo": "https://www.i-divadlo.cz/divadlo/kolekce-parchant/rychle-sipy-a-zahada-klubovny",
+  "photos": [
+    { "src": "/assets/panels/sipy-1.png", "alt": "Dívka v kapuci se s leknutím dívá vzhůru, za ní se v klubovně tísní další čtyři postavy pod visícími petrolejkami.", "width": 900, "height": 863 },
+    { "src": "/assets/panels/sipy-2.png", "alt": "Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny.", "width": 900, "height": 788 },
+    { "src": "/assets/panels/sipy-3.png", "alt": "Skupina postav stojí v klubovně kolem sedící dívky, jedna z nich gestikuluje uprostřed pohybu.", "width": 900, "height": 750 }
+  ],
+  "order": 1
+}
