@@ -1,5 +1,5 @@
 {
   "updated": "2026-08-16",
-  "note": "Locally controlled. GoOut is no longer the source of truth; scripts/fetch-goout.mjs is an optional refresh and nothing on the page depends on it.",
+  "note": "Locally controlled. GoOut is no longer the source of truth; scripts/fetch-goout.mjs is an optional refresh and nothing on the page depends on it. Date entries have the shape {\"when\": \"so 12. 10. 19:30\", \"title\": \"Rychlé šípy a záhada klubovny\", \"url\": \"https://goout.net/...\", \"state\": \"on_sale\" | \"sold_out\"} — this is NOT the shape fetch-goout.mjs emits; translate by hand.",
   "dates": []
 }

@@ -237,3 +237,10 @@ img { max-width: 100%; height: auto; }
   border: 3px solid var(--ink);
   text-decoration: none;
 }
+
+/* --- ticket cards: performance-date entries on both /program and the
+   homepage's next-performance strip --------------------------------------- */
+.ticket { padding: 1.5rem; background: var(--cream); border: 3px solid var(--ink); }
+.ticket__date { font-size: 1.5rem; color: var(--cherry); margin: 0 0 0.35rem; }
+.ticket p { margin: 0 0 0.35rem; }
+.ticket[data-state="sold_out"] { opacity: 0.55; }
