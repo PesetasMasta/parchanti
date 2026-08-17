@@ -1,11 +1,53 @@
 ---
 import Base from '../layouts/Base.astro';
+
+// Only the Rychlé šípy photographs are identifiable. Nothing else may be
+// captioned with a production name; misattributing someone else's production
+// is worse than an uncaptioned photo. hero.png is the company itself.
+const photos = [
+  { src: '/assets/panels/sipy-1.png', width: 900, height: 863, caption: 'Rychlé šípy a záhada klubovny', animate: true,
+    alt: 'Dívka v kapuci se s leknutím dívá vzhůru, za ní se v klubovně tísní další čtyři postavy pod visícími petrolejkami.' },
+  { src: '/assets/panels/sipy-2.png', width: 900, height: 788, caption: 'Rychlé šípy a záhada klubovny', animate: false,
+    alt: 'Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny.' },
+  { src: '/assets/panels/sipy-3.png', width: 900, height: 750, caption: 'Rychlé šípy a záhada klubovny', animate: false,
+    alt: 'Skupina postav stojí v klubovně kolem sedící dívky, jedna z nich gestikuluje uprostřed pohybu.' },
+  { src: '/assets/panels/hero.png', width: 1400, height: 1077, caption: 'Soubor', animate: false,
+    alt: 'Šest herců stojí vedle sebe v řadě v podkroví s lany a petrolejkou nad hlavou.' },
+];
 ---
 <Base title="Fotky — Kolekce Parchant" description="Fotografie z představení souboru Kolekce Parchant ve Studiu Citadela.">
-  <section class="page">
+  <section class="page fotky">
     <div class="page__inner">
       <h1 class="display page-heading">Fotky</h1>
-      <p class="prose">Obsah stránky vzniká. Zatím se podívejte na náš Instagram nebo GoOut.</p>
+
+      <div class="gallery">
+        {photos.map((photo) => (
+          <figure class="gallery__item" data-animate={photo.animate ? 'hero' : undefined}>
+            <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" />
+            <figcaption>{photo.caption}</figcaption>
+          </figure>
+        ))}
+      </div>
     </div>
   </section>
 </Base>
+
+<style>
+  .fotky { background: var(--lime); }
+
+  .gallery { display: grid; gap: 1.5rem; }
+
+  @media (min-width: 48rem) { .gallery { grid-template-columns: 1fr 1fr; } }
+
+  .gallery__item { margin: 0; }
+
+  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); }
+
+  .gallery__item figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+</style>

@@ -54,6 +54,7 @@ const EXPECTED_ROUTES = [
   '/soubor/maximilian-dolansky/', '/soubor/maxmilian-kocek/', '/soubor/matous-vysata/',
   '/soubor/aliska/', '/soubor/jiri-dlouhy/', '/soubor/simon-fikar/',
   '/soubor/simon-lorko/', '/soubor/marek-cimbal/',
+  '/404.html',
 ].sort();
 
 const actualRoutes = discoverRoutes(DIST);
@@ -564,6 +565,70 @@ onPage('/soubor/aliska/',
     const r = JSON.parse(raw);
     if (r.heading !== 'Aliska') return `heading was ${JSON.stringify(r.heading)} — her full billing name is still unconfirmed, use "Aliska"`;
     if (!r.hra) return 'Hra lásky missing from her productions';
+    return null;
+  },
+);
+
+onPage('/o-nas/',
+  'O nás holds marked placeholder prose, nothing invented',
+  `JSON.stringify({
+    placeholder: Boolean(document.querySelector('[data-placeholder]')),
+    mentionsPending: document.querySelector('[data-placeholder]')?.textContent.includes('drží místo') ?? false,
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.placeholder) return 'O nás prose is still pending from the client and must be marked data-placeholder';
+    if (!r.mentionsPending) return 'placeholder text must say it is holding space, so nobody mistakes it for real copy';
+    return null;
+  },
+);
+
+onPage('/o-prostoru/',
+  'venue page carries the address and the trams',
+  `JSON.stringify({
+    address: document.body.textContent.includes('Klimentská 16'),
+    trams: document.body.textContent.includes('Dlouhá třída'),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.address) return 'address missing';
+    if (!r.trams) return 'tram stop missing';
+    return null;
+  },
+);
+
+onPage('/fotky/',
+  'gallery: four photos, honest captions, one animation hook',
+  `JSON.stringify({
+    captions: [...document.querySelectorAll('.gallery__item figcaption')].map((c) => c.textContent.trim()),
+    animateHooks: document.querySelectorAll('[data-animate]').length,
+    altsDistinct: new Set([...document.querySelectorAll('.gallery__item img')].map((img) => img.alt)).size,
+  })`,
+  (raw) => {
+    const g = JSON.parse(raw);
+    const expected = [
+      'Rychlé šípy a záhada klubovny', 'Rychlé šípy a záhada klubovny',
+      'Rychlé šípy a záhada klubovny', 'Soubor',
+    ];
+    if (JSON.stringify(g.captions) !== JSON.stringify(expected)) {
+      return `captions were ${JSON.stringify(g.captions)} — only šípy photos are identifiable; nothing else may carry a production name`;
+    }
+    if (g.animateHooks !== 1) return `expected exactly one data-animate hook, got ${g.animateHooks}`;
+    if (g.altsDistinct !== 4) return 'alt texts must describe each photo, not duplicate the captions';
+    return null;
+  },
+);
+
+onPage('/404.html',
+  '404 page says so and links home',
+  `JSON.stringify({
+    saysNotFound: document.body.textContent.includes('Stránka nenalezena'),
+    homeLink: Boolean(document.querySelector('main a[href="/"]')),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.saysNotFound) return 'no not-found message';
+    if (!r.homeLink) return 'no link home';
     return null;
   },
 );
