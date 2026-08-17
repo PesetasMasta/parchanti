@@ -1,5 +1,10 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import program from '../../data/program.json';
+
+const productions = (await getCollection('productions'))
+  .sort((a, b) => a.data.order - b.data.order);
 
 const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia Citadela v Praze. Rychlé šípy a záhada klubovny, Hra lásky a náhody.';
 ---
@@ -25,10 +30,153 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     ],
   })} />
 
-  <section class="page">
+  <section class="hero page">
+    <div class="page__inner hero__grid">
+      <div class="hero__copy">
+        <p class="hero__eyebrow">Nezávislé divadlo &middot; Praha</p>
+        <h1 class="display hero__title">Kolekce Parchant</h1>
+
+        <!-- The short claim under the name is still pending from the client.
+             Deliberately separate from the pitch below: the backlog lists them
+             as two different items. Leave empty rather than inventing one. -->
+        <p class="hero__claim" data-placeholder></p>
+
+        <p class="hero__pitch">Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!</p>
+
+        <p><a class="button" href="/program/">Program</a></p>
+      </div>
+
+      <img
+        class="hero__photo"
+        src="/assets/panels/hero.png"
+        width="1400"
+        height="1077"
+        alt="Šest herců stojí vedle sebe v řadě v podkroví s lany a petrolejkou nad hlavou."
+      />
+    </div>
+  </section>
+
+  <section class="next page">
     <div class="page__inner">
-      <h1 class="display page-heading">Kolekce Parchant</h1>
-      <p class="prose">Nezávislý divadelní soubor ze Studia Citadela, Klimentská 16, Praha 1. Stránka vzniká.</p>
+      <h2 class="next__eyebrow">Nejbližší představení</h2>
+      <!-- No upcoming dates is the normal launch state, said honestly. -->
+      {program.dates.length === 0 ? (
+        <div class="next__empty">
+          <p>Zatím žádný vypsaný termín. Nové termíny vypisujeme na GoOut &mdash; jakmile se objeví tam, najdete je i tady.</p>
+          <p><a class="link" href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">Sledovat na GoOut</a></p>
+        </div>
+      ) : (
+        program.dates.slice(0, 1).map((date) => (
+          <article class="ticket">
+            <p class="ticket__date display">{date.when}</p>
+            <p>{date.title}</p>
+            <p><a class="link" href={date.url}>Vstupenky</a></p>
+          </article>
+        ))
+      )}
+    </div>
+  </section>
+
+  <section class="teaser page">
+    <div class="page__inner">
+      <h2 class="display page-heading">Repertoár</h2>
+      <div class="teaser__grid">
+        {productions.map((production) => (
+          <article class="production-card">
+            <!-- No identifiable photo exists for this production; an olive
+                 block is honest, a misattributed photo is not. -->
+            {production.data.photos.length > 0 ? (
+              <img
+                src={production.data.photos[0].src}
+                width={production.data.photos[0].width}
+                height={production.data.photos[0].height}
+                alt={production.data.photos[0].alt}
+                loading="lazy"
+              />
+            ) : (
+              <div class="production-card__blank" aria-hidden="true"></div>
+            )}
+            <h3 class="display production-card__title">
+              {production.data.titleLead} <span>{production.data.titleRest}</span>
+            </h3>
+            <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
 </Base>
+
+<style>
+  .hero { background: var(--lime); }
+
+  .hero__grid { display: grid; gap: 2rem; }
+
+  /* Phone-first: halves stack, name first. Side by side from tablet up. */
+  @media (min-width: 48rem) {
+    .hero__grid { grid-template-columns: 1fr 1fr; align-items: center; }
+  }
+
+  .hero__eyebrow {
+    margin: 0 0 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.8rem;
+  }
+
+  .hero__title {
+    margin: 0;
+    font-size: clamp(3rem, 13vw, 6.5rem);
+    color: var(--cherry);
+  }
+
+  .hero__claim:empty { display: none; }
+
+  .hero__pitch {
+    max-width: var(--measure);
+    margin: 1.5rem 0;
+    font-size: clamp(1.15rem, 1rem + 1vw, 1.5rem);
+    font-weight: 600;
+    text-wrap: pretty;
+  }
+
+  .hero__photo { display: block; border: 3px solid var(--ink); }
+
+  .next__eyebrow {
+    margin: 0 0 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.8rem;
+    color: var(--cherry);
+  }
+
+  .next__empty {
+    max-width: var(--measure);
+    padding: 1.5rem;
+    border: 3px dashed var(--ink);
+  }
+
+  .next__empty p { margin: 0 0 0.75rem; }
+  .next__empty p:last-child { margin-bottom: 0; }
+
+  .teaser { background: var(--lime); }
+
+  .teaser__grid { display: grid; gap: 1.5rem; }
+
+  @media (min-width: 48rem) {
+    .teaser__grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .production-card { padding: 1.25rem; background: var(--cream); border: 3px solid var(--ink); }
+
+  .production-card img,
+  .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); }
+
+  .production-card__blank { aspect-ratio: 900 / 750; background: var(--olive); }
+
+  .production-card__title { margin: 1rem 0 0.5rem; font-size: clamp(1.5rem, 6vw, 2.2rem); }
+
+  .production-card__title span { display: block; font-size: 0.55em; color: var(--cherry); }
+</style>

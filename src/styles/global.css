@@ -224,3 +224,16 @@ img { max-width: 100%; height: auto; }
 .footer__links a { color: var(--cream); font-weight: 700; text-underline-offset: 0.2em; }
 
 .footer__address { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  text-decoration: none;
+}

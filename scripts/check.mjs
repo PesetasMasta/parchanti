@@ -355,6 +355,88 @@ onPage('/',
   },
 );
 
+onPage('/',
+  'hero: name, empty claim slot, verbatim pitch, Program CTA, photo',
+  `JSON.stringify({
+    title: document.querySelector('.hero__title')?.textContent.trim(),
+    claimIsPlaceholder: document.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
+    claimIsEmpty: (document.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
+    pitch: document.querySelector('.hero__pitch')?.textContent.trim(),
+    cta: document.querySelector('.hero a.button')?.getAttribute('href'),
+    photo: Boolean(document.querySelector('.hero img[src*="/assets/panels/"]')),
+  })`,
+  (raw) => {
+    const hero = JSON.parse(raw);
+    if (hero.title !== 'Kolekce Parchant') return `hero title was ${JSON.stringify(hero.title)}`;
+    if (!hero.claimIsPlaceholder) return 'claim slot is not marked data-placeholder';
+    if (!hero.claimIsEmpty) return 'claim slot must stay empty until the client sends it';
+    // Her verbatim copy, character-exact, including the missing comma.
+    const pitch = 'Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!';
+    if (hero.pitch !== pitch) return `pitch was ${JSON.stringify(hero.pitch)}`;
+    if (hero.cta !== '/program/') return `CTA href was ${JSON.stringify(hero.cta)}`;
+    if (!hero.photo) return 'hero photo is missing';
+    return null;
+  },
+);
+
+onPage('/',
+  'next-performance strip shows its honest empty state below the hero',
+  `(() => {
+    const strip = document.querySelector('.next');
+    const hero = document.querySelector('.hero');
+    return JSON.stringify({
+      exists: Boolean(strip),
+      belowHero: strip && hero
+        ? strip.getBoundingClientRect().top >= hero.getBoundingClientRect().top
+        : false,
+      emptyVisible: Boolean(strip?.querySelector('.next__empty')),
+      mentionsGoOut: (strip?.textContent ?? '').includes('GoOut'),
+      tickets: strip ? strip.querySelectorAll('.ticket').length : -1,
+    });
+  })()`,
+  (raw) => {
+    const s = JSON.parse(raw);
+    if (!s.exists) return 'no .next strip';
+    if (!s.belowHero) return 'the strip must sit below the first screen, not above it';
+    if (!s.emptyVisible) return 'empty state missing — there are no dates, and that must be said honestly';
+    if (!s.mentionsGoOut) return 'empty state should say where dates get announced';
+    if (s.tickets !== 0) return `expected no tickets, got ${s.tickets}`;
+    return null;
+  },
+);
+
+onPage('/',
+  'two production cards in order, linking to their pages',
+  `JSON.stringify([...document.querySelectorAll('.production-card')]
+     .map((card) => card.querySelector('a')?.getAttribute('href')))`,
+  (raw) => {
+    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
+  },
+);
+
+// Generic from here on: declared image intrinsics must match the real files.
+// The scroll page shipped with all four images declaring wrong dimensions;
+// this makes that class of error fail loudly on every page.
+generic(
+  'declared image dimensions match the files',
+  `JSON.stringify([...document.querySelectorAll('img')]
+     .filter((img) => img.complete)
+     .map((img) => ({
+       src: img.getAttribute('src'),
+       attr: img.getAttribute('width') + 'x' + img.getAttribute('height'),
+       real: img.naturalWidth + 'x' + img.naturalHeight,
+     })))`,
+  (raw) => {
+    const images = JSON.parse(raw);
+    const wrong = images.filter((img) => img.attr !== img.real);
+    return wrong.length
+      ? wrong.map((img) => `${img.src} declares ${img.attr}, file is ${img.real}`).join('; ')
+      : null;
+  },
+);
+
 // --- 4. Run everything at both widths, one browser per width.
 const widths = [320, 390];
 const failures = [];
