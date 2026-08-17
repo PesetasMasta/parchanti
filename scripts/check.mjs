@@ -50,6 +50,10 @@ const EXPECTED_ROUTES = [
   '/fotky/',
   '/repertoar/rychle-sipy-a-zahada-klubovny/',
   '/repertoar/hra-lasky-a-nahody/',
+  '/soubor/prokop-zach/', '/soubor/zuzana-matuskova/', '/soubor/ondrej-stupka/',
+  '/soubor/maximilian-dolansky/', '/soubor/maxmilian-kocek/', '/soubor/matous-vysata/',
+  '/soubor/aliska/', '/soubor/jiri-dlouhy/', '/soubor/simon-fikar/',
+  '/soubor/simon-lorko/', '/soubor/marek-cimbal/',
 ].sort();
 
 const actualRoutes = discoverRoutes(DIST);
@@ -505,6 +509,61 @@ onPage('/repertoar/hra-lasky-a-nahody/',
     if (!r.aliska) return 'Aliska missing from cast links';
     if (r.photos !== 0) return "no identifiable photos exist for this production — showing any misattributes someone's work";
     if (!r.idivadlo) return 'i-divadlo source link missing';
+    return null;
+  },
+);
+
+onPage('/soubor/',
+  'ensemble lists all eleven people, each linking to their page',
+  `JSON.stringify([...document.querySelectorAll('.ensemble a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    const links = JSON.parse(raw);
+    if (links.length !== 11) return `expected 11 person links, got ${links.length}`;
+    for (const slug of ['prokop-zach', 'aliska', 'maxmilian-kocek', 'maximilian-dolansky', 'matous-vysata']) {
+      if (!links.includes(`/soubor/${slug}/`)) return `missing link to /soubor/${slug}/`;
+    }
+    return null;
+  },
+);
+
+onPage('/soubor/prokop-zach/',
+  'person page cross-links to every production they are in',
+  `JSON.stringify([...document.querySelectorAll('.person__productions a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    const links = JSON.parse(raw);
+    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    const missing = expected.filter((href) => !links.includes(href));
+    return missing.length ? `missing: ${missing.join(', ')}` : null;
+  },
+);
+
+onPage('/soubor/simon-lorko/',
+  'creative credits count as involvement, not just cast',
+  `JSON.stringify([...document.querySelectorAll('.person__productions a')]
+     .map((a) => a.getAttribute('href')))`,
+  (raw) => {
+    // Šimon Lorko wrote šípy but is in neither cast; if his page shows no
+    // productions, credits are not being queried.
+    const links = JSON.parse(raw);
+    return links.includes('/repertoar/rychle-sipy-a-zahada-klubovny/')
+      ? null
+      : "Šimon Lorko's page must list Rychlé šípy via his writing credit";
+  },
+);
+
+onPage('/soubor/aliska/',
+  'Aliska is billed under the name the client asked for',
+  `JSON.stringify({
+    heading: document.querySelector('h1')?.textContent.trim(),
+    hra: [...document.querySelectorAll('.person__productions a')]
+      .some((a) => a.getAttribute('href') === '/repertoar/hra-lasky-a-nahody/'),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.heading !== 'Aliska') return `heading was ${JSON.stringify(r.heading)} — her full billing name is still unconfirmed, use "Aliska"`;
+    if (!r.hra) return 'Hra lásky missing from her productions';
     return null;
   },
 );

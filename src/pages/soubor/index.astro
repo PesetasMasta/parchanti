@@ -1,11 +1,66 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+
+// Collection order follows the JSON file, which is the approved billing order.
+const people = await getCollection('people');
 ---
 <Base title="Soubor — Kolekce Parchant" description="Lidé souboru Kolekce Parchant — herci a tvůrci nezávislého divadla ze Studia Citadela.">
   <section class="page">
     <div class="page__inner">
       <h1 class="display page-heading">Soubor</h1>
-      <p class="prose">Obsah stránky vzniká. Zatím se podívejte na náš Instagram nebo GoOut.</p>
+
+      <!-- Compiled from the two productions' credits on i-divadlo, with the
+           client's corrections applied (Aliska; Maxmilián Kocek; Matouš
+           Vyšata; Mikuláš Polák removed). Still not the company's own list -
+           confirm before launch. -->
+      <ul class="ensemble">
+        {people.map((person) => (
+          <li class="ensemble__person">
+            <a class="ensemble__link" href={`/soubor/${person.id}/`}>
+              <span class="ensemble__name display">{person.data.name}</span>
+              <span class="ensemble__role">{person.data.role}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <p class="ensemble__note">Archivní nahrávky &middot; Tomáš Turek, Roman Zach</p>
     </div>
   </section>
 </Base>
+
+<style>
+  .ensemble {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ensemble__person { background: var(--lime); border: 3px solid var(--ink); }
+
+  .ensemble__link { display: grid; gap: 0.15rem; padding: 1rem; text-decoration: none; color: var(--ink); }
+
+  .ensemble__link:hover .ensemble__name,
+  .ensemble__link:focus-visible .ensemble__name { color: var(--cherry); }
+
+  .ensemble__name { font-size: 1.15rem; line-height: 1.15; }
+
+  .ensemble__role {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .ensemble__note {
+    margin: 1.5rem 0 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+</style>
