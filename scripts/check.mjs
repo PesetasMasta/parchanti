@@ -338,9 +338,18 @@ onPage('/',
     const condensedHeight = masthead.getBoundingClientRect().height;
     const nameHiddenAfterScroll = getComputedStyle(name).display === 'none';
     const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    const burger = document.querySelector('.burger');
+    const burgerBox = burger.getBoundingClientRect();
+    const burgerCondensed = {
+      width: burgerBox.width,
+      height: burgerBox.height,
+      labelHidden: getComputedStyle(document.querySelector('.burger__label')).display === 'none',
+      barsVisible: getComputedStyle(document.querySelector('.burger__bars')).display !== 'none',
+      name: burger.getAttribute('aria-label') ?? burger.textContent.trim(),
+    };
     window.scrollTo(0, 0);
     document.body.style.minHeight = '';
-    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensed, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop });
+    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensed, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop, burgerCondensed });
   })()`,
   (raw) => {
     const s = JSON.parse(raw);
@@ -348,6 +357,14 @@ onPage('/',
     if (!s.condensed) return 'masthead never gained data-condensed after scrolling';
     if (!s.nameHiddenAfterScroll) return 'the name did not drop away when condensed';
     if (s.condensedHeight >= s.fullHeight) return `condensed ${s.condensedHeight}px is not smaller than full ${s.fullHeight}px`;
+    // Condensed, the button keeps only its bars. Shrinking a control is easy
+    // to overdo, so the tap target and the accessible name are asserted here
+    // rather than left to the eye.
+    const b = s.burgerCondensed;
+    if (!b.labelHidden) return 'the burger still shows its label when condensed';
+    if (!b.barsVisible) return 'the burger bars vanished — the button is now unlabelled and unreadable';
+    if (!b.name) return 'the burger has no accessible name once its visible label is hidden';
+    if (b.width < 24 || b.height < 24) return `condensed burger is ${b.width}x${b.height}px, under the 24px minimum tap target`;
     // The offset that matters is the condensed height - that is the state in
     // effect once the page has scrolled to an anchor.
     if (s.scrollPaddingTop < s.condensedHeight) return `scroll-padding-top ${s.scrollPaddingTop}px is under the condensed masthead ${s.condensedHeight}px`;

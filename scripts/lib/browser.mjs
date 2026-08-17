@@ -4,9 +4,11 @@
 // share one implementation. Node's global WebSocket means no dependencies.
 
 import { spawn } from 'node:child_process';
+import { rmSync } from 'node:fs';
 
 const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
 const PORT = 9333;
+const PROFILE = '/tmp/parchant-shot-profile';
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -71,12 +73,20 @@ class Client {
 // suite spawns once per width and navigates. withPage stays as a wrapper so
 // shot.mjs keeps working unchanged.
 export async function withBrowser(fn) {
+  // A run killed part-way leaves lock files behind in the profile, and every
+  // later launch then fails with the thoroughly unhelpful CDP error "Failed to
+  // open a new tab" - the suite gets through one viewport width and dies on
+  // the second. Starting from an empty profile every time costs nothing (it is
+  // scratch state, and it had grown to 121 MB) and makes that unfixable-looking
+  // failure impossible.
+  rmSync(PROFILE, { recursive: true, force: true });
+
   const browser = spawn(BRAVE, [
     '--headless',
     '--disable-gpu',
     `--remote-debugging-port=${PORT}`,
     '--no-first-run',
-    '--user-data-dir=/tmp/parchant-shot-profile',
+    `--user-data-dir=${PROFILE}`,
     'about:blank',
   ], { stdio: 'ignore' });
 

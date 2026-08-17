@@ -64,7 +64,9 @@
 
 * { box-sizing: border-box; }
 
-/* Must clear the condensed masthead height (.masthead[data-condensed], ~65px)
+/* Must clear the condensed masthead height (.masthead[data-condensed], ~51px
+   since the burger drops its label; check.mjs asserts the relationship rather
+   than the number)
    with headroom, since that is the state in effect once a scroll to an
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
@@ -115,6 +117,11 @@ img { max-width: 100%; height: auto; }
 .masthead[data-condensed] { padding-block: 0.45rem; }
 .masthead[data-condensed] .masthead__home svg { height: 1.6rem; }
 .masthead[data-condensed] .masthead__name { display: none; }
+/* Condensed, the button drops the word and keeps the bars, which read as a
+   menu on their own. The button carries aria-label="Menu" so hiding the text
+   costs nothing to a screen reader. */
+.masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
+.masthead[data-condensed] .burger__label { display: none; }
 
 /* Sentinel the IntersectionObserver watches; out of flow, invisible. */
 .masthead-sentinel { position: absolute; top: 0; width: 1px; height: 1px; }

@@ -53,7 +53,9 @@ const currentPath = Astro.url.pathname;
     <KPMark />
     <span class="masthead__name">Kolekce Parchant</span>
   </a>
-  <button class="burger" type="button" aria-expanded="false" aria-controls="nav">
+  <!-- aria-label, not just the visible word: the label is hidden once the
+       masthead condenses, and without it the button would lose its name. -->
+  <button class="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">
     <span class="burger__label">Menu</span>
     <span class="burger__bars" aria-hidden="true"></span>
   </button>
