@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import program from '../../data/program.json';
 ---
-<Base title="Program — Kolekce Parchant" description="Termíny představení souboru Kolekce Parchant ve Studiu Citadela v Praze. Nové termíny vypisujeme na GoOut.">
+<Base title="Program — Kolekce Parchant" description="Termíny představení souboru Kolekce Parchant ve Studiu Citadela v Praze.">
   <section class="page">
     <div class="page__inner">
       <h1 class="display page-heading">Program</h1>
@@ -10,16 +10,22 @@ import program from '../../data/program.json';
       {program.dates.length === 0 ? (
         <div class="program__empty">
           <p class="program__empty-title display">Zatím žádný vypsaný termín</p>
-          <p>Nové termíny vypisujeme na GoOut. Jakmile se objeví tam, najdete je i tady.</p>
-          <p><a class="link" href="https://goout.net/cs/kolekce-parchant/pzpmtpg/">Sledovat na GoOut</a></p>
+          <p>Jakmile vypíšeme nové termíny, najdete je tady.</p>
+          <p><a class="link" href="https://www.instagram.com/kolekce_parchant">Sledovat na Instagramu</a></p>
         </div>
       ) : (
         <div class="program__list">
           {program.dates.map((date) => (
             <article class="ticket" data-state={date.state}>
               <p class="ticket__date display">{date.when}</p>
-              <p>{date.title}</p>
-              <p><a class="link" href={date.url}>Vstupenky na GoOut</a></p>
+              <p>
+                {date.slug
+                  ? <a class="link" href={`/repertoar/${date.slug}/`}>{date.title}</a>
+                  : date.title}
+                {date.note && <span class="ticket__note"> &mdash; {date.note}</span>}
+              </p>
+              {/* No ticketing yet, so no link is rendered rather than an empty one. */}
+              {date.url && <p><a class="link" href={date.url}>Vstupenky</a></p>}
             </article>
           ))}
         </div>

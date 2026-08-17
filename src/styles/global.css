@@ -244,3 +244,6 @@ img { max-width: 100%; height: auto; }
 .ticket__date { font-size: 1.5rem; color: var(--cherry); margin: 0 0 0.35rem; }
 .ticket p { margin: 0 0 0.35rem; }
 .ticket[data-state="sold_out"] { opacity: 0.55; }
+/* "premiéra", "první repríza" — her label for a date, secondary to the title. */
+.ticket__note { color: var(--ink); opacity: 0.75; }
+.program__list { display: grid; gap: 1rem; }
