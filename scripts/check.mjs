@@ -605,8 +605,12 @@ onPage('/soubor/simon-lorko/',
   },
 );
 
+// She replaced a wrong name in the cast and was written to us only as
+// "Aliska", so this page was pinned to that single name while the full one
+// was unknown. It is known now, and the other ten people are all billed in
+// full, so she is too. QA.md asks her to confirm the spelling.
 onPage('/soubor/aliska/',
-  'Aliska is billed under the name the client asked for',
+  'Aliska is billed under her full name, like everyone else on the site',
   `JSON.stringify({
     heading: document.querySelector('h1')?.textContent.trim(),
     hra: [...document.querySelectorAll('.person__productions a')]
@@ -614,7 +618,7 @@ onPage('/soubor/aliska/',
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    if (r.heading !== 'Aliska') return `heading was ${JSON.stringify(r.heading)} — her full billing name is still unconfirmed, use "Aliska"`;
+    if (r.heading !== 'Alisa Gertsovskaya') return `heading was ${JSON.stringify(r.heading)}`;
     if (!r.hra) return 'Hra lásky missing from her productions';
     return null;
   },
