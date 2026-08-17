@@ -416,6 +416,25 @@ onPage('/',
   },
 );
 
+onPage('/program/',
+  'program shows its empty state while there are no dates',
+  `JSON.stringify({
+    heading: document.querySelector('.page-heading')?.textContent.trim(),
+    emptyVisible: Boolean(document.querySelector('.program__empty')),
+    mentionsGoOut: document.body.textContent.includes('GoOut'),
+    goOutLink: Boolean(document.querySelector('a[href*="goout.net/cs/kolekce-parchant"]')),
+    tickets: document.querySelectorAll('.ticket').length,
+  })`,
+  (raw) => {
+    const p = JSON.parse(raw);
+    if (p.heading !== 'Program') return `heading was ${JSON.stringify(p.heading)}`;
+    if (!p.emptyVisible) return 'empty state is not visible';
+    if (!p.mentionsGoOut || !p.goOutLink) return 'empty state must say where dates get announced and link there';
+    if (p.tickets !== 0) return `expected no tickets, got ${p.tickets}`;
+    return null;
+  },
+);
+
 // Generic from here on: declared image intrinsics must match the real files.
 // The scroll page shipped with all four images declaring wrong dimensions;
 // this makes that class of error fail loudly on every page.
