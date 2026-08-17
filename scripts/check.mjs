@@ -9,13 +9,17 @@
 //   node scripts/check.mjs
 
 import { execFileSync } from 'node:child_process';
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { staticServer } from './serve.mjs';
 import { withBrowser } from './lib/browser.mjs';
 
 const DIST = new URL('../dist', import.meta.url).pathname;
 const PORT = 4517;
+
+// The program assertions compare the rendered page against the same file the
+// pages render from, so adding a date cannot silently go unchecked.
+const program = JSON.parse(readFileSync(new URL('../data/program.json', import.meta.url), 'utf8'));
 
 // --- 1. Build. A check suite that trusts a pre-existing dist/ can pass on
 // stale output; building here makes that impossible.
@@ -202,15 +206,36 @@ generic(
   },
 );
 
+// Matched case-insensitively: the client writes her own productions in capitals
+// ("ČERVÁNKY"), so a case-sensitive needle would let the very spelling we are
+// guarding against walk straight through.
+// 'červánky' was removed from this list on 2026-08-17: the premiere was blocked
+// because she had never mentioned it, and she has now scheduled it herself.
+// Hančilová stays out — her name is not needed to list a date, and it is still
+// unverified.
 generic(
-  'no forbidden name or undisclosed premiere appears',
-  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Mikuláš Polák', 'Višata', 'červánky', 'Hančilová']
-     .filter((needle) => document.documentElement.textContent.includes(needle)))`,
+  'no forbidden name appears',
+  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Mikuláš Polák', 'Višata', 'Hančilová']
+     .filter((needle) => document.documentElement.textContent.toLowerCase().includes(needle.toLowerCase())))`,
   (raw) => {
     const found = JSON.parse(raw);
     return found.length
-      ? `forbidden on this page: ${found.join(', ')} — removed names must stay removed and the October premiere must not be announced`
+      ? `forbidden on this page: ${found.join(', ')} — removed names must stay removed`
       : null;
+  },
+);
+
+// The ticket cards render a link only when a date carries a ticket URL. An
+// anchor with no href looks like a link, is not one, and is invisible to the
+// internal-link check because it has no path to resolve.
+generic(
+  'no anchor is rendered without a destination',
+  `JSON.stringify([...document.querySelectorAll('a')]
+     .filter((a) => !a.getAttribute('href')?.trim())
+     .map((a) => a.textContent.trim().slice(0, 40)))`,
+  (raw) => {
+    const dead = JSON.parse(raw);
+    return dead.length ? `link-styled elements with no href: ${dead.join(', ')}` : null;
   },
 );
 
@@ -387,7 +412,7 @@ onPage('/',
 );
 
 onPage('/',
-  'next-performance strip shows its honest empty state below the hero',
+  'next-performance strip sits below the hero and shows the first date',
   `(() => {
     const strip = document.querySelector('.next');
     const hero = document.querySelector('.hero');
@@ -397,17 +422,24 @@ onPage('/',
         ? strip.getBoundingClientRect().top >= hero.getBoundingClientRect().top
         : false,
       emptyVisible: Boolean(strip?.querySelector('.next__empty')),
-      mentionsGoOut: (strip?.textContent ?? '').includes('GoOut'),
       tickets: strip ? strip.querySelectorAll('.ticket').length : -1,
+      when: strip?.querySelector('.ticket__date')?.textContent.trim() ?? null,
     });
   })()`,
   (raw) => {
     const s = JSON.parse(raw);
+    const next = program.dates[0];
     if (!s.exists) return 'no .next strip';
     if (!s.belowHero) return 'the strip must sit below the first screen, not above it';
-    if (!s.emptyVisible) return 'empty state missing — there are no dates, and that must be said honestly';
-    if (!s.mentionsGoOut) return 'empty state should say where dates get announced';
-    if (s.tickets !== 0) return `expected no tickets, got ${s.tickets}`;
+    // Both states are asserted here, so the empty state stays covered when the
+    // season ends and dates go back to zero.
+    if (!next) {
+      if (!s.emptyVisible) return 'no dates, so the empty state must be shown rather than a blank box';
+      return s.tickets === 0 ? null : `expected no tickets, got ${s.tickets}`;
+    }
+    if (s.emptyVisible) return 'dates exist, but the empty state is showing';
+    if (s.tickets !== 1) return `the strip shows the next performance only, got ${s.tickets} cards`;
+    if (s.when !== next.when) return `showed ${JSON.stringify(s.when)}, first date is ${JSON.stringify(next.when)}`;
     return null;
   },
 );
@@ -424,20 +456,39 @@ onPage('/',
 );
 
 onPage('/program/',
-  'program shows its empty state while there are no dates',
+  'program lists every date she sent, linking the productions that have pages',
   `JSON.stringify({
     heading: document.querySelector('.page-heading')?.textContent.trim(),
     emptyVisible: Boolean(document.querySelector('.program__empty')),
-    mentionsGoOut: document.body.textContent.includes('GoOut'),
-    goOutLink: Boolean(document.querySelector('a[href*="goout.net/cs/kolekce-parchant"]')),
-    tickets: document.querySelectorAll('.ticket').length,
+    cards: [...document.querySelectorAll('.ticket')].map((card) => ({
+      when: card.querySelector('.ticket__date')?.textContent.trim(),
+      links: [...card.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+    })),
   })`,
   (raw) => {
     const p = JSON.parse(raw);
     if (p.heading !== 'Program') return `heading was ${JSON.stringify(p.heading)}`;
-    if (!p.emptyVisible) return 'empty state is not visible';
-    if (!p.mentionsGoOut || !p.goOutLink) return 'empty state must say where dates get announced and link there';
-    if (p.tickets !== 0) return `expected no tickets, got ${p.tickets}`;
+    if (!program.dates.length) {
+      if (!p.emptyVisible) return 'no dates, so the empty state must be shown';
+      return p.cards.length === 0 ? null : `expected no cards, got ${p.cards.length}`;
+    }
+    if (p.emptyVisible) return 'dates exist, but the empty state is showing';
+    if (p.cards.length !== program.dates.length) {
+      return `${p.cards.length} cards for ${program.dates.length} dates — every date she sent must be listed`;
+    }
+    for (const [index, date] of program.dates.entries()) {
+      const card = p.cards[index];
+      if (card.when !== date.when) {
+        return `card ${index + 1} reads ${JSON.stringify(card.when)}, expected ${JSON.stringify(date.when)}`;
+      }
+      // A production with a page is reachable from its date; one without a
+      // page must not link anywhere, least of all to a route that does not exist.
+      const expected = date.slug ? [`/repertoar/${date.slug}/`] : [];
+      const internal = card.links.filter((href) => href?.startsWith('/'));
+      if (JSON.stringify(internal) !== JSON.stringify(expected)) {
+        return `card ${index + 1} (${date.title}) links ${JSON.stringify(internal)}, expected ${JSON.stringify(expected)}`;
+      }
+    }
     return null;
   },
 );
