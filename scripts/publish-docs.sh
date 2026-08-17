@@ -1,30 +1,22 @@
 #!/usr/bin/env bash
-# Assemble docs/ for GitHub Pages.
-# Pages serves from main:/docs, so docs/ is committed while build/ stays ignored.
+# Assemble docs/ for publishing.
+# Pages serves from main:/docs, so docs/ is committed while dist/ stays ignored.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# Fail rather than publish a page that does not pass its own checks.
-node scripts/check.mjs "file://$ROOT/prototype/index.html"
+# check.mjs runs the build itself, so it can never approve a stale dist/.
+# Fail rather than publish a site that does not pass its own checks.
+node scripts/check.mjs
 
 rm -rf docs
-mkdir -p docs
+cp -R dist docs
 
-# The scroll page is the direction. Assets are copied as-is: the page loads
-# them relatively, so what is served is byte-identical to what was checked.
-cp prototype/index.html docs/index.html
-cp -R prototype/assets docs/assets
-
-# The superseded canvas direction, kept reachable for comparison.
-node scripts/inline.mjs canvas
-cp build/parchant-canvas.html docs/canvas.html
-
-# Skip Jekyll: these are plain files and underscore-prefixed names would be eaten.
+# Skip Jekyll: plain files, and it would eat the underscore-prefixed _astro/.
 touch docs/.nojekyll
 
-# A mockup carrying unverified cast names does not belong in a search index.
+# A site carrying unverified cast names does not belong in a search index.
 cat > docs/robots.txt <<'EOF'
 User-agent: *
 Disallow: /

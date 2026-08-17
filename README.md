@@ -4,35 +4,25 @@ Prototype site for the theatre company Kolekce Parchant (Studio Citadela, Prague
 Not live anywhere yet. This repo holds the visual direction, the GoOut integration,
 and the photo pipeline.
 
-## The page
+## How this is built
 
-`prototype/index.html` — a single scrolling page, no build step, no
-dependencies. Seven colour bands you scroll through, in the order the client
-asked for: program, repertoár, soubor, o nás, o prostoru, fotky.
+Astro static site. Content lives in schema-validated collections
+(`src/content/`): two productions and eleven people, with every person
+reference checked against the people list at build time.
 
-`prototype/canvas.html` — the superseded direction: a pannable 2x2 comic map
-you moved across instead of scrolling. Kept as a record, still published at
-`/canvas.html`. Two things retired it: the client asked for a burger menu over
-six named sections, which is a scroll-page structure and not a spatial one, and
-the inspiration boards she then shared pointed at mid-century circus poster
-rather than Foglar comic. The reasoning is in
-`specs/2026-08-16-poster-press-scroll-design.md`.
+    npm install            # once
+    npm run dev            # live dev server
+    node scripts/check.mjs # build + full check suite (needs Brave installed)
+    node scripts/serve.mjs # preview dist/ at http://127.0.0.1:4173/
+    bash scripts/publish-docs.sh  # checks, then assembles docs/
 
-## Run it
-
-```bash
-node scripts/fetch-fonts.mjs                  # download the four woff2 subsets
-node scripts/redraw-photos.mjs ~/Downloads/parchant   # redraw photos as inked panels (~$0.04 each)
-node scripts/check.mjs                        # assertions: contrast, overflow, content, metadata
-node scripts/shot.mjs "file://$PWD/prototype/index.html" /tmp/kp.png 390 844
-./scripts/publish-docs.sh                     # assemble docs/ for GitHub Pages
-open -a "Brave Browser" prototype/index.html
-```
+Links are root-relative, so the built site is previewed over HTTP, not
+file://. The previous single-page prototype is kept as-is in `prototype/`.
 
 `check.mjs` is the test suite. There is no framework: it drives a real headless
 Brave over the DevTools protocol, so assertions run against computed styles and
 real layout rather than a parsed string. `publish-docs.sh` refuses to publish a
-page that does not pass it.
+site that does not pass it.
 
 ## Design direction
 
