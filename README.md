@@ -26,40 +26,43 @@ site that does not pass it.
 
 ## Design direction
 
-Poster press. The page is a stack of printed posters, so each section is a
-colour band and scrolling reads as flipping through a pile. Circus appears as
-structure only — perforated ticket edges, notched ribbon section heads, arrow
-signs, diamond dividers — never as drawn tents or masks.
+Poster press, spread across real pages: bezruci.cz-style curated homepage plus
+one URL per section and one per production, not a single scrolling page. Each
+page is a colour band. Circus appears as structure only — 3px ink borders, the
+condensing masthead, a full-screen cherry menu overlay — never as drawn tents
+or masks.
+
+The KP mark is drawn once as SVG, not set in a typeface: a stroked skeleton
+drawn three times — an ink extrusion offset down-right, a cherry body on top,
+and a thin cream inline running through each stroke. No sparkles.
 
 Palette, taken from the two colour boards the client shared, which propose the
 same idea independently:
 
 | Token | Hex | Where it goes |
 |---|---|---|
-| paper | `#FFFECD` | cream bands; text on deep red |
-| ground | `#B0BC68` | olive bands |
-| ground light | `#CDD78A` | lime bands |
-| punch red | `#EB313F` | KP monogram, display type |
-| cherry | `#AA0A27` | red body text and links |
-| ink | `#1E1B14` | body text |
+| cream | `#FFFECD` | page ground; text on cherry |
+| lime | `#CDD78A` | primary accent bands |
+| olive | `#B0BC68` | secondary bands, photo placeholders |
+| cherry | `#AA0A27` | the red — mark, display type, links, ribbons |
+| ink | `#1E1B14` | body text, extrusion, rules |
 
-Two reds, deliberately. Punch red on cream is about 4.2:1 — enough for large
-display type, short of the 4.5:1 body text needs — so it is display-only and
-cherry carries anything small. Cream never sits on olive, which is about 2:1.
-`check.mjs` enforces both rules and fails the build rather than trusting anyone
-to remember them.
-
-Outlined display type is exempt from the ratio check, because the ratio model
-does not describe it: legibility comes from a hard ink edge on all sides. The
-exemption is paid for by asserting the outline is actually present.
+One red, deliberately. Cherry on cream is about 7.3:1, which clears WCAG body
+text at any size, so a single red does the whole job (an earlier punch red
+`#EB313F` was dropped for exactly this reason and must not come back). The
+rule that survives: cream never sits on lime or olive, both close to 2:1 — those
+grounds take ink instead. `check.mjs` enforces WCAG contrast transitively on
+every page at 320px and 390px and fails the build rather than trusting anyone
+to remember the rule.
 
 Deliberately single-theme. A printed poster is paper, so there is no dark mode.
 
-Type is self-hosted Archivo Black and Archivo — two woff2 subsets each, latin
-and latin-ext. latin-ext is the requirement that eliminates most display faces:
-`ě š č ř ž ů ť ď ň` live in U+0100–017F and are usually the first glyphs a
-display font drops. `check.mjs` measures whether they actually render rather
-than trusting the subset declaration.
+Type is self-hosted DM Serif Display (display) and Archivo (body) — two woff2
+subsets each, latin and latin-ext. Archivo Black is retired. latin-ext is the
+requirement that eliminates most display faces: `ě š č ř ž ů ť ď ň` live in
+U+0100–017F and are usually the first glyphs a display font drops. `check.mjs`
+measures whether they actually render rather than trusting the subset
+declaration.
 
 Photos are redrawn by an image model rather than filtered. The previous
 pipeline posterized phone shots to two inks to make amateur capture read as
@@ -157,8 +160,8 @@ it.
 
 ## Next
 
-1. Production detail pages and actor pages, with the cross-linking (the part she
-   asked for): production → cast → other productions.
-2. Move from a single HTML file to Astro once the direction is signed off, keeping
-   content as files so a git-backed CMS can be layered on later.
-3. Photo redraw pass (AI or illustrator) once the new shoot exists.
+1. Hosting and DNS decision — the site is not live anywhere yet.
+2. Content the client has blocked: the claim under the logo and the *O nás*
+   prose, both still `data-placeholder` in the markup.
+3. The actors-moving animation.
+4. Gallery panel regeneration once more redrawn photos exist.
