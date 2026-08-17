@@ -42,6 +42,12 @@ function discoverRoutes(dir, prefix = '/') {
 // Page tasks extend it as routes land; by the last page task it is complete.
 const EXPECTED_ROUTES = [
   '/',
+  '/program/',
+  '/repertoar/',
+  '/soubor/',
+  '/o-nas/',
+  '/o-prostoru/',
+  '/fotky/',
 ].sort();
 
 const actualRoutes = discoverRoutes(DIST);
@@ -238,6 +244,117 @@ generic(
   },
 );
 
+onPage('/',
+  'nav overlay: closed at rest, opens, Escape closes, focus traps',
+  `(async () => {
+    const burger = document.querySelector('.burger');
+    const nav = document.querySelector('#nav');
+    const closed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    burger.click();
+    const opened = burger.getAttribute('aria-expanded') === 'true' && nav.hasAttribute('data-open');
+    const dialog = nav.getAttribute('role') === 'dialog' && nav.getAttribute('aria-modal') === 'true';
+    const links = [...nav.querySelectorAll('.nav__link')];
+    // Trap: Tab on the last link wraps to the first, Shift+Tab on the first
+    // wraps to the last. The overlay is the entire navigation model.
+    links[links.length - 1].focus();
+    nav.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    const wrapsForward = document.activeElement === links[0];
+    links[0].focus();
+    nav.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+    const wrapsBack = document.activeElement === links[links.length - 1];
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    const focusReturned = document.activeElement === burger;
+    return JSON.stringify({ closed, opened, dialog, wrapsForward, wrapsBack, reclosed, focusReturned });
+  })()`,
+  (raw) => {
+    const bad = Object.entries(JSON.parse(raw)).filter(([, ok]) => !ok).map(([name]) => name);
+    return bad.length ? `failed: ${bad.join(', ')}` : null;
+  },
+);
+
+onPage('/',
+  'nav lists the six section pages in order',
+  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
+     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()))`,
+  (raw) => {
+    const expected = [
+      '/program/|Program', '/repertoar/|Repertoár', '/soubor/|Soubor',
+      '/o-nas/|O nás', '/o-prostoru/|O prostoru', '/fotky/|Fotky',
+    ];
+    const actual = JSON.parse(raw);
+    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
+  },
+);
+
+onPage('/',
+  'masthead condenses on scroll and anchors clear the condensed bar',
+  `(async () => {
+    const masthead = document.querySelector('.masthead');
+    const name = document.querySelector('.masthead__name');
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    // The page may be short while under construction; the behaviour under
+    // test is scroll-driven, so guarantee there is somewhere to scroll to.
+    document.body.style.minHeight = '300vh';
+    window.scrollTo(0, 0);
+    await frame(); await frame();
+    const fullHeight = masthead.getBoundingClientRect().height;
+    const nameVisibleAtTop = getComputedStyle(name).display !== 'none';
+    window.scrollTo(0, 600);
+    await frame(); await frame(); await new Promise((resolve) => setTimeout(resolve, 350));
+    const condensed = masthead.hasAttribute('data-condensed');
+    const condensedHeight = masthead.getBoundingClientRect().height;
+    const nameHiddenAfterScroll = getComputedStyle(name).display === 'none';
+    const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    window.scrollTo(0, 0);
+    document.body.style.minHeight = '';
+    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensed, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop });
+  })()`,
+  (raw) => {
+    const s = JSON.parse(raw);
+    if (!s.nameVisibleAtTop) return 'the full lockup name is not visible at the top';
+    if (!s.condensed) return 'masthead never gained data-condensed after scrolling';
+    if (!s.nameHiddenAfterScroll) return 'the name did not drop away when condensed';
+    if (s.condensedHeight >= s.fullHeight) return `condensed ${s.condensedHeight}px is not smaller than full ${s.fullHeight}px`;
+    // The offset that matters is the condensed height - that is the state in
+    // effect once the page has scrolled to an anchor.
+    if (s.scrollPaddingTop < s.condensedHeight) return `scroll-padding-top ${s.scrollPaddingTop}px is under the condensed masthead ${s.condensedHeight}px`;
+    return null;
+  },
+);
+
+onPage('/',
+  'footer carries the three links and the address, no Facebook',
+  `JSON.stringify({
+    instagram: Boolean(document.querySelector('.footer a[href*="instagram.com/kolekce_parchant"]')),
+    idivadlo: Boolean(document.querySelector('.footer a[href*="i-divadlo.cz/divadlo/kolekce-parchant"]')),
+    goout: Boolean(document.querySelector('.footer a[href*="goout.net"]')),
+    facebook: Boolean(document.querySelector('a[href*="facebook"]')),
+    address: document.querySelector('.footer').textContent.includes('Klimentská 16'),
+  })`,
+  (raw) => {
+    const f = JSON.parse(raw);
+    if (!f.instagram || !f.idivadlo || !f.goout) return 'a footer link is missing';
+    if (f.facebook) return 'Facebook link present — the client never requested one';
+    if (!f.address) return 'address missing from footer';
+    return null;
+  },
+);
+
+onPage('/',
+  'homepage carries TheaterGroup JSON-LD and a favicon link',
+  `JSON.stringify({
+    schemaType: JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}')['@type'] ?? null,
+    favicon: document.querySelector('link[rel="icon"]')?.getAttribute('href') ?? null,
+  })`,
+  (raw) => {
+    const m = JSON.parse(raw);
+    if (m.schemaType !== 'TheaterGroup') return `schema @type was ${JSON.stringify(m.schemaType)}`;
+    if (m.favicon !== '/favicon.svg') return `favicon href was ${JSON.stringify(m.favicon)}`;
+    return null;
+  },
+);
+
 // --- 4. Run everything at both widths, one browser per width.
 const widths = [320, 390];
 const failures = [];
@@ -267,6 +384,22 @@ try {
       }
     });
   }
+
+  // The condense transition must be suppressed under prefers-reduced-motion:
+  // it snaps instead of animating. Separate visit: media emulation is
+  // per-navigation, so this cannot ride inside the main loop. Runs while the
+  // static server is still up, so it lives inside this try before the
+  // finally below closes it.
+  await withBrowser(async (visit) => {
+    await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844, reducedMotion: true }, async (evaluate) => {
+      const duration = await evaluate(
+        `getComputedStyle(document.querySelector('.masthead__home svg')).transitionDuration`,
+      );
+      const problem = /^0s(, 0s)*$/.test(duration) ? null : `transition-duration is ${duration} under reduced motion`;
+      console.log(`${problem ? 'FAIL' : 'pass'}  [reduced-motion /] condense snaps${problem ? ` — ${problem}` : ''}`);
+      if (problem) failures.push('reduced motion');
+    });
+  });
 } finally {
   server.close();
 }

@@ -64,7 +64,10 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-padding-top: 4rem; }
+/* Must clear the condensed masthead height (.masthead[data-condensed], ~65px)
+   with headroom, since that is the state in effect once a scroll to an
+   anchor has settled. */
+html { scroll-padding-top: 4.5rem; }
 
 body {
   margin: 0;
@@ -88,3 +91,136 @@ img { max-width: 100%; height: auto; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* --- masthead: full lockup at top, mark + Menu once scrolled ------------- */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem var(--gutter);
+  background: var(--cream);
+  border-bottom: 3px solid var(--ink);
+}
+
+.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+
+.masthead__home svg { height: 2.4rem; width: auto; display: block; transition: height 0.2s ease; }
+
+.masthead__name { font-family: var(--display); font-size: 1.3rem; line-height: 1; color: var(--ink); }
+
+.masthead[data-condensed] { padding-block: 0.45rem; }
+.masthead[data-condensed] .masthead__home svg { height: 1.6rem; }
+.masthead[data-condensed] .masthead__name { display: none; }
+
+/* Sentinel the IntersectionObserver watches; out of flow, invisible. */
+.masthead-sentinel { position: absolute; top: 0; width: 1px; height: 1px; }
+
+.burger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  cursor: pointer;
+}
+
+/* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
+.burger__bars {
+  width: 1.25rem;
+  height: 0.75rem;
+  background:
+    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
+}
+
+.burger[aria-expanded="true"] .burger__bars {
+  background:
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
+}
+
+/* --- full-screen nav overlay --------------------------------------------- */
+.nav {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  place-content: center;
+  padding: var(--gutter);
+  background: var(--cherry);
+  /* On the wrapper, not only the links, so <li> nodes never fall back to the
+     inherited ink body colour against cherry. */
+  color: var(--cream);
+}
+
+.nav[data-open] { display: grid; }
+
+.nav__list { margin: 0; padding: 0; list-style: none; display: grid; gap: clamp(0.5rem, 2vw, 1rem); }
+
+.nav__link {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 10vw, 4.5rem);
+  line-height: 1.15;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.nav__link:hover,
+.nav__link:focus-visible { color: var(--lime); }
+
+.nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* --- page scaffold -------------------------------------------------------- */
+.page { padding: var(--band-padding) var(--gutter); }
+
+.page__inner { max-width: 68rem; margin-inline: auto; }
+
+.page-heading {
+  margin: 0 0 2rem;
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  color: var(--cherry);
+}
+
+.prose { max-width: var(--measure); }
+.prose p { margin: 0 0 1em; text-wrap: pretty; }
+
+.link { color: var(--cherry); font-weight: 700; text-underline-offset: 0.2em; }
+
+.credits {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.25rem;
+  margin: 2rem 0 0;
+  font-size: 0.9rem;
+}
+
+.credits dt {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  padding-top: 0.22em;
+}
+
+.credits dd { margin: 0; }
+
+/* --- footer ---------------------------------------------------------------- */
+.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--cream); }
+
+.footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
+
+.footer__links { margin: 0 0 1.5rem; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+
+.footer__links a { color: var(--cream); font-weight: 700; text-underline-offset: 0.2em; }
+
+.footer__address { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
