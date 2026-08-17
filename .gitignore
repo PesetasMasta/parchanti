@@ -5,3 +5,6 @@ inspiration/
 .superpowers/
 dist/
 .astro/
+
+# Unverified personal data about named individuals; must not reach the public repo.
+bios-draft.md
