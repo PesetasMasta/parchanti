@@ -62,8 +62,10 @@
      Expanded clears whichever is taller, the fluid mark or the burger (the
      burger wins below ~570px, the mark above it), plus breathing room; the
      border counts, since box-sizing is border-box. */
-  --masthead-height: calc(max(clamp(2.4rem, 11vw, 3.6rem), 3rem) + 1.4rem + 3px);
-  --masthead-height-condensed: calc(2.1rem + 0.9rem + 3px);
+  --masthead-logo: clamp(2.4rem, 11vw, 3.6rem);
+  --masthead-logo-condensed: 2.1rem;
+  --masthead-height: calc(max(var(--masthead-logo), 3rem) + 1.4rem + 3px);
+  --masthead-height-condensed: calc(var(--masthead-logo-condensed) + 0.9rem + 3px);
 
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
@@ -167,18 +169,88 @@ img { max-width: 100%; height: auto; }
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
    fixed 3.2rem the lockup and the burger no longer fit 320px. */
-.masthead__home svg { height: clamp(2.4rem, 11vw, 3.6rem); width: auto; display: block; transition: height 0.2s ease; }
+.masthead__home svg { height: var(--masthead-logo); width: auto; display: block; transition: height 0.2s ease; }
 
 .masthead__name { font-family: var(--display); font-size: clamp(1rem, 5vw, 1.8rem); line-height: 1; color: var(--ink); }
 
 .masthead[data-condensed] { height: var(--masthead-height-condensed); }
-.masthead[data-condensed] .masthead__home svg { height: 2.1rem; }
+.masthead[data-condensed] .masthead__home svg { height: var(--masthead-logo-condensed); }
 .masthead[data-condensed] .masthead__name { display: none; }
 /* Condensed, the button drops the word and keeps the bars, which read as a
    menu on their own. The button carries aria-label="Menu" so hiding the text
    costs nothing to a screen reader. */
 .masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
 .masthead[data-condensed] .burger__label { display: none; }
+
+/* --- condensing continuously ---------------------------------------------
+
+   The stepped version above is the fallback. Where scroll-driven animations
+   run, the bar follows the scroll instead of flipping at a threshold
+   (2026-08-18: "slo by aby se to postupne zmensovalo? aby tam nebyl ten
+   skok?").
+
+   One registered custom property carries the whole thing: --condense runs 0
+   to 1 across the first --masthead-height of scroll, and every size below is
+   interpolated from it. Registering it is what makes it animatable - an
+   unregistered custom property has no type, so it could only flip between
+   values, which is the very thing being fixed here.
+
+   Base.astro leaves data-condensed alone when this path is live, so the two
+   never both apply. Under prefers-reduced-motion the animation is cancelled
+   along with everything else and --condense holds at its initial 0, so the
+   bar simply stays expanded. */
+@property --condense {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes masthead-condense {
+  to { --condense: 1; }
+}
+
+@supports (animation-timeline: scroll()) {
+  .masthead {
+    /* Longhands, not the shorthand: `animation` resets animation-timeline to
+       auto, which would silently drop the scroll timeline. */
+    animation-name: masthead-condense;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 var(--masthead-height);
+    height: calc(var(--masthead-height) - (var(--masthead-height) - var(--masthead-height-condensed)) * var(--condense));
+    /* The scroll drives it now; a duration on top would lag behind the finger. */
+    transition: none;
+  }
+
+  .masthead__home svg {
+    height: calc(var(--masthead-logo) - (var(--masthead-logo) - var(--masthead-logo-condensed)) * var(--condense));
+    transition: none;
+  }
+
+  /* Both words fade over the first half of the range. Opacity, not display,
+     which cannot interpolate. */
+  .masthead__name,
+  .burger__label { opacity: calc(1 - var(--condense) * 2); }
+
+  /* The button also gives up the word's width, which is what makes it shrink
+     rather than just pale. The name keeps its box on purpose: it wraps to two
+     lines on a narrow screen, and collapsing it would re-wrap the lockup on
+     every scroll frame. Invisible it costs nothing - the burger is pinned
+     right by space-between either way. */
+  .burger__label {
+    max-width: calc(6rem * (1 - var(--condense)));
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .burger {
+    gap: calc(0.6rem * (1 - var(--condense)));
+    padding:
+      calc(0.5rem - 0.05rem * var(--condense))
+      calc(0.9rem - 0.35rem * var(--condense));
+  }
+}
 
 .burger {
   display: flex;

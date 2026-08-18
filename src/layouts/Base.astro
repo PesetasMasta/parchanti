@@ -139,10 +139,24 @@ const currentPath = Astro.url.pathname;
   // by which point the bar overlaps content and has a reason to be smaller.
   // A 1px sentinel fired at 1px of scroll instead, shrinking the bar while its
   // reserved space was still on screen and opening a gap underneath it.
-  const masthead = document.querySelector('.masthead');
-  new IntersectionObserver(([entry]) => {
-    masthead.toggleAttribute('data-condensed', !entry.isIntersecting);
-  }).observe(document.querySelector('.masthead-space'));
+  //
+  // Skipped where CSS can drive the condense off the scroll position itself:
+  // that path shrinks the bar continuously, and toggling the attribute
+  // underneath it would put a second, stepped set of sizes in play.
+  //
+  // Reduced motion is the exception. The scroll-driven condense is an
+  // animation, so it is cancelled with all the others, and --condense holds at
+  // 0 - the bar would simply never shrink. The stepped fallback is the right
+  // answer there: it snaps, which is motion-free, and the space is still
+  // reclaimed. Its [data-condensed] rules outrank the scroll-driven ones on
+  // specificity, so nothing has to be undone.
+  const wantsStillness = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (wantsStillness || !CSS.supports('animation-timeline', 'scroll()')) {
+    const masthead = document.querySelector('.masthead');
+    new IntersectionObserver(([entry]) => {
+      masthead.toggleAttribute('data-condensed', !entry.isIntersecting);
+    }).observe(document.querySelector('.masthead-space'));
+  }
 </script>
 </body>
 </html>

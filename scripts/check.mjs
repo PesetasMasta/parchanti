@@ -332,36 +332,43 @@ onPage('/',
     const masthead = document.querySelector('.masthead');
     const name = document.querySelector('.masthead__name');
     const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    // Hidden by display, by opacity or by visibility - which one is an
+    // implementation detail, and it differs between the scroll-driven path
+    // and its stepped fallback.
+    const hidden = (el) => {
+      const style = getComputedStyle(el);
+      return style.display === 'none'
+        || style.visibility === 'hidden'
+        || parseFloat(style.opacity) === 0;
+    };
     // The page may be short while under construction; the behaviour under
     // test is scroll-driven, so guarantee there is somewhere to scroll to.
     document.body.style.minHeight = '300vh';
     window.scrollTo(0, 0);
     await frame(); await frame();
     const fullHeight = masthead.getBoundingClientRect().height;
-    const nameVisibleAtTop = getComputedStyle(name).display !== 'none';
+    const nameVisibleAtTop = !hidden(name);
     window.scrollTo(0, 600);
     await frame(); await frame(); await new Promise((resolve) => setTimeout(resolve, 350));
-    const condensed = masthead.hasAttribute('data-condensed');
     const condensedHeight = masthead.getBoundingClientRect().height;
-    const nameHiddenAfterScroll = getComputedStyle(name).display === 'none';
+    const nameHiddenAfterScroll = hidden(name);
     const scrollPaddingTop = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
     const burger = document.querySelector('.burger');
     const burgerBox = burger.getBoundingClientRect();
     const burgerCondensed = {
       width: burgerBox.width,
       height: burgerBox.height,
-      labelHidden: getComputedStyle(document.querySelector('.burger__label')).display === 'none',
+      labelHidden: hidden(document.querySelector('.burger__label')),
       barsVisible: getComputedStyle(document.querySelector('.burger__bars')).display !== 'none',
       name: burger.getAttribute('aria-label') ?? burger.textContent.trim(),
     };
     window.scrollTo(0, 0);
     document.body.style.minHeight = '';
-    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensed, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop, burgerCondensed });
+    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop, burgerCondensed });
   })()`,
   (raw) => {
     const s = JSON.parse(raw);
     if (!s.nameVisibleAtTop) return 'the full lockup name is not visible at the top';
-    if (!s.condensed) return 'masthead never gained data-condensed after scrolling';
     if (!s.nameHiddenAfterScroll) return 'the name did not drop away when condensed';
     if (s.condensedHeight >= s.fullHeight) return `condensed ${s.condensedHeight}px is not smaller than full ${s.fullHeight}px`;
     // Condensed, the button keeps only its bars. Shrinking a control is easy
@@ -775,42 +782,118 @@ try {
       const problem = /^0s(, 0s)*$/.test(duration) ? null : `transition-duration is ${duration} under reduced motion`;
       console.log(`${problem ? 'FAIL' : 'pass'}  [reduced-motion /] condense snaps${problem ? ` — ${problem}` : ''}`);
       if (problem) failures.push('reduced motion');
+
+      // Reduced motion means no animation, not no feature. The scroll-driven
+      // condense is cancelled along with every other animation, so the stepped
+      // fallback has to take over - otherwise these readers keep the tall bar
+      // over every screen of the site.
+      const heights = await evaluate(`(async () => {
+        const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
+        const masthead = document.querySelector('.masthead');
+        document.body.style.minHeight = '300vh';
+        window.scrollTo(0, 0);
+        await settle();
+        const expanded = +masthead.getBoundingClientRect().height.toFixed(1);
+        window.scrollTo(0, 600);
+        await settle();
+        const scrolled = +masthead.getBoundingClientRect().height.toFixed(1);
+        window.scrollTo(0, 0);
+        document.body.style.minHeight = '';
+        return { expanded, scrolled };
+      })()`);
+      const stuck = heights.scrolled < heights.expanded
+        ? null
+        : `bar is still ${heights.scrolled}px after scrolling, same as the expanded ${heights.expanded}px`;
+      console.log(`${stuck ? 'FAIL' : 'pass'}  [reduced-motion /] masthead still condenses${stuck ? ` — ${stuck}` : ''}`);
+      if (stuck) failures.push('reduced motion condense');
     });
   });
 
-  // Condensing the masthead must not reflow the page. The header sits at the
-  // top of the document, so if its box changes height every element below it
-  // moves, the document resizes, and scroll anchoring drags the reader
-  // somewhere they did not ask to be. Toggled directly rather than by
-  // scrolling, so this measures the condense and nothing else.
+  // The masthead must shrink with the scroll, not flip between two sizes at a
+  // threshold. Measured at the midpoint of the condense range: a stepped
+  // implementation reads as fully expanded or fully condensed there, a
+  // scroll-linked one reads as neither.
   await withBrowser(async (visit) => {
     for (const width of [320, 390]) {
       await visit(`http://127.0.0.1:${PORT}/`, { width, height: 844 }, async (evaluate) => {
         const measured = await evaluate(`(async () => {
-          const settle = () => new Promise((resolve) => setTimeout(resolve, 350));
+          const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
           const masthead = document.querySelector('.masthead');
-          const below = document.querySelector('main').firstElementChild;
-          const state = () => ({
-            documentHeight: document.documentElement.scrollHeight,
-            contentTop: +(below.getBoundingClientRect().top + window.scrollY).toFixed(1),
-          });
-          masthead.removeAttribute('data-condensed');
-          await settle();
-          const expanded = state();
-          masthead.setAttribute('data-condensed', '');
-          await settle();
-          const condensed = state();
-          masthead.removeAttribute('data-condensed');
-          return { expanded, condensed };
+          document.body.style.minHeight = '300vh';
+          const height = async (y) => {
+            window.scrollTo(0, y);
+            await settle();
+            return +masthead.getBoundingClientRect().height.toFixed(1);
+          };
+          const expanded = await height(0);
+          const range = expanded;
+          const middle = await height(Math.round(range / 2));
+          const condensed = await height(600);
+          window.scrollTo(0, 0);
+          document.body.style.minHeight = '';
+          return {
+            expanded,
+            middle,
+            condensed,
+            supported: CSS.supports('animation-timeline', 'scroll()'),
+          };
         })()`);
-        const { expanded, condensed } = measured;
+        const { expanded, middle, condensed, supported } = measured;
         const wrong = [];
-        const shift = condensed.contentTop - expanded.contentTop;
-        if (Math.abs(shift) > 0.5) wrong.push(`content below moves ${shift.toFixed(1)}px`);
-        if (condensed.documentHeight !== expanded.documentHeight) {
-          wrong.push(`document resizes ${expanded.documentHeight} -> ${condensed.documentHeight}`);
+        if (!supported) wrong.push('browser cannot run scroll-driven animations, so this is unverified');
+        if (middle > expanded - 4) wrong.push(`at half the range it is still ${middle}px, barely off the expanded ${expanded}px`);
+        if (middle < condensed + 4) wrong.push(`at half the range it is already ${middle}px, essentially the condensed ${condensed}px`);
+        const label = `[${width}px /] masthead shrinks with the scroll, not in one step`;
+        console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
+        if (wrong.length) failures.push(label);
+      });
+    }
+  });
+
+  // Shrinking the masthead must not reflow the page. The bar is out of flow
+  // and a constant-height spacer holds its place, so scrolling through the
+  // whole condense range must leave the document the same height and every
+  // element below exactly where it was. When the bar was in flow this drifted
+  // 21.8px and scroll anchoring then dragged the reader off their position.
+  await withBrowser(async (visit) => {
+    for (const width of [320, 390]) {
+      await visit(`http://127.0.0.1:${PORT}/`, { width, height: 844 }, async (evaluate) => {
+        const samples = await evaluate(`(async () => {
+          const settle = () => new Promise((resolve) => setTimeout(resolve, 250));
+          const below = document.querySelector('main').firstElementChild;
+          const out = [];
+          for (const y of [0, 20, 40, 74, 120, 300, 40, 0]) {
+            window.scrollTo(0, y);
+            await settle();
+            out.push({
+              scrollY: Math.round(window.scrollY),
+              requested: y,
+              documentHeight: document.documentElement.scrollHeight,
+              contentTop: +(below.getBoundingClientRect().top + window.scrollY).toFixed(1),
+            });
+          }
+          window.scrollTo(0, 0);
+          return out;
+        })()`);
+        const first = samples[0];
+        const wrong = [];
+        for (const sample of samples) {
+          if (sample.documentHeight !== first.documentHeight) {
+            wrong.push(`at ${sample.requested}px the document is ${sample.documentHeight}, was ${first.documentHeight}`);
+            break;
+          }
         }
-        const label = `[${width}px /] condensing the masthead does not reflow the page`;
+        for (const sample of samples) {
+          if (Math.abs(sample.contentTop - first.contentTop) > 0.5) {
+            wrong.push(`at ${sample.requested}px the content below moved ${(sample.contentTop - first.contentTop).toFixed(1)}px`);
+            break;
+          }
+        }
+        // Scroll anchoring compensating for a resize shows up as a scroll that
+        // does not land where it was sent.
+        const missed = samples.find((sample) => Math.abs(sample.scrollY - sample.requested) > 1);
+        if (missed) wrong.push(`scrollTo(${missed.requested}) landed at ${missed.scrollY}`);
+        const label = `[${width}px /] scrolling through the condense does not reflow the page`;
         console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
         if (wrong.length) failures.push(label);
       });
