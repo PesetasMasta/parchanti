@@ -73,7 +73,13 @@ html { scroll-padding-top: 4.5rem; }
 
 body {
   margin: 0;
-  background: var(--cream);
+  /* The sage cloud ground the client asked for (2026-08-18). Generated
+     Perlin noise, not a sourced wallpaper: nothing to licence, under a
+     kilobyte, and tinted only between lime and cream. Lime is the colour
+     underneath and the darkest the wash ever reaches, so it stays the
+     ground every contrast check measures against. Bands that want to break
+     the wash - .o-nas in olive, cream cards - paint over it as before. */
+  background: url("/assets/clouds.svg") center / cover no-repeat var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
