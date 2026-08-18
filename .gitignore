@@ -8,3 +8,9 @@ dist/
 
 # Unverified personal data about named individuals; must not reach the public repo.
 bios-draft.md
+
+# Client-facing question list; stays out of the public repo.
+QA.md
+
+# Draft of the client e-mail; stays out of the public repo.
+email-otazky.md
