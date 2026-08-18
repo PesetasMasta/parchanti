@@ -850,6 +850,72 @@ try {
     }
   });
 
+  // Condensed, the button is meant to be bare bars: no border, no fill, and
+  // the cherry that was its background carried into the bars themselves
+  // (2026-08-18: "udelej jen tmave carky bez okraju a pozadi. prenes pozadi
+  // velkeho menu do carek na konci cesty"). Its padding has to actually reach
+  // the condensed values too - the first cut of the scroll-driven rules sat
+  // above the base .burger rule and lost to it on source order, so the button
+  // kept full padding around a collapsed label.
+  await withBrowser(async (visit) => {
+    await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844 }, async (evaluate) => {
+      const measured = await evaluate(`(async () => {
+        const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
+        // Colours are read by painting them, not by parsing them: color-mix
+        // computes to color(srgb ...) while plain colours stay rgb(...), and
+        // the comparison is about the colour, not the notation.
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        const sample = (colour) => {
+          context.clearRect(0, 0, 1, 1);
+          context.fillStyle = colour;
+          context.fillRect(0, 0, 1, 1);
+          const data = context.getImageData(0, 0, 1, 1).data;
+          return [data[0], data[1], data[2], Math.round(data[3] / 2.55) / 100];
+        };
+        const burger = document.querySelector('.burger');
+        const bars = document.querySelector('.burger__bars');
+        document.body.style.minHeight = '300vh';
+        const read = async (y) => {
+          window.scrollTo(0, y);
+          await settle();
+          const style = getComputedStyle(burger);
+          return {
+            background: sample(style.backgroundColor),
+            border: sample(style.borderTopColor),
+            bar: sample(getComputedStyle(bars).getPropertyValue('--bar').trim()),
+            padding: parseFloat(style.paddingLeft),
+            gap: parseFloat(style.columnGap),
+          };
+        };
+        const top = await read(0);
+        const scrolled = await read(600);
+        window.scrollTo(0, 0);
+        document.body.style.minHeight = '';
+        return { top, scrolled };
+      })()`);
+      const { top, scrolled } = measured;
+      const CHERRY = [170, 10, 39];
+      const CREAM = [255, 254, 205];
+      const near = (colour, target) => colour
+        && colour[3] > 0.99
+        && target.every((channel, index) => Math.abs(colour[index] - channel) <= 2);
+      const wrong = [];
+      if (!near(top.background, CHERRY)) wrong.push(`at the top the button is not cherry (${top.background})`);
+      if (!near(top.bar, CREAM)) wrong.push(`at the top the bars are not cream (${top.bar})`);
+      if (scrolled.background?.[3] !== 0) wrong.push(`condensed the button still has a fill (alpha ${scrolled.background?.[3]})`);
+      if (scrolled.border?.[3] !== 0) wrong.push(`condensed the button still has a border (alpha ${scrolled.border?.[3]})`);
+      if (!near(scrolled.bar, CHERRY)) wrong.push(`condensed the bars are not cherry (${scrolled.bar})`);
+      if (!(scrolled.padding < top.padding)) wrong.push(`padding did not shrink: ${top.padding} -> ${scrolled.padding}`);
+      if (scrolled.gap !== 0) wrong.push(`condensed the gap beside the dropped label is still ${scrolled.gap}px`);
+      const label = '[/] condensed burger reduces to bare cherry bars';
+      console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
+      if (wrong.length) failures.push(label);
+    });
+  });
+
   // Shrinking the masthead must not reflow the page. The bar is out of flow
   // and a constant-height spacer holds its place, so scrolling through the
   // whole condense range must leave the document the same height and every

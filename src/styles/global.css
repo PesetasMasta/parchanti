@@ -182,6 +182,36 @@ img { max-width: 100%; height: auto; }
 .masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
 .masthead[data-condensed] .burger__label { display: none; }
 
+.burger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: var(--cherry);
+  border: 3px solid var(--ink);
+  cursor: pointer;
+}
+
+/* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
+.burger__bars {
+  width: 1.25rem;
+  height: 0.75rem;
+  background:
+    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
+}
+
+.burger[aria-expanded="true"] .burger__bars {
+  background:
+    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
+}
+
 /* --- condensing continuously ---------------------------------------------
 
    The stepped version above is the fallback. Where scroll-driven animations
@@ -203,6 +233,15 @@ img { max-width: 100%; height: auto; }
   syntax: "<number>";
   inherits: true;
   initial-value: 0;
+}
+
+/* Registered so it resolves to a colour rather than to the text of the
+   color-mix that produced it - that is what lets check.mjs read the bars'
+   actual colour back instead of parsing a gradient string. */
+@property --bar {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #FFFECD;
 }
 
 @keyframes masthead-condense {
@@ -250,37 +289,42 @@ img { max-width: 100%; height: auto; }
       calc(0.5rem - 0.05rem * var(--condense))
       calc(0.9rem - 0.35rem * var(--condense));
   }
+
+  /* At the end of the journey the button sheds its chrome and the cherry it
+     was filled with moves into the bars, so what is left is three bars on the
+     masthead's own cream (2026-08-18: "jen tmave carky bez okraju a pozadi.
+     prenes pozadi velkeho menu do carek na konci cesty").
+
+     Confined to the last quarter on purpose, and measured rather than guessed.
+     The bars have to be light on the cherry fill and dark once it is gone, and
+     no colour is both: any continuous path crosses a point where the bars and
+     what is behind them are the same pink and the button reads as an empty
+     block. Run across the back half that dead spot was ~37px of scroll wide
+     and plainly visible in a screenshot; over the last quarter it is ~8px, a
+     frame or two, and both resting states are well clear of it.
+
+     The border fades to transparent rather than to zero width: the button
+     keeps its size, so the bars do not shift and the tap target does not
+     shrink at the moment it becomes the only thing to aim at. */
+  .burger {
+    --burger-chrome: clamp(0, calc((var(--condense) - 0.75) * 4), 1);
+    background: color-mix(in srgb, var(--cherry), transparent calc(100% * var(--burger-chrome)));
+    border-color: color-mix(in srgb, var(--ink), transparent calc(100% * var(--burger-chrome)));
+  }
+
+  .burger__bars {
+    --bar: color-mix(in srgb, var(--cream), var(--cherry) calc(100% * var(--burger-chrome)));
+    background:
+      linear-gradient(var(--bar) 0 0) 0 0 / 100% 3px no-repeat,
+      linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat,
+      linear-gradient(var(--bar) 0 0) 0 100% / 100% 3px no-repeat;
+  }
+
+  .burger[aria-expanded="true"] .burger__bars {
+    background: linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat;
+  }
 }
 
-.burger {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.9rem;
-  font: inherit;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--cream);
-  background: var(--cherry);
-  border: 3px solid var(--ink);
-  cursor: pointer;
-}
-
-/* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
-.burger__bars {
-  width: 1.25rem;
-  height: 0.75rem;
-  background:
-    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
-    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
-    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
-}
-
-.burger[aria-expanded="true"] .burger__bars {
-  background:
-    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
-}
 
 /* --- full-screen nav overlay --------------------------------------------- */
 .nav {
