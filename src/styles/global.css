@@ -1,18 +1,18 @@
 @font-face {
-  font-family: "DM Serif Display";
+  font-family: "Ultra";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/dm-serif-display-latin-ext.woff2") format("woff2");
+  src: url("/fonts/ultra-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {
-  font-family: "DM Serif Display";
+  font-family: "Ultra";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+  src: url("/fonts/ultra-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -54,7 +54,7 @@
   --cherry: #AA0A27;
   --ink:    #1E1B14;
 
-  --display: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --display: "Ultra", Rockwell, "Arial Black", Georgia, serif;
   --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --measure: 34rem;
@@ -110,12 +110,15 @@ img { max-width: 100%; height: auto; }
 
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
 
-.masthead__home svg { height: 2.4rem; width: auto; display: block; transition: height 0.2s ease; }
+/* Bigger than the first draft at the client's request (2026-08-18), but
+   fluid: Rye is a much wider face than the serif it replaced, and at a
+   fixed 3.2rem the lockup and the burger no longer fit 320px. */
+.masthead__home svg { height: clamp(2.4rem, 11vw, 3.6rem); width: auto; display: block; transition: height 0.2s ease; }
 
-.masthead__name { font-family: var(--display); font-size: 1.3rem; line-height: 1; color: var(--ink); }
+.masthead__name { font-family: var(--display); font-size: clamp(1rem, 5vw, 1.8rem); line-height: 1; color: var(--ink); }
 
 .masthead[data-condensed] { padding-block: 0.45rem; }
-.masthead[data-condensed] .masthead__home svg { height: 1.6rem; }
+.masthead[data-condensed] .masthead__home svg { height: 2.1rem; }
 .masthead[data-condensed] .masthead__name { display: none; }
 /* Condensed, the button drops the word and keeps the bars, which read as a
    menu on their own. The button carries aria-label="Menu" so hiding the text
@@ -194,7 +197,11 @@ img { max-width: 100%; height: auto; }
 
 .page-heading {
   margin: 0 0 2rem;
-  font-size: clamp(2.4rem, 9vw, 4rem);
+  /* Floor lowered for Ultra: a long name set solid - Gertsovskaya - is wider
+     than a 320px screen at the old 2.4rem minimum. break-word is the backstop
+     for a name longer still. */
+  font-size: clamp(1.9rem, 9vw, 4rem);
+  overflow-wrap: break-word;
   color: var(--cherry);
 }
 

@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-17",
+  "updated": "2026-08-18",
   "source": "Client's autumn/winter plan, sent 2026-08-17. Her wording: all performances at 20:00 except Toníkova cesta at 17:30. Weekdays below were verified against the 2026 calendar and all fourteen match what she wrote.",
   "note": "Locally controlled. GoOut is not the company's account (FEEDBACK.md 2026-08-11: \"goout není pod vlastní správou, zařídí si vlastní\"), so nothing here is fetched. Entry shape: {\"when\": \"čt 17. 9. 20:00\", \"title\": \"Hra lásky a náhody\", \"slug\": optional production slug — present only for productions that have a page, \"note\": optional label such as \"premiéra\", \"url\": optional ticket link — omit entirely when tickets are not on sale, \"state\": \"announced\" | \"on_sale\" | \"sold_out\"}. This is NOT the shape fetch-goout.mjs emits; translate by hand.",
-  "unconfirmed": "The 10 Nov Toníkova cesta carries 17:30 from her blanket rule; her list marks the time explicitly only on the October and December ones. \"ČERVÁNKY\" is her own capitalisation, kept verbatim; the i-divadlo title is \"Ale ty červánky jsou stejně nejkrásnější\". No performance has a ticket URL yet.",
+  "unconfirmed": "Confirmed by the client 2026-08-18: every Toníkova cesta is at 17:30, and the title is \"Červánky\" - her short form, first letter only, not the i-divadlo \"Ale ty červánky jsou stejně nejkrásnější\". Still open: no performance has a ticket URL, because GoOut is still being sorted out on her side.",
   "dates": [
     {
       "when": "čt 17. 9. 20:00",
@@ -35,13 +35,13 @@
     },
     {
       "when": "so 24. 10. 20:00",
-      "title": "ČERVÁNKY",
+      "title": "Červánky",
       "note": "premiéra",
       "state": "announced"
     },
     {
       "when": "st 4. 11. 20:00",
-      "title": "ČERVÁNKY",
+      "title": "Červánky",
       "note": "první repríza",
       "state": "announced"
     },
@@ -64,7 +64,7 @@
     },
     {
       "when": "út 1. 12. 20:00",
-      "title": "ČERVÁNKY",
+      "title": "Červánky",
       "note": "druhá repríza",
       "state": "announced"
     },

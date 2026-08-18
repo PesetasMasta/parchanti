@@ -57,7 +57,7 @@ to remember the rule.
 
 Deliberately single-theme. A printed poster is paper, so there is no dark mode.
 
-Type is self-hosted DM Serif Display (display) and Archivo (body) — two woff2
+Type is self-hosted Ultra (display) and Archivo (body) — two woff2
 subsets each, latin and latin-ext. Archivo Black is retired. latin-ext is the
 requirement that eliminates most display faces: `ě š č ř ž ů ť ď ň` live in
 U+0100–017F and are usually the first glyphs a display font drops. `check.mjs`

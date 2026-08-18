@@ -103,25 +103,32 @@ generic(
       probe.textContent = text;
       return probe.getBoundingClientRect().width;
     };
-    // If the face lacks a glyph the browser substitutes from the fallback;
-    // comparing the diacritic string in face+fallback against fallback alone
-    // catches the swap. document.fonts.load() forces the fetch first -
-    // without it this measurement races the async @font-face load and always
-    // reads fallback metrics.
+    // If the face lacks a glyph the browser substitutes silently. Measuring
+    // the face against a family that cannot exist catches that: when both
+    // render from the same system fallback the widths are identical.
+    // Comparing against a named fallback instead (', monospace') does NOT
+    // work - an absent glyph resolves through the system fallback, not
+    // through the listed family, so the widths differ and a face with no
+    // Czech at all passes. Rye passed that way on 2026-08-18 while missing
+    // eight letters. Per character, so the report names them.
+    // document.fonts.load() forces the fetch first - without it this
+    // measurement races the async @font-face load.
     const result = {};
-    for (const family of ['"DM Serif Display"', '"Archivo"']) {
-      await document.fonts.load('64px ' + family, 'ěščřžůťďň');
-      const withDiacritics = widthOf('ěščřžůťďň', family + ', monospace');
-      const fallbackOnly = widthOf('ěščřžůťďň', 'monospace');
-      result[family] = withDiacritics !== fallbackOnly;
+    for (const family of ['"Ultra"', '"Archivo"']) {
+      await document.fonts.load('64px ' + family, 'ěščřžůťďňĚŠČŘŽŮŤĎŇ');
+      const missing = [...'ěščřžůťďňĚŠČŘŽŮŤĎŇ'].filter((character) =>
+        widthOf(character, family) === widthOf(character, '"NoSuchFamily12345"'));
+      result[family] = missing;
     }
     probe.remove();
     return JSON.stringify(result);
   })()`,
   (raw) => {
     const result = JSON.parse(raw);
-    const missing = Object.entries(result).filter(([, ok]) => !ok).map(([family]) => family);
-    return missing.length ? `no Czech glyphs in ${missing.join(', ')}` : null;
+    const broken = Object.entries(result).filter(([, missing]) => missing.length);
+    return broken.length
+      ? broken.map(([family, missing]) => `${family} lacks ${missing.join(' ')}`).join('; ')
+      : null;
   },
 );
 

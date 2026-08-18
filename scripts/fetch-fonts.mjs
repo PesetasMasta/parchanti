@@ -20,10 +20,14 @@ const OUT = new URL('../public/fonts/', import.meta.url);
 const WANTED = ['latin', 'latin-ext'];
 
 const FAMILIES = [
-  // DM Serif Display replaces Archivo Black as the display face
-  // (spec 2026-08-17). It ships latin-ext, which Prata - the closest match
-  // to the client's board - does not; Czech display type is why that matters.
-  { query: 'DM+Serif+Display', family: 'DM Serif Display', weight: '400', file: 'dm-serif-display' },
+  // Ultra is the display face: from the client's own western board
+  // (2026-08-18) and the only face on it that is free, carries latin-ext AND
+  // actually draws the Czech glyphs. Rye was tried first and rejected - its
+  // latin-ext subset is declared but eight letters are simply absent, so the
+  // browser substitutes a serif mid-word. Silverfake, Was Cwayboy and Brim
+  // Narrow from the same board are Canva-only. Never trust the declared
+  // subset; check.mjs probes the glyphs themselves.
+  { query: 'Ultra', family: 'Ultra', weight: '400', file: 'ultra' },
   { query: 'Archivo:wght@400..700', family: 'Archivo', weight: '400 700', file: 'archivo' },
 ];
 
