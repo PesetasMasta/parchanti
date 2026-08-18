@@ -1,13 +1,66 @@
 [
-  { "id": "prokop-zach", "name": "Prokop Zach", "role": "režie, scéna, hraje" },
-  { "id": "zuzana-matuskova", "name": "Zuzana Matušková", "role": "hraje" },
-  { "id": "ondrej-stupka", "name": "Ondřej Stupka", "role": "hraje" },
-  { "id": "maximilian-dolansky", "name": "Maximilián Dolanský", "role": "hraje" },
-  { "id": "maxmilian-kocek", "name": "Maxmilián Kocek", "role": "hraje" },
-  { "id": "matous-vysata", "name": "Matouš Vyšata", "role": "alternace" },
-  { "id": "aliska", "name": "Alisa Gertsovskaya", "role": "hraje" },
-  { "id": "jiri-dlouhy", "name": "Jiří Dlouhý", "role": "hraje" },
-  { "id": "simon-fikar", "name": "Šimon Fikar", "role": "alternace" },
-  { "id": "simon-lorko", "name": "Šimon Lorko", "role": "text" },
-  { "id": "marek-cimbal", "name": "Marek Cimbál", "role": "hudba" }
+  {
+    "id": "prokop-zach",
+    "name": "Prokop Zach",
+    "role": "režie, scéna, hraje",
+    "bio": "Zakladatel souboru. Studuje hudebně-dramatický obor na Pražské konzervatoři a hraje také v Činoherním klubu a Divadle Bez zábradlí."
+  },
+  {
+    "id": "zuzana-matuskova",
+    "name": "Zuzana Matušková",
+    "role": "hraje",
+    "bio": "Studentka Pražské konzervatoře, hostuje také v Divadle na Vinohradech."
+  },
+  {
+    "id": "ondrej-stupka",
+    "name": "Ondřej Stupka",
+    "role": "hraje",
+    "bio": "Studuje na Pražské konzervatoři. Hrál ve filmu Vlny a v seriálu Limity."
+  },
+  {
+    "id": "maximilian-dolansky",
+    "name": "Maximilián Dolanský",
+    "role": "hraje",
+    "bio": "Studuje herectví na Pražské konzervatoři, hraje v Arše a na Jatkách78."
+  },
+  {
+    "id": "maxmilian-kocek",
+    "name": "Maxmilián Kocek",
+    "role": "hraje",
+    "bio": "Na Pražské konzervatoři studuje od roku 2021. Hlavní role v seriálu Metoda Markovič."
+  },
+  {
+    "id": "matous-vysata",
+    "name": "Matouš Vyšata",
+    "role": "alternace"
+  },
+  {
+    "id": "aliska",
+    "name": "Alisa Gertsovskaya",
+    "role": "hraje"
+  },
+  {
+    "id": "jiri-dlouhy",
+    "name": "Jiří Dlouhý",
+    "role": "hraje",
+    "bio": "Studuje na Pražské konzervatoři, hraje v Činoherním klubu a od roku 2023 v seriálu Ulice."
+  },
+  {
+    "id": "simon-fikar",
+    "name": "Šimon Fikar",
+    "role": "alternace",
+    "bio": "Studuje na Pražské konzervatoři. Za dabing Miguela v Cocu dostal cenu Kouzelný prsten."
+  },
+  {
+    "id": "simon-lorko",
+    "name": "Šimon Lorko",
+    "role": "text",
+    "bio": "Studuje režii a dramaturgii na DAMU. Se hrou Sedm nocí vyhrál soutěž Knihovny Václava Havla k výročí Franze Kafky."
+  },
+  {
+    "id": "marek-cimbal",
+    "name": "Marek Cimbál",
+    "role": "hudba",
+    "bio": "Studuje skladbu na Pražské konzervatoři u Miloše Orsona Štědroně. Pro Kolekci Parchant napsal hudbu k oběma inscenacím."
+  }
 ]

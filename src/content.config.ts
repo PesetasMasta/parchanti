@@ -65,6 +65,9 @@ const people = defineCollection({
   schema: z.object({
     name: z.string(),
     role: z.string(),
+    // Optional: two members have no researched sentence yet, and their pages
+    // must render without one rather than showing a gap.
+    bio: z.string().optional(),
   }),
 });
 

@@ -30,6 +30,7 @@ const description = `${person.data.name} (${person.data.role}) — Kolekce Parch
     <div class="page__inner">
       <h1 class="display page-heading">{person.data.name}</h1>
       <p class="person__role">{person.data.role}</p>
+      {person.data.bio && <p class="person__bio">{person.data.bio}</p>}
 
       <h2 class="person__subheading">V inscenacích</h2>
       <ul class="person__productions">
@@ -49,11 +50,22 @@ const description = `${person.data.name} (${person.data.role}) — Kolekce Parch
 
 <style>
   .person__role {
-    margin: 0 0 2rem;
+    margin: 0 0 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-size: 0.85rem;
+  }
+
+  .person__bio {
+    max-width: var(--measure);
+    margin: 0 0 2rem;
+    text-wrap: pretty;
+  }
+
+  /* Two members have no bio yet; keep their heading at the same distance. */
+  .person__role + .person__subheading {
+    margin-top: 2rem;
   }
 
   .person__subheading {
