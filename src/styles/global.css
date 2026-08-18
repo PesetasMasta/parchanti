@@ -73,13 +73,7 @@ html { scroll-padding-top: 4.5rem; }
 
 body {
   margin: 0;
-  /* The sage cloud ground the client asked for (2026-08-18). Generated
-     Perlin noise, not a sourced wallpaper: nothing to licence, under a
-     kilobyte, and tinted only between lime and cream. Lime is the colour
-     underneath and the darkest the wash ever reaches, so it stays the
-     ground every contrast check measures against. Bands that want to break
-     the wash - .o-nas in olive, cream cards - paint over it as before. */
-  background: url("/assets/clouds.svg") center / cover no-repeat var(--lime);
+  background: var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
@@ -195,6 +189,28 @@ img { max-width: 100%; height: auto; }
 .nav__link:focus-visible { color: var(--lime); }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
+   noise, not a sourced wallpaper: nothing to licence, under a kilobyte, and
+   tinted only between lime and cream.
+
+   It is a fixed layer rather than a background on body. `cover` on body sizes
+   the image against the whole document, so on a 2300px page the wash was
+   magnified until a phone saw one flat patch of it. Fixed to the viewport it
+   is the same size on every page and every screen.
+
+   body keeps a solid lime background-color underneath: it is the fallback,
+   the darkest tone the wash ever reaches, and what check.mjs measures
+   contrast against. Bands that break the wash - .o-nas in olive, cream cards
+   - paint over this layer as before. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url("/assets/clouds.svg") center / cover no-repeat var(--lime);
+  pointer-events: none;
+}
 
 /* --- page scaffold -------------------------------------------------------- */
 .page { padding: var(--band-padding) var(--gutter); }
