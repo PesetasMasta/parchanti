@@ -1,16 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
   <!-- The client's sage cloud ground, generated rather than sourced: fractal
-       Perlin noise tinted between the palette's own lime and cream. The low
-       end is clamped at lime so the ground never gets darker than the colour
-       every contrast measurement on this site assumes. -->
+       Perlin noise tinted between the palette's own lime and cream.
+
+       Square and seamless. stitchTiles only wraps when the noise fits the tile
+       a whole number of times, so the base frequency is 4/1200 exactly, and
+       every octave above it doubles to another whole number. Verified by
+       measuring the wrap-around column against an ordinary interior column:
+       the two differ by the same amount, so there is no seam to see.
+
+       The linear pass before the tint is what makes the wash visible at all.
+       fractalNoise clusters around its midpoint, so tinting it directly used
+       only the middle third of lime..cream and the result read as flat on a
+       phone. Stretching first spends the whole range: same two colours, three
+       times the modulation, 0.5% of the tile clipped at the lime end.
+
+       The low end stays clamped at lime - the ground never gets darker than
+       the colour every contrast measurement on this site assumes. -->
   <filter id="clouds" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.0035" numOctaves="5" seed="11" stitchTiles="stitch"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.00333333" numOctaves="5" seed="11" stitchTiles="stitch"/>
     <feColorMatrix type="saturate" values="0"/>
     <feComponentTransfer>
-      <feFuncR type="table" tableValues="0.804 0.92 1.0"/>
-      <feFuncG type="table" tableValues="0.843 0.93 0.996"/>
-      <feFuncB type="table" tableValues="0.541 0.68 0.804"/>
+      <feFuncR type="linear" slope="2.2" intercept="-0.6"/>
+      <feFuncG type="linear" slope="2.2" intercept="-0.6"/>
+      <feFuncB type="linear" slope="2.2" intercept="-0.6"/>
+      <!-- Turbulence writes noise into alpha too; left alone the wash floats
+           half-transparent over the body colour and loses half its contrast. -->
+      <feFuncA type="table" tableValues="1 1"/>
+    </feComponentTransfer>
+    <feComponentTransfer>
+      <feFuncR type="table" tableValues="0.804 1.0"/>
+      <feFuncG type="table" tableValues="0.843 0.996"/>
+      <feFuncB type="table" tableValues="0.541 0.804"/>
     </feComponentTransfer>
   </filter>
-  <rect width="1200" height="1800" filter="url(#clouds)"/>
+  <rect width="1200" height="1200" filter="url(#clouds)"/>
 </svg>

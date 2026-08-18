@@ -60,6 +60,16 @@
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
+
+  /* One cloud tile. Also the drift distance, so the two can never fall out of
+     step. Held small on a phone so a 390px screen still gets whole cloud
+     shapes across it, and opened up on a wide screen so the tile does not
+     visibly repeat. */
+  --cloud-tile: 720px;
+}
+
+@media (min-width: 60rem) {
+  :root { --cloud-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -191,13 +201,24 @@ img { max-width: 100%; height: auto; }
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
 
 /* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
-   noise, not a sourced wallpaper: nothing to licence, under a kilobyte, and
+   noise, not a sourced wallpaper: nothing to licence, two kilobytes, and
    tinted only between lime and cream.
 
    It is a fixed layer rather than a background on body. `cover` on body sizes
    the image against the whole document, so on a 2300px page the wash was
-   magnified until a phone saw one flat patch of it. Fixed to the viewport it
-   is the same size on every page and every screen.
+   magnified until a phone saw one flat patch of it. Sized in px and repeated,
+   the clouds are the same size on every page and every screen - and the tile
+   wraps, so repeating it is invisible.
+
+   The layer drifts (2026-08-18: "lepsi by bylo aby se hejbalo"). It moves by
+   exactly one tile and then starts over, which is why the loop cannot be seen
+   either. It is a transform on a promoted layer, so the drift is composited
+   and nothing repaints: the alternative, animating background-position,
+   re-rasters the whole viewport every frame.
+
+   Oversized by one tile so the translated layer still covers the viewport at
+   the end of the loop, and by no more than that - an overhang costs raster
+   memory on a phone.
 
    body keeps a solid lime background-color underneath: it is the fallback,
    the darkest tone the wash ever reaches, and what check.mjs measures
@@ -206,10 +227,24 @@ img { max-width: 100%; height: auto; }
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  top: calc(var(--cloud-tile) * -1);
+  left: calc(var(--cloud-tile) * -1);
+  width: calc(100% + var(--cloud-tile));
+  height: calc(100% + var(--cloud-tile));
   z-index: -1;
-  background: url("/assets/clouds.svg") center / cover no-repeat var(--lime);
+  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
   pointer-events: none;
+  will-change: transform;
+  animation: cloud-drift 150s linear infinite;
+}
+
+@keyframes cloud-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--cloud-tile), var(--cloud-tile), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
 }
 
 /* --- page scaffold -------------------------------------------------------- */
