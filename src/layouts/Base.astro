@@ -46,7 +46,7 @@ const currentPath = Astro.url.pathname;
 </head>
 <body>
 
-<div class="masthead-sentinel" aria-hidden="true"></div>
+<div class="masthead-space" aria-hidden="true"></div>
 
 <header class="masthead">
   <a class="masthead__home" href="/" aria-label="Kolekce Parchant, domů">
@@ -133,10 +133,16 @@ const currentPath = Astro.url.pathname;
   // Condense the masthead once the page scrolls: the name drops away and the
   // mark steps down (CSS handles both off data-condensed). The transition is
   // killed globally under prefers-reduced-motion, so it snaps there.
+  //
+  // The observed element is the spacer that reserves the masthead's place in
+  // flow, so the condense fires exactly when the page has scrolled past it -
+  // by which point the bar overlaps content and has a reason to be smaller.
+  // A 1px sentinel fired at 1px of scroll instead, shrinking the bar while its
+  // reserved space was still on screen and opening a gap underneath it.
   const masthead = document.querySelector('.masthead');
   new IntersectionObserver(([entry]) => {
     masthead.toggleAttribute('data-condensed', !entry.isIntersecting);
-  }).observe(document.querySelector('.masthead-sentinel'));
+  }).observe(document.querySelector('.masthead-space'));
 </script>
 </body>
 </html>

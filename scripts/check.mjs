@@ -778,6 +778,45 @@ try {
     });
   });
 
+  // Condensing the masthead must not reflow the page. The header sits at the
+  // top of the document, so if its box changes height every element below it
+  // moves, the document resizes, and scroll anchoring drags the reader
+  // somewhere they did not ask to be. Toggled directly rather than by
+  // scrolling, so this measures the condense and nothing else.
+  await withBrowser(async (visit) => {
+    for (const width of [320, 390]) {
+      await visit(`http://127.0.0.1:${PORT}/`, { width, height: 844 }, async (evaluate) => {
+        const measured = await evaluate(`(async () => {
+          const settle = () => new Promise((resolve) => setTimeout(resolve, 350));
+          const masthead = document.querySelector('.masthead');
+          const below = document.querySelector('main').firstElementChild;
+          const state = () => ({
+            documentHeight: document.documentElement.scrollHeight,
+            contentTop: +(below.getBoundingClientRect().top + window.scrollY).toFixed(1),
+          });
+          masthead.removeAttribute('data-condensed');
+          await settle();
+          const expanded = state();
+          masthead.setAttribute('data-condensed', '');
+          await settle();
+          const condensed = state();
+          masthead.removeAttribute('data-condensed');
+          return { expanded, condensed };
+        })()`);
+        const { expanded, condensed } = measured;
+        const wrong = [];
+        const shift = condensed.contentTop - expanded.contentTop;
+        if (Math.abs(shift) > 0.5) wrong.push(`content below moves ${shift.toFixed(1)}px`);
+        if (condensed.documentHeight !== expanded.documentHeight) {
+          wrong.push(`document resizes ${expanded.documentHeight} -> ${condensed.documentHeight}`);
+        }
+        const label = `[${width}px /] condensing the masthead does not reflow the page`;
+        console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
+        if (wrong.length) failures.push(label);
+      });
+    }
+  });
+
   // The cloud ground rides on body, which propagates to the canvas: that is
   // what makes it cover a document of any length and scroll with the text.
   // Checked as computed values, since the tile size and the repeat are the two

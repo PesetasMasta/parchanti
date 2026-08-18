@@ -57,6 +57,14 @@
   --display: "Ultra", Rockwell, "Arial Black", Georgia, serif;
   --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+  /* The masthead is taken out of flow, so its height is declared rather than
+     emergent - the spacer that holds its place has to know the same number.
+     Expanded clears whichever is taller, the fluid mark or the burger (the
+     burger wins below ~570px, the mark above it), plus breathing room; the
+     border counts, since box-sizing is border-box. */
+  --masthead-height: calc(max(clamp(2.4rem, 11vw, 3.6rem), 3rem) + 1.4rem + 3px);
+  --masthead-height-condensed: calc(2.1rem + 0.9rem + 3px);
+
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
@@ -123,19 +131,36 @@ img { max-width: 100%; height: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* --- masthead: full lockup at top, mark + Menu once scrolled ------------- */
+/* --- masthead: full lockup at top, mark + Menu once scrolled -------------
+
+   Fixed, not sticky, and paired with .masthead-space below. Sticky kept the
+   bar in normal flow at the top of the document, so condensing it - 73px down
+   to 51px - reflowed the whole page: everything below jumped 21.8px, the
+   document resized, and scroll anchoring then dragged the reader somewhere
+   they had not scrolled to. Out of flow the bar resizes freely, because
+   nothing is laid out against it. check.mjs asserts the page does not move. */
 .masthead {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 3;
+  height: var(--masthead-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem var(--gutter);
+  padding: 0 var(--gutter);
   background: var(--cream);
   border-bottom: 3px solid var(--ink);
+  transition: height 0.2s ease;
 }
+
+/* Reserves the masthead's place in flow at a constant height, and doubles as
+   the IntersectionObserver target that drives the condense. Constant is the
+   point: it is sized off --masthead-height and never off the bar's current
+   state, so condensing cannot move it. */
+.masthead-space { height: var(--masthead-height); }
 
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
 
@@ -146,7 +171,7 @@ img { max-width: 100%; height: auto; }
 
 .masthead__name { font-family: var(--display); font-size: clamp(1rem, 5vw, 1.8rem); line-height: 1; color: var(--ink); }
 
-.masthead[data-condensed] { padding-block: 0.45rem; }
+.masthead[data-condensed] { height: var(--masthead-height-condensed); }
 .masthead[data-condensed] .masthead__home svg { height: 2.1rem; }
 .masthead[data-condensed] .masthead__name { display: none; }
 /* Condensed, the button drops the word and keeps the bars, which read as a
@@ -154,9 +179,6 @@ img { max-width: 100%; height: auto; }
    costs nothing to a screen reader. */
 .masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
 .masthead[data-condensed] .burger__label { display: none; }
-
-/* Sentinel the IntersectionObserver watches; out of flow, invisible. */
-.masthead-sentinel { position: absolute; top: 0; width: 1px; height: 1px; }
 
 .burger {
   display: flex;
