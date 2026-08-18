@@ -81,9 +81,25 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
+/* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
+   noise, not a sourced wallpaper: nothing to licence, two kilobytes, and
+   tinted only between lime and cream.
+
+   On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
+   textem?"). A background on body propagates to the canvas, which covers the
+   whole document however long the page is - no layer to size, no overhang to
+   clip, no way for it to come up short at the bottom.
+
+   Sized in px and repeated, never `cover`: cover measured against the whole
+   document, so on a 2300px page the wash was magnified until a phone saw one
+   flat patch of it. The tile wraps seamlessly, so repeating it is invisible.
+
+   The lime behind it is the fallback, the darkest tone the wash ever reaches,
+   and what check.mjs measures contrast against. Bands that break the wash -
+   .o-nas in olive, cream cards - paint over it as before. */
 body {
   margin: 0;
-  background: var(--lime);
+  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
@@ -101,7 +117,10 @@ img { max-width: 100%; height: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  /* The pseudo-element selectors matter: `*` alone does not match ::before,
+     so the cloud drift ran straight through this rule until check.mjs caught
+     it. */
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 /* --- masthead: full lockup at top, mark + Menu once scrolled ------------- */
@@ -199,53 +218,6 @@ img { max-width: 100%; height: auto; }
 .nav__link:focus-visible { color: var(--lime); }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
-
-/* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
-   noise, not a sourced wallpaper: nothing to licence, two kilobytes, and
-   tinted only between lime and cream.
-
-   It is a fixed layer rather than a background on body. `cover` on body sizes
-   the image against the whole document, so on a 2300px page the wash was
-   magnified until a phone saw one flat patch of it. Sized in px and repeated,
-   the clouds are the same size on every page and every screen - and the tile
-   wraps, so repeating it is invisible.
-
-   The layer drifts (2026-08-18: "lepsi by bylo aby se hejbalo"). It moves by
-   exactly one tile and then starts over, which is why the loop cannot be seen
-   either. It is a transform on a promoted layer, so the drift is composited
-   and nothing repaints: the alternative, animating background-position,
-   re-rasters the whole viewport every frame.
-
-   Oversized by one tile so the translated layer still covers the viewport at
-   the end of the loop, and by no more than that - an overhang costs raster
-   memory on a phone.
-
-   body keeps a solid lime background-color underneath: it is the fallback,
-   the darkest tone the wash ever reaches, and what check.mjs measures
-   contrast against. Bands that break the wash - .o-nas in olive, cream cards
-   - paint over this layer as before. */
-body::before {
-  content: "";
-  position: fixed;
-  top: calc(var(--cloud-tile) * -1);
-  left: calc(var(--cloud-tile) * -1);
-  width: calc(100% + var(--cloud-tile));
-  height: calc(100% + var(--cloud-tile));
-  z-index: -1;
-  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
-  pointer-events: none;
-  will-change: transform;
-  animation: cloud-drift 150s linear infinite;
-}
-
-@keyframes cloud-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(var(--cloud-tile), var(--cloud-tile), 0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::before { animation: none; }
-}
 
 /* --- page scaffold -------------------------------------------------------- */
 .page { padding: var(--band-padding) var(--gutter); }

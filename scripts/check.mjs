@@ -763,9 +763,8 @@ try {
     });
   }
 
-  // Both moving parts must be suppressed under prefers-reduced-motion: the
-  // condense transition snaps instead of animating, and the cloud ground holds
-  // still. Separate visit: media emulation is per-navigation, so this cannot
+  // The condense transition must be suppressed under prefers-reduced-motion:
+  // it snaps instead of animating. Separate visit: media emulation is per-navigation, so this cannot
   // ride inside the main loop. Runs while the static server is still up, so it
   // lives inside this try before the finally below closes it.
   await withBrowser(async (visit) => {
@@ -776,35 +775,36 @@ try {
       const problem = /^0s(, 0s)*$/.test(duration) ? null : `transition-duration is ${duration} under reduced motion`;
       console.log(`${problem ? 'FAIL' : 'pass'}  [reduced-motion /] condense snaps${problem ? ` — ${problem}` : ''}`);
       if (problem) failures.push('reduced motion');
-
-      const drift = await evaluate(
-        `getComputedStyle(document.body, '::before').animationName`,
-      );
-      const stopped = drift === 'none' ? null : `clouds still run ${drift} under reduced motion`;
-      console.log(`${stopped ? 'FAIL' : 'pass'}  [reduced-motion /] clouds hold still${stopped ? ` — ${stopped}` : ''}`);
-      if (stopped) failures.push('reduced motion clouds');
     });
   });
 
-  // The drift moves the cloud layer by exactly one tile. Any other distance
-  // and the loop jumps, which is the one way a seamless tile can still look
-  // broken. Checked as computed values so the two cannot drift apart in the
-  // stylesheet.
+  // The cloud ground rides on body, which propagates to the canvas: that is
+  // what makes it cover a document of any length and scroll with the text.
+  // Checked as computed values, since the tile size and the repeat are the two
+  // things that would silently go back to a stretched single image.
   await withBrowser(async (visit) => {
     await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844 }, async (evaluate) => {
       const measured = await evaluate(`(() => {
-        const style = getComputedStyle(document.body, '::before');
-        const tile = getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim();
-        return { size: style.backgroundSize, repeat: style.backgroundRepeat, tile };
+        const style = getComputedStyle(document.body);
+        return {
+          size: style.backgroundSize,
+          repeat: style.backgroundRepeat,
+          attachment: style.backgroundAttachment,
+          image: style.backgroundImage,
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
+        };
       })()`);
-      const expected = `${measured.tile} ${measured.tile}`;
-      const problem = measured.size === expected && measured.repeat === 'repeat'
-        ? null
-        : `background is ${measured.size} / ${measured.repeat}, tile is ${measured.tile}`;
-      console.log(`${problem ? 'FAIL' : 'pass'}  [/] clouds tile at one --cloud-tile${problem ? ` — ${problem}` : ''}`);
-      if (problem) failures.push('cloud tiling');
+      const wrong = [];
+      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
+      if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
+      if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
+      if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
+      const label = '[/] cloud ground tiles on body and scrolls with the page';
+      console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
+      if (wrong.length) failures.push(label);
     });
   });
+
 } finally {
   server.close();
   server.closeAllConnections?.();
