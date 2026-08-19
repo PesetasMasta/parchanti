@@ -49,22 +49,17 @@
   color-scheme: only light;
 
   --cream:  #FFFECD;
+  --lime:   #CDD78A;
+  --olive:  #B0BC68;
   --cherry: #AA0A27;
   --ink:    #1E1B14;
 
-  /* The painted wall the client chose 2026-08-19, sampled from her own
-     photograph. The whole wall sits between 1.4% and 21% luminance - it is a
-     dark family throughout, and that one fact drives every colour rule below.
-     Cherry measures 1.0-2.0:1 on it and ink 1.2-2.3:1, so neither survives
-     out here; cream measures 7.3:1 even on the lightest patch. */
-  --forest: #0E2E17;
-  --fern:   #3E5C2B;
-
-  /* Which of the two accents this ground can carry. Cream is the default
-     because the wall is the default ground; every cream or white surface
-     below flips it back to cherry, and headings and links just read it. One
-     token instead of a hand-kept list of selectors per surface. */
-  --accent: var(--cream);
+  /* Which accent the ground underneath can carry. Cherry by default, because
+     the sage ground is light: 4.92:1 on lime, 7.3:1 on cream, 7.55:1 on the
+     white bar. The dark bands below flip it to cream. One token instead of a
+     hand-kept list of selectors per surface - a new card inherits the right
+     answer rather than needing one. */
+  --accent: var(--cherry);
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -90,11 +85,11 @@
      step. Held small on a phone so a 390px screen still gets whole cloud
      shapes across it, and opened up on a wide screen so the tile does not
      visibly repeat. */
-  --wall-tile: 720px;
+  --cloud-tile: 720px;
 }
 
 @media (min-width: 60rem) {
-  :root { --wall-tile: 1100px; }
+  :root { --cloud-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -124,8 +119,8 @@ html { scroll-padding-top: 4.5rem; }
    .o-nas in olive, cream cards - paint over it as before. */
 body {
   margin: 0;
-  background: url("/assets/wall.svg") 0 0 / var(--wall-tile) var(--wall-tile) repeat var(--forest);
-  color: var(--cream);
+  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
+  color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
   line-height: 1.55;
@@ -134,17 +129,12 @@ body {
 
 img { max-width: 100%; height: auto; }
 
-/* The surfaces that paint over the wall. Ink and cherry are unreadable on
-   green, so each one has to hand the type back its dark colours - and the
-   generic contrast assertion in scripts/check.mjs fails the build if a new
-   cream surface is ever added without joining this list. */
-.masthead,
-.ticket,
-.production-card,
-.ensemble__person,
-.press {
-  color: var(--ink);
-  --accent: var(--cherry);
+/* The dark bands. Cherry is 1.9:1 on ink, so anything reading --accent inside
+   them has to get cream instead; the generic contrast assertion in
+   scripts/check.mjs fails the build if a new dark surface skips this. */
+.footer,
+.nav {
+  --accent: var(--cream);
 }
 
 .display {
@@ -383,7 +373,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .nav__link:hover,
-.nav__link:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
+.nav__link:focus-visible { color: var(--lime); }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
 
@@ -428,13 +418,7 @@ img { max-width: 100%; height: auto; }
 .credits dd { margin: 0; }
 
 /* --- footer ---------------------------------------------------------------- */
-/* Ink on a dark green wall barely separates, so the rule does the work. */
-.footer {
-  padding: var(--band-padding) var(--gutter);
-  background: var(--ink);
-  border-top: 3px solid var(--cream);
-  color: var(--cream);
-}
+.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--cream); }
 
 .footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
 
@@ -453,9 +437,7 @@ img { max-width: 100%; height: auto; }
   font-size: 0.85rem;
   color: var(--cream);
   background: var(--cherry);
-  /* Cream, not ink: cherry on the wall is 2:1, so the block's own edge would
-     not read. The border is what separates the button from the ground. */
-  border: 3px solid var(--cream);
+  border: 3px solid var(--ink);
   text-decoration: none;
 }
 

@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
-  <!-- The painted-wall ground, generated rather than sourced: fractal Perlin
-       noise tinted between the two ends of the green the client photographed
-       (2026-08-19). Nothing to licence, two kilobytes.
+  <!-- The client's sage cloud ground, generated rather than sourced: fractal
+       Perlin noise tinted between the palette's own lime and cream.
 
        Square and seamless. stitchTiles only wraps when the noise fits the tile
        a whole number of times, so the base frequency is 4/1200 exactly, and
@@ -15,9 +14,8 @@
        phone. Stretching first spends the whole range: same two colours, three
        times the modulation, 0.5% of the tile clipped at the lime end.
 
-       The low end stays clamped at --forest, and the high end never passes
-       #3E5C2B: cream measures 7.3:1 even on the lightest patch, which is what
-       every contrast measurement on this site assumes. -->
+       The low end stays clamped at lime - the ground never gets darker than
+       the colour every contrast measurement on this site assumes. -->
   <filter id="clouds" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
     <feTurbulence type="fractalNoise" baseFrequency="0.00333333" numOctaves="5" seed="11" stitchTiles="stitch"/>
     <feColorMatrix type="saturate" values="0"/>
@@ -30,9 +28,9 @@
       <feFuncA type="table" tableValues="1 1"/>
     </feComponentTransfer>
     <feComponentTransfer>
-      <feFuncR type="table" tableValues="0.055 0.243"/>
-      <feFuncG type="table" tableValues="0.180 0.361"/>
-      <feFuncB type="table" tableValues="0.090 0.169"/>
+      <feFuncR type="table" tableValues="0.804 1.0"/>
+      <feFuncG type="table" tableValues="0.843 0.996"/>
+      <feFuncB type="table" tableValues="0.541 0.804"/>
     </feComponentTransfer>
   </filter>
   <rect width="1200" height="1200" filter="url(#clouds)"/>

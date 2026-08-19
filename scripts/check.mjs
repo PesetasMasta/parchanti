@@ -979,15 +979,15 @@ try {
           repeat: style.backgroundRepeat,
           attachment: style.backgroundAttachment,
           image: style.backgroundImage,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
         };
       })()`);
       const wrong = [];
-      if (!measured.image.includes('wall.svg')) wrong.push(`image is ${measured.image}`);
+      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
       if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
       if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
       if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      const label = '[/] wall ground tiles on body and scrolls with the page';
+      const label = '[/] cloud ground tiles on body and scrolls with the page';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });
