@@ -134,7 +134,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .hero__title {
     margin: 0;
     font-size: clamp(3rem, 13vw, 6.5rem);
-    color: var(--cherry);
+    color: var(--accent);
   }
 
   .hero__claim:empty { display: none; }
@@ -147,7 +147,8 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     text-wrap: pretty;
   }
 
-  .hero__photo { display: block; border: 3px solid var(--ink); }
+  /* Cream, not ink: the photo sits straight on the wall. */
+  .hero__photo { display: block; border: 3px solid var(--cream); }
 
   .next__eyebrow {
     margin: 0 0 1rem;
@@ -155,7 +156,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 0.8rem;
-    color: var(--cherry);
+    color: var(--accent);
   }
 
   .next__empty {
@@ -180,9 +181,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .production-card img,
   .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); }
 
-  .production-card__blank { aspect-ratio: 900 / 750; background: var(--olive); }
+  .production-card__blank { aspect-ratio: 900 / 750; background: var(--fern); }
 
   .production-card__title { margin: 1rem 0 0.5rem; font-size: clamp(1.5rem, 6vw, 2.2rem); }
 
-  .production-card__title span { display: block; font-size: 0.55em; color: var(--cherry); }
+  .production-card__title span { display: block; font-size: 0.55em; color: var(--accent); }
 </style>

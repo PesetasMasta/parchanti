@@ -1,18 +1,18 @@
 @font-face {
-  font-family: "Ultra";
+  font-family: "Cutive Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/ultra-latin-ext.woff2") format("woff2");
+  src: url("/fonts/cutive-mono-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {
-  font-family: "Ultra";
+  font-family: "Cutive Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/ultra-latin.woff2") format("woff2");
+  src: url("/fonts/cutive-mono-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -49,12 +49,27 @@
   color-scheme: only light;
 
   --cream:  #FFFECD;
-  --lime:   #CDD78A;
-  --olive:  #B0BC68;
   --cherry: #AA0A27;
   --ink:    #1E1B14;
 
-  --display: "Ultra", Rockwell, "Arial Black", Georgia, serif;
+  /* The painted wall the client chose 2026-08-19, sampled from her own
+     photograph. The whole wall sits between 1.4% and 21% luminance - it is a
+     dark family throughout, and that one fact drives every colour rule below.
+     Cherry measures 1.0-2.0:1 on it and ink 1.2-2.3:1, so neither survives
+     out here; cream measures 7.3:1 even on the lightest patch. */
+  --forest: #0E2E17;
+  --fern:   #3E5C2B;
+
+  /* Which of the two accents this ground can carry. Cream is the default
+     because the wall is the default ground; every cream or white surface
+     below flips it back to cherry, and headings and links just read it. One
+     token instead of a hand-kept list of selectors per surface. */
+  --accent: var(--cream);
+
+  /* The typewriter face the client picked 2026-08-19. Fallbacks are
+     metric-neighbours, not lookalikes: a monospace stack keeps the
+     line breaks put while the webfont loads. */
+  --display: "Cutive Mono", "Courier New", Courier, monospace;
   --body: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   /* The masthead is taken out of flow, so its height is declared rather than
@@ -75,11 +90,11 @@
      step. Held small on a phone so a 390px screen still gets whole cloud
      shapes across it, and opened up on a wide screen so the tile does not
      visibly repeat. */
-  --cloud-tile: 720px;
+  --wall-tile: 720px;
 }
 
 @media (min-width: 60rem) {
-  :root { --cloud-tile: 1100px; }
+  :root { --wall-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -109,8 +124,8 @@ html { scroll-padding-top: 4.5rem; }
    .o-nas in olive, cream cards - paint over it as before. */
 body {
   margin: 0;
-  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
-  color: var(--ink);
+  background: url("/assets/wall.svg") 0 0 / var(--wall-tile) var(--wall-tile) repeat var(--forest);
+  color: var(--cream);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
   line-height: 1.55;
@@ -118,6 +133,19 @@ body {
 }
 
 img { max-width: 100%; height: auto; }
+
+/* The surfaces that paint over the wall. Ink and cherry are unreadable on
+   green, so each one has to hand the type back its dark colours - and the
+   generic contrast assertion in scripts/check.mjs fails the build if a new
+   cream surface is ever added without joining this list. */
+.masthead,
+.ticket,
+.production-card,
+.ensemble__person,
+.press {
+  color: var(--ink);
+  --accent: var(--cherry);
+}
 
 .display {
   font-family: var(--display);
@@ -153,7 +181,7 @@ img { max-width: 100%; height: auto; }
   justify-content: space-between;
   gap: 1rem;
   padding: 0 var(--gutter);
-  background: var(--cream);
+  background: #FFFFFF;
   border-bottom: 3px solid var(--ink);
   transition: height 0.2s ease;
 }
@@ -164,7 +192,9 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+/* Cherry, which the mark picks up through currentColor. It reads 7.6:1 on
+   the white bar; on the wall the same file comes through cream. */
+.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--cherry); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
@@ -353,7 +383,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .nav__link:hover,
-.nav__link:focus-visible { color: var(--lime); }
+.nav__link:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
 
@@ -364,18 +394,20 @@ img { max-width: 100%; height: auto; }
 
 .page-heading {
   margin: 0 0 2rem;
-  /* Floor lowered for Ultra: a long name set solid - Gertsovskaya - is wider
+  /* Floor lowered because a long name set solid - Gertsovskaya - is wider
      than a 320px screen at the old 2.4rem minimum. break-word is the backstop
-     for a name longer still. */
+     for a name longer still. Cutive Mono is narrower than Ultra was, so the
+     floor has room to spare now; check.mjs measures it rather than trusting
+     the arithmetic. */
   font-size: clamp(1.9rem, 9vw, 4rem);
   overflow-wrap: break-word;
-  color: var(--cherry);
+  color: var(--accent);
 }
 
 .prose { max-width: var(--measure); }
 .prose p { margin: 0 0 1em; text-wrap: pretty; }
 
-.link { color: var(--cherry); font-weight: 700; text-underline-offset: 0.2em; }
+.link { color: var(--accent); font-weight: 700; text-underline-offset: 0.2em; }
 
 .credits {
   display: grid;
@@ -396,7 +428,13 @@ img { max-width: 100%; height: auto; }
 .credits dd { margin: 0; }
 
 /* --- footer ---------------------------------------------------------------- */
-.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--cream); }
+/* Ink on a dark green wall barely separates, so the rule does the work. */
+.footer {
+  padding: var(--band-padding) var(--gutter);
+  background: var(--ink);
+  border-top: 3px solid var(--cream);
+  color: var(--cream);
+}
 
 .footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
 
@@ -415,14 +453,16 @@ img { max-width: 100%; height: auto; }
   font-size: 0.85rem;
   color: var(--cream);
   background: var(--cherry);
-  border: 3px solid var(--ink);
+  /* Cream, not ink: cherry on the wall is 2:1, so the block's own edge would
+     not read. The border is what separates the button from the ground. */
+  border: 3px solid var(--cream);
   text-decoration: none;
 }
 
 /* --- ticket cards: performance-date entries on both /program and the
    homepage's next-performance strip --------------------------------------- */
 .ticket { padding: 1.5rem; background: var(--cream); border: 3px solid var(--ink); }
-.ticket__date { font-size: 1.5rem; color: var(--cherry); margin: 0 0 0.35rem; }
+.ticket__date { font-size: 1.5rem; color: var(--accent); margin: 0 0 0.35rem; }
 .ticket p { margin: 0 0 0.35rem; }
 .ticket[data-state="sold_out"] { opacity: 0.55; }
 /* "premiéra", "první repríza" — her label for a date, secondary to the title. */

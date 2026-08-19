@@ -1,23 +1,108 @@
 ---
-// The KP mark. Lettering drawn as SVG, not set in a typeface: a stroked
-// skeleton drawn twice (ink extrusion offset down-right, cherry body) plus a
-// thin cream inline. The swash rises off the P. Size is controlled by the
-// consumer via CSS height on the svg.
+// The KP mark, traced from the client's own pen sketch (2026-08-19) and
+// cleaned up: her drawn ring, the K standing in a framed panel, the P looped
+// over it, sparkles off the right shoulder.
+//
+// Everything is currentColor, so one component serves the cherry mark on the
+// white bar and the cream one on the wall. `letters` drops the ring and its
+// decoration: below roughly 80px the frame and the zigzag collapse into a
+// smudge, so anything smaller than that takes the lockup alone.
+interface Props {
+  letters?: boolean;
+}
+const { letters = false } = Astro.props;
 ---
-<svg viewBox="0 0 250 160" aria-hidden="true" fill="none" stroke-linecap="butt" stroke-linejoin="miter">
-  <g transform="translate(12,12)" stroke="#1E1B14" stroke-width="26">
-    <path d="M30,44 V136" /><path d="M30,92 L88,44" /><path d="M30,92 L88,136" />
-    <path d="M132,44 V136" /><path d="M132,44 H162 A30,30 0 0 1 162,104 H132" />
-    <path d="M132,44 V20 C132,6 156,4 162,18" />
-  </g>
-  <g stroke="#AA0A27" stroke-width="26">
-    <path d="M30,44 V136" /><path d="M30,92 L88,44" /><path d="M30,92 L88,136" />
-    <path d="M132,44 V136" /><path d="M132,44 H162 A30,30 0 0 1 162,104 H132" />
-    <path d="M132,44 V20 C132,6 156,4 162,18" />
-  </g>
-  <g stroke="#FFFECD" stroke-width="6">
-    <path d="M30,44 V136" /><path d="M30,92 L88,44" /><path d="M30,92 L88,136" />
-    <path d="M132,44 V136" /><path d="M132,44 H162 A30,30 0 0 1 162,104 H132" />
-    <path d="M132,44 V20 C132,6 156,4 162,18" />
+{letters ? (
+<svg viewBox="27 42 160 124" aria-hidden="true">
+  <g class="kp-letters">
+    <g fill="currentColor">
+      <path d="M31 52 H72 V64 H31 Z"/>
+      <path d="M43 52 H60 V142 H43 Z"/>
+      <path d="M29 130 H74 V142 H29 Z"/>
+    </g>
+    <g fill="none" stroke="currentColor" stroke-linecap="butt">
+      <path d="M59 99 L99 54" stroke-width="15"/>
+      <path d="M59 101 L102 142" stroke-width="17"/>
+    </g>
+
+    <!-- P laid over the K, its loop drawn as one thick stroke -->
+    <g fill="currentColor">
+      <path d="M88 44 H128 V57 H88 Z"/>
+      <path d="M99 44 H118 V162 H99 Z"/>
+      <path d="M86 150 H130 V162 H86 Z"/>
+    </g>
+    <g fill="currentColor">
+      <path d="M118 48
+               C150 48 176 62 176 88
+               C176 114 150 128 118 128
+               L118 111
+               C139 111 156 102 156 88
+               C156 74 139 66 118 66
+               Z"/>
+      <path d="M108 128 H180 V141 H108 Z"/>
+    </g>
   </g>
 </svg>
+) : (
+<svg viewBox="0 0 200 200" aria-hidden="true">
+
+  <!-- Traced from the client's pen sketch (2026-08-19). Her structure kept:
+       drawn ring, K standing in a framed panel, P looped over the top of it,
+       sparkles off the right shoulder. All currentColor, so one file serves
+       the white bar, the dark ground and the footer. -->
+
+  <!-- everything that is frame rather than letter -->
+  <g class="kp-frame" fill="none" stroke="currentColor" stroke-linejoin="round">
+    <path d="M98 7 C150 4 195 46 193 101 C191 154 150 196 99 193 C47 190 8 151 7 99 C6 47 46 10 98 7 Z" stroke-width="5"/>
+    <path d="M186 86 C191 130 157 179 107 184 C75 187 45 172 29 146" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M31 43 H128 V163 H31 Z" stroke-width="3.5"/>
+    <path d="M38 43 V163" stroke-width="2"/>
+    <path d="M43 51 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5" stroke-width="2.2"/>
+    <path d="M43 155 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5" stroke-width="2.2"/>
+    <path d="M22 92 c-7 0 -9 10 -2 11 c6 1 8 -8 1 -10" stroke-width="2"/>
+    <path d="M22 108 c-7 0 -9 10 -2 11 c6 1 8 -8 1 -10" stroke-width="2"/>
+  </g>
+  <g class="kp-frame" fill="currentColor">
+    <circle cx="46" cy="146" r="3.4"/>
+    <circle cx="57" cy="152" r="2.8"/>
+    <circle cx="47" cy="157" r="2.2"/>
+  </g>
+
+  <!-- K: slab stem, slab foot, two arms reaching under the P -->
+  <g class="kp-letters">
+    <g fill="currentColor">
+      <path d="M31 52 H72 V64 H31 Z"/>
+      <path d="M43 52 H60 V142 H43 Z"/>
+      <path d="M29 130 H74 V142 H29 Z"/>
+    </g>
+    <g fill="none" stroke="currentColor" stroke-linecap="butt">
+      <path d="M59 99 L99 54" stroke-width="15"/>
+      <path d="M59 101 L102 142" stroke-width="17"/>
+    </g>
+
+    <!-- P laid over the K, its loop drawn as one thick stroke -->
+    <g fill="currentColor">
+      <path d="M88 44 H128 V57 H88 Z"/>
+      <path d="M99 44 H118 V162 H99 Z"/>
+      <path d="M86 150 H130 V162 H86 Z"/>
+    </g>
+    <g fill="currentColor">
+      <path d="M118 48
+               C150 48 176 62 176 88
+               C176 114 150 128 118 128
+               L118 111
+               C139 111 156 102 156 88
+               C156 74 139 66 118 66
+               Z"/>
+      <path d="M108 128 H180 V141 H108 Z"/>
+    </g>
+  </g>
+
+  <!-- sparkles off the right shoulder -->
+  <g class="kp-frame" fill="currentColor">
+    <path d="M172 34 l3.2 10.5 l10.5 3.2 l-10.5 3.2 l-3.2 10.5 l-3.2 -10.5 l-10.5 -3.2 l10.5 -3.2 Z"/>
+    <path d="M181 68 l2.2 7 l7 2.2 l-7 2.2 l-2.2 7 l-2.2 -7 l-7 -2.2 l7 -2.2 Z"/>
+    <path d="M154 30 l1.7 5.4 l5.4 1.7 l-5.4 1.7 l-1.7 5.4 l-1.7 -5.4 l-5.4 -1.7 l5.4 -1.7 Z"/>
+  </g>
+</svg>
+)}

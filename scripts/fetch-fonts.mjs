@@ -27,7 +27,12 @@ const FAMILIES = [
   // browser substitutes a serif mid-word. Silverfake, Was Cwayboy and Brim
   // Narrow from the same board are Canva-only. Never trust the declared
   // subset; check.mjs probes the glyphs themselves.
-  { query: 'Ultra', family: 'Ultra', weight: '400', file: 'ultra' },
+  // Cutive Mono is the display face the client picked on 2026-08-19 - the
+  // second of the three typewriter faces rendered for her, and the one that
+  // carries all 25 Czech accented letters (probed, not taken on trust). It
+  // replaces Ultra, which came off the western board before she changed
+  // direction to the typewriter.
+  { query: 'Cutive+Mono', family: 'Cutive Mono', weight: '400', file: 'cutive-mono' },
   { query: 'Archivo:wght@400..700', family: 'Archivo', weight: '400 700', file: 'archivo' },
 ];
 

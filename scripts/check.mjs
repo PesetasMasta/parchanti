@@ -114,7 +114,7 @@ generic(
     // document.fonts.load() forces the fetch first - without it this
     // measurement races the async @font-face load.
     const result = {};
-    for (const family of ['"Ultra"', '"Archivo"']) {
+    for (const family of ['"Cutive Mono"', '"Archivo"']) {
       await document.fonts.load('64px ' + family, 'ěščřžůťďňĚŠČŘŽŮŤĎŇ');
       const missing = [...'ěščřžůťďňĚŠČŘŽŮŤĎŇ'].filter((character) =>
         widthOf(character, family) === widthOf(character, '"NoSuchFamily12345"'));
@@ -979,15 +979,15 @@ try {
           repeat: style.backgroundRepeat,
           attachment: style.backgroundAttachment,
           image: style.backgroundImage,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
         };
       })()`);
       const wrong = [];
-      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
+      if (!measured.image.includes('wall.svg')) wrong.push(`image is ${measured.image}`);
       if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
       if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
       if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      const label = '[/] cloud ground tiles on body and scrolls with the page';
+      const label = '[/] wall ground tiles on body and scrolls with the page';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });
