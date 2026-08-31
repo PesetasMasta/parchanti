@@ -1,17 +1,35 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="O nás — Kolekce Parchant" description="Kolekce Parchant je nezávislý divadelní soubor, který hraje ve Studiu Citadela v Praze.">
+<Base title="O Kolekci Parchant — Kolekce Parchant" description="Kolekce Parchant je nezávislý divadelní soubor, který založil Prokop Zach a který hraje ve Studiu Citadela v Praze.">
   <section class="page o-nas">
     <div class="page__inner">
-      <h1 class="display page-heading">O nás</h1>
+      <!-- Renamed at the client's request 2026-08-31 ("O NÁS - přejmenovat na
+           O KOLEKCI PARCHANT"). The /o-nas/ route stays: nothing links to it
+           from outside yet, and this is a label change, not a change to the
+           information architecture. -->
+      <h1 class="display page-heading">O Kolekci Parchant</h1>
 
-      <!-- Her own text is still pending. This holds the space so the layout
-           can be judged; replace it wholesale, do not edit around it. -->
-      <div class="prose" data-placeholder>
+      <!-- Her text, published as she wrote it (2026-08-31). Three slips are
+           deliberately left in - "v dob jeho studií", "To se pomohlo s pomocí
+           herce", and the missing comma after "Max Dolanský" - and go to her
+           in the next QA round. Same rule as "v nové size": we do not correct
+           her words without asking. -->
+      <div class="prose">
         <p>
-          Sem patří text o souboru &mdash; kdo jste, jak jste začali, proč
-          Parchant. Zatím drží místo, aby bylo vidět, kolik ho na stránce je.
+          Soubor Kolekce Parchant byl založen mladým hercem Prokopem Zachem v dob
+          jeho studií na Pražské konzervatoři. Jeho vize byla založit nezávislý
+          mladý soubor, který bude mít možnost dělat si divadlo podle sebe a jít
+          vlastním směrem. To se pomohlo s pomocí herce Ondřeje Stupky se kterým
+          nazkoušeli první inscenaci souboru. V další sezoně se k nim přidal Max
+          Dolanský Zuzana Matušková, Šimon Fikar, Jiří Dlouhý další herci kteří
+          stáli u zrodu druhé inscenace Hra lásky a náhody.
+        </p>
+        <p>
+          Postupem času se do souboru začali přidávat další kolegové a hlavně
+          přátelé a tak společně utvořili soubor, který má na kontě již čtyři
+          inscenace a připravuje další. A to vše na půdě punkového prostoru
+          Studia Citadela.
         </p>
       </div>
     </div>

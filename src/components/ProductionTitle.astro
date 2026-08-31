@@ -1,0 +1,16 @@
+---
+// A production's name, set the way its shape asks for.
+//
+// "Rychlé šípy" + "a záhada klubovny" is a name over a subtitle and reads as
+// two sizes. "Hra lásky a náhody" is one phrase and has to read as one heading
+// (client, 2026-08-31: "hra lásky a náhody musí být velký nadpis") - it simply
+// carries no titleRest. Three templates set production titles, so the rule
+// lives here rather than in each of them.
+interface Props {
+  titleLead: string;
+  titleRest?: string;
+}
+
+const { titleLead, titleRest } = Astro.props;
+---
+{titleLead}{titleRest && <> <span class="production-title__rest">{titleRest}</span></>}

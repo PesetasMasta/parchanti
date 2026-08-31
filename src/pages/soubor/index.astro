@@ -2,67 +2,121 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 
-// Collection order follows the JSON file, which is the approved billing order.
-const people = await getCollection('people');
+// The company's own roster, sent by the client 2026-08-31 - the first
+// authoritative list we have had, replacing the one we compiled from
+// i-divadlo credits.
+//
+// Sorted on `order`, which carries her numbering. getCollection() returns
+// entries sorted by id, so an unsorted list renders alphabetically by slug -
+// which is what the page had been doing all along, unnoticed, because nobody
+// had given us an order that mattered.
+const people = (await getCollection('people'))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const groups = [
+  { key: 'soubor', heading: 'Soubor' },
+  { key: 'host', heading: 'Hosté' },
+];
 ---
 <Base title="Soubor — Kolekce Parchant" description="Lidé souboru Kolekce Parchant — herci a tvůrci nezávislého divadla ze Studia Citadela.">
   <section class="page">
     <div class="page__inner">
       <h1 class="display page-heading">Soubor</h1>
 
-      <!-- Compiled from the two productions' credits on i-divadlo, with the
-           client's corrections applied (Aliska; Maxmilián Kocek; Matouš
-           Vyšata; Mikuláš Polák removed). Still not the company's own list -
-           confirm before launch. -->
-      <ul class="ensemble">
-        {people.map((person) => (
-          <li class="ensemble__person">
-            <a class="ensemble__link" href={`/soubor/${person.id}/`}>
-              <span class="ensemble__name display">{person.data.name}</span>
-              <span class="ensemble__role">{person.data.role}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
-      <p class="ensemble__note">Archivní nahrávky &middot; Tomáš Turek, Roman Zach</p>
+      {groups.map((group) => (
+        <>
+          <h2 class="ensemble__heading">{group.heading}</h2>
+          <ul class="ensemble">
+            {people.filter((person) => person.data.group === group.key).map((person) => (
+              <li class="ensemble__person">
+                <a class="ensemble__link" href={`/soubor/${person.id}/`}>
+                  {/* Portraits are still to come from the company itself;
+                      everyone without one gets a marked blank rather than a
+                      substitute.
+                      Two exceptions, added 2026-08-31 on the client's
+                      instruction and supplied by her: Roman Zach and Tomáš
+                      Turek. Their provenance is not established and no licence
+                      or sitter's consent has been recorded for either - they
+                      are published on her say-so, not because the rights
+                      question was answered. Swap them for photographs the two
+                      of them provide as soon as those exist. */}
+                  {person.data.portrait ? (
+                    <img
+                      class="ensemble__portrait"
+                      src={person.data.portrait.src}
+                      width={person.data.portrait.width}
+                      height={person.data.portrait.height}
+                      alt={person.data.portrait.alt}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span class="ensemble__portrait ensemble__portrait--blank" data-placeholder aria-hidden="true"></span>
+                  )}
+                  <span class="ensemble__name display">{person.data.name}</span>
+                  <span class="ensemble__role">{person.data.role}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
     </div>
   </section>
 </Base>
 
 <style>
+  /* The eyebrow treatment, not a second display heading: the page's own h1
+     already reads "Soubor", and the same word set the same way immediately
+     underneath read as a mistake. Small and tracked, it reads as the label of
+     a group instead. */
+  .ensemble__heading {
+    margin: 3rem 0 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+
+  .ensemble__heading:first-of-type { margin-top: 0; }
+
+  /* Exactly two columns, at every width: "Dva sloupce, vedle sebou dva lidi"
+     (2026-08-31). Not an auto-fill grid - that gave three or four across on a
+     wide screen, which is not what she asked for. */
   .ensemble {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.25rem, 4vw, 2rem);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* Cream, not lime: the cards sit on the lime cloud ground now and would
-     otherwise lose their figure against it. */
-  .ensemble__person { background: var(--cream); border: 3px solid var(--ink); }
-
-  .ensemble__link { display: grid; gap: 0.15rem; padding: 1rem; text-decoration: none; color: var(--ink); }
+  /* "!nedělat rámečky!" - no border, no card ground. The instruction is about
+     this page only; the tickets and the production cards keep their frames,
+     which she asked for in the same message. */
+  .ensemble__link {
+    display: grid;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
 
   .ensemble__link:hover .ensemble__name,
   .ensemble__link:focus-visible .ensemble__name { color: var(--accent); }
 
-  .ensemble__name { font-size: 1.15rem; line-height: 1.15; }
+  /* Portrait above the name above the function, in that order. */
+  .ensemble__portrait { display: block; width: 100%; }
+
+  .ensemble__portrait--blank { aspect-ratio: 3 / 4; background: var(--olive); }
+
+  .ensemble__name { font-size: clamp(1.05rem, 4vw, 1.35rem); line-height: 1.15; overflow-wrap: break-word; }
 
   .ensemble__role {
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-  }
-
-  .ensemble__note {
-    margin: 1.5rem 0 0;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    text-wrap: pretty;
   }
 </style>

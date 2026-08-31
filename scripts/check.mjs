@@ -13,6 +13,7 @@ import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { staticServer } from './serve.mjs';
 import { withBrowser } from './lib/browser.mjs';
+import { displayWhen, czechDate, upcoming, todayISO } from '../src/lib/program.js';
 
 const DIST = new URL('../dist', import.meta.url).pathname;
 const PORT = 4517;
@@ -20,6 +21,28 @@ const PORT = 4517;
 // The program assertions compare the rendered page against the same file the
 // pages render from, so adding a date cannot silently go unchecked.
 const program = JSON.parse(readFileSync(new URL('../data/program.json', import.meta.url), 'utf8'));
+
+// --- 0. Program data, before anything is built. `when` is the client's own
+// display string and `date`/`time` are the machine-readable fields the pages
+// actually render from; they duplicate each other, so they are checked against
+// each other. This is what catches a weekday that has drifted off its date -
+// the fourteen autumn dates were verified against the 2026 calendar by hand
+// once, and this makes that permanent.
+{
+  const wrong = program.dates
+    .map((entry) => ({ entry, derived: displayWhen(entry) }))
+    .filter(({ entry, derived }) => entry.when !== derived);
+  if (wrong.length) {
+    for (const { entry, derived } of wrong) {
+      console.error(`  program.json: "${entry.when}" does not match ${entry.date} ${entry.time} (that is "${derived}")`);
+    }
+    process.exit(1);
+  }
+  if (upcoming(program.dates).length === 0) {
+    console.error(`  program.json: every listed date is behind ${todayISO()} — the site would show the empty state`);
+    process.exit(1);
+  }
+}
 
 // --- 1. Build. A check suite that trusts a pre-existing dist/ can pass on
 // stale output; building here makes that impossible.
@@ -58,6 +81,10 @@ const EXPECTED_ROUTES = [
   '/soubor/maximilian-dolansky/', '/soubor/maxmilian-kocek/', '/soubor/matous-vysata/',
   '/soubor/aliska/', '/soubor/jiri-dlouhy/', '/soubor/simon-fikar/',
   '/soubor/simon-lorko/', '/soubor/marek-cimbal/',
+  // Added 2026-08-31 from the client's own roster: three new guests plus
+  // Mikuláš Polák, whom she removed once and has now put back herself.
+  '/soubor/mikulas-polak/', '/soubor/ondrej-kapusta/',
+  '/soubor/roman-zach/', '/soubor/tomas-turek/',
   '/404.html',
 ].sort();
 
@@ -218,11 +245,14 @@ generic(
 // guarding against walk straight through.
 // 'červánky' was removed from this list on 2026-08-17: the premiere was blocked
 // because she had never mentioned it, and she has now scheduled it herself.
+// 'Mikuláš Polák' was removed on 2026-08-31: she took him off the site once and
+// has now put him back herself, as a guest, on the roster she sent. Her call
+// both times.
 // Hančilová stays out — her name is not needed to list a date, and it is still
 // unverified.
 generic(
   'no forbidden name appears',
-  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Mikuláš Polák', 'Višata', 'Hančilová']
+  `JSON.stringify(['Pivařská', 'Aneta Kalertová', 'Višata', 'Hančilová']
      .filter((needle) => document.documentElement.textContent.toLowerCase().includes(needle.toLowerCase())))`,
   (raw) => {
     const found = JSON.parse(raw);
@@ -313,16 +343,34 @@ onPage('/',
 );
 
 onPage('/',
-  'nav lists the six section pages in order',
-  `JSON.stringify([...document.querySelectorAll('#nav .nav__link')]
-     .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()))`,
+  'nav lists the six section pages in order, then the back control',
+  `JSON.stringify({
+    links: [...document.querySelectorAll('#nav a.nav__link')]
+      .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()),
+    back: (() => {
+      const button = document.querySelector('.nav__back');
+      if (!button) return null;
+      return {
+        label: button.textContent.trim(),
+        // A button, not an anchor: it has no destination, and a dead href
+        // would be a link that goes nowhere.
+        isButton: button.tagName === 'BUTTON',
+        last: button.closest('li') === document.querySelector('.nav__list li:last-child'),
+      };
+    })(),
+  })`,
   (raw) => {
+    const r = JSON.parse(raw);
     const expected = [
       '/program/|Program', '/repertoar/|Repertoár', '/soubor/|Soubor',
-      '/o-nas/|O nás', '/o-prostoru/|O prostoru', '/fotky/|Fotky',
+      '/o-nas/|O Kolekci Parchant', '/o-prostoru/|O prostoru', '/fotky/|Fotky',
     ];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
+    if (JSON.stringify(r.links) !== JSON.stringify(expected)) return `got ${JSON.stringify(r.links)}`;
+    if (!r.back) return 'the back control she asked for is missing from the menu';
+    if (r.back.label !== 'Zpět') return `back control reads ${JSON.stringify(r.back.label)}`;
+    if (!r.back.isButton) return 'the back control must be a button — it has no destination to put in an href';
+    if (!r.back.last) return 'the back control belongs after the section pages, not among them';
+    return null;
   },
 );
 
@@ -443,34 +491,39 @@ onPage('/',
 );
 
 onPage('/',
-  'next-performance strip sits below the hero and shows the first date',
-  `(() => {
-    const strip = document.querySelector('.next');
-    const hero = document.querySelector('.hero');
-    return JSON.stringify({
-      exists: Boolean(strip),
-      belowHero: strip && hero
-        ? strip.getBoundingClientRect().top >= hero.getBoundingClientRect().top
-        : false,
-      emptyVisible: Boolean(strip?.querySelector('.next__empty')),
-      tickets: strip ? strip.querySelectorAll('.ticket').length : -1,
-      when: strip?.querySelector('.ticket__date')?.textContent.trim() ?? null,
-    });
-  })()`,
+  'next-performance strip sits below the hero and shows the next date still to be played',
+  `JSON.stringify({
+    belowHero: (() => {
+      const strip = document.querySelector('.next');
+      const hero = document.querySelector('.hero');
+      return Boolean(strip && hero
+        && strip.getBoundingClientRect().top >= hero.getBoundingClientRect().top);
+    })(),
+    emptyVisible: Boolean(document.querySelector('.next__empty')),
+    cards: document.querySelectorAll('.next .ticket').length,
+    title: document.querySelector('.next .ticket__title')?.textContent.replace(/\\s+/g, ' ').trim(),
+    time: document.querySelector('.next .ticket__time')?.textContent.trim(),
+    day: document.querySelector('.next .ticket__day')?.textContent.trim(),
+    poster: Boolean(document.querySelector('.next .ticket__poster img, .next .ticket__poster-blank')),
+  })`,
   (raw) => {
-    const s = JSON.parse(raw);
-    const next = program.dates[0];
-    if (!s.exists) return 'no .next strip';
-    if (!s.belowHero) return 'the strip must sit below the first screen, not above it';
+    const r = JSON.parse(raw);
+    const next = upcoming(program.dates)[0];
+    if (!r.belowHero) return 'the strip must sit below the first screen, not above it';
     // Both states are asserted here, so the empty state stays covered when the
-    // season ends and dates go back to zero.
+    // season ends and every date has been played.
     if (!next) {
-      if (!s.emptyVisible) return 'no dates, so the empty state must be shown rather than a blank box';
-      return s.tickets === 0 ? null : `expected no tickets, got ${s.tickets}`;
+      if (!r.emptyVisible) return 'nothing left to play, so the empty state must be shown rather than a blank box';
+      return r.cards === 0 ? null : `expected no tickets, got ${r.cards}`;
     }
-    if (s.emptyVisible) return 'dates exist, but the empty state is showing';
-    if (s.tickets !== 1) return `the strip shows the next performance only, got ${s.tickets} cards`;
-    if (s.when !== next.when) return `showed ${JSON.stringify(s.when)}, first date is ${JSON.stringify(next.when)}`;
+    if (r.emptyVisible) return 'dates are still to come, but the empty state is showing';
+    if (r.cards !== 1) return `expected exactly one next performance, got ${r.cards}`;
+    // The bug this exists for: the strip used to render dates[0], so it would
+    // have advertised 17. 9. from 18. 9. onwards with nobody noticing.
+    if (r.day !== czechDate(next.date)) return `shows ${JSON.stringify(r.day)}, but the next date still to be played is ${czechDate(next.date)}`;
+    if (r.time !== next.time) return `shows ${JSON.stringify(r.time)}, expected ${JSON.stringify(next.time)}`;
+    if (!r.title?.includes(next.title.split(' ')[0])) return `title was ${JSON.stringify(r.title)}, expected ${JSON.stringify(next.title)}`;
+    if (!r.poster) return 'the mini-poster slot she asked for is missing';
     return null;
   },
 );
@@ -487,31 +540,40 @@ onPage('/',
 );
 
 onPage('/program/',
-  'program lists every date she sent, linking the productions that have pages',
+  'program lists every date still to be played, as title over time over date',
   `JSON.stringify({
     heading: document.querySelector('.page-heading')?.textContent.trim(),
     emptyVisible: Boolean(document.querySelector('.program__empty')),
+    accessNote: document.body.textContent.includes('Prostor není bezbariérový'),
     cards: [...document.querySelectorAll('.ticket')].map((card) => ({
-      when: card.querySelector('.ticket__date')?.textContent.trim(),
+      title: card.querySelector('.ticket__title')?.textContent.replace(/\\s+/g, ' ').trim(),
+      time: card.querySelector('.ticket__time')?.textContent.trim(),
+      day: card.querySelector('.ticket__day')?.textContent.trim(),
+      meta: card.querySelector('.ticket__meta')?.textContent.trim() ?? null,
+      poster: Boolean(card.querySelector('.ticket__poster img, .ticket__poster-blank')),
       links: [...card.querySelectorAll('a')].map((a) => a.getAttribute('href')),
     })),
   })`,
   (raw) => {
     const p = JSON.parse(raw);
+    const dates = upcoming(program.dates);
     if (p.heading !== 'Program') return `heading was ${JSON.stringify(p.heading)}`;
-    if (!program.dates.length) {
-      if (!p.emptyVisible) return 'no dates, so the empty state must be shown';
+    if (!p.accessNote) return 'the accessibility line she asked for is missing';
+    if (!dates.length) {
+      if (!p.emptyVisible) return 'no dates left to play, so the empty state must be shown';
       return p.cards.length === 0 ? null : `expected no cards, got ${p.cards.length}`;
     }
     if (p.emptyVisible) return 'dates exist, but the empty state is showing';
-    if (p.cards.length !== program.dates.length) {
-      return `${p.cards.length} cards for ${program.dates.length} dates — every date she sent must be listed`;
+    if (p.cards.length !== dates.length) {
+      return `${p.cards.length} cards for ${dates.length} dates still to be played`;
     }
-    for (const [index, date] of program.dates.entries()) {
+    for (const [index, date] of dates.entries()) {
       const card = p.cards[index];
-      if (card.when !== date.when) {
-        return `card ${index + 1} reads ${JSON.stringify(card.when)}, expected ${JSON.stringify(date.when)}`;
-      }
+      // Title, time and date each in their own line, stacked - not one run of
+      // text (client, 2026-08-31).
+      if (card.time !== date.time) return `card ${index + 1} time is ${JSON.stringify(card.time)}, expected ${JSON.stringify(date.time)}`;
+      if (card.day !== czechDate(date.date)) return `card ${index + 1} date is ${JSON.stringify(card.day)}, expected ${JSON.stringify(czechDate(date.date))}`;
+      if (!card.poster) return `card ${index + 1} has no mini-poster slot`;
       // A production with a page is reachable from its date; one without a
       // page must not link anywhere, least of all to a route that does not exist.
       const expected = date.slug ? [`/repertoar/${date.slug}/`] : [];
@@ -519,7 +581,15 @@ onPage('/program/',
       if (JSON.stringify(internal) !== JSON.stringify(expected)) {
         return `card ${index + 1} (${date.title}) links ${JSON.stringify(internal)}, expected ${JSON.stringify(expected)}`;
       }
+      // Running time and age come from the production, so only dates with a
+      // page can carry them. Toníkova cesta and Červánky have neither.
+      if (!date.slug && card.meta) return `card ${index + 1} (${date.title}) has no page, so it cannot show ${JSON.stringify(card.meta)}`;
     }
+    const sipy = p.cards.find((card) => card.title.startsWith('Rychlé šípy'));
+    if (!sipy || !sipy.meta?.includes('1 hodina')) return `Rychlé šípy must show the running time she gave: got ${JSON.stringify(sipy?.meta)}`;
+    if (!sipy.meta.includes('0+')) return `Rychlé šípy must show 0+: got ${JSON.stringify(sipy.meta)}`;
+    const hra = p.cards.find((card) => card.title.startsWith('Hra lásky'));
+    if (!hra || hra.meta !== '12+') return `Hra lásky must show 12+ and no running time (she has not given one): got ${JSON.stringify(hra?.meta)}`;
     return null;
   },
 );
@@ -530,6 +600,8 @@ onPage('/repertoar/',
     slugs: [...document.querySelectorAll('[data-slug]')].map((el) => el.dataset.slug),
     hasClientWording: document.body.textContent.includes('v nové size'),
     detailLinks: [...document.querySelectorAll('[data-slug] a')].map((a) => a.getAttribute('href')),
+    hraSplit: Boolean(document.querySelector('[data-slug="hra-lasky-a-nahody"] .production-title__rest')),
+    sipySplit: Boolean(document.querySelector('[data-slug="rychle-sipy-a-zahada-klubovny"] .production-title__rest')),
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -540,7 +612,13 @@ onPage('/repertoar/',
     }
     const missing = expected.map((slug) => `/repertoar/${slug}/`)
       .filter((href) => !r.detailLinks.includes(href));
-    return missing.length ? `no link to ${missing.join(', ')}` : null;
+    if (missing.length) return `no link to ${missing.join(', ')}`;
+    // "hra lásky a náhody musí být velký nadpis" (2026-08-31, item 7). The
+    // whole phrase is the name, so it must not be split into a title and a
+    // half-size subtitle the way the two-part šípy title is.
+    if (r.hraSplit) return 'Hra lásky a náhody is still set as a title plus a subtitle — the whole phrase is the heading';
+    if (!r.sipySplit) return 'Rychlé šípy has a real subtitle and must keep the two sizes';
+    return null;
   },
 );
 
@@ -554,6 +632,8 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     castLinks: [...document.querySelectorAll('.cast a')].map((a) => a.getAttribute('href')),
     foglar: document.body.textContent.includes('na motivy knih Jaroslava Foglara'),
     premiere: document.body.textContent.includes('30. 1. 2026'),
+    credits: [...document.querySelectorAll('.credits dt')].map((dt) => dt.textContent.trim()),
+    creditsText: document.querySelector('.credits')?.textContent.replace(/\\s+/g, ' ').trim(),
     blurb: document.body.textContent.includes('v nové size'),
     photos: document.querySelectorAll('.gallery img').length,
   })`,
@@ -566,8 +646,17 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     if (!r.footers[0].includes('Hessy') || !r.footers[0].includes('90 %')) return `first quote footer was ${JSON.stringify(r.footers[0])}`;
     if (r.score !== '87 %') return `score was ${JSON.stringify(r.score)}`;
     if (!r.castText.includes('Maxmilián Kocek / Matouš Vyšata')) return 'alternation must render as "Maxmilián Kocek / Matouš Vyšata"';
-    if (r.castLinks.length !== 6) return `expected 6 cast links, got ${r.castLinks.length}`;
+    // Ondřej Kapusta joined the cast at her request, 2026-08-31.
+    if (r.castLinks.length !== 7) return `expected 7 cast links, got ${r.castLinks.length}`;
+    if (!r.castLinks.includes('/soubor/ondrej-kapusta/')) return 'Ondřej Kapusta is missing from the cast';
     if (!r.castLinks.includes('/soubor/maxmilian-kocek/')) return 'cast links do not point at person pages';
+    // Her labels and her numbers, not the ones we invented or took elsewhere.
+    if (!r.credits.includes('Hlas ze záznamu')) return `credit labels are ${JSON.stringify(r.credits)} — she asked for "hlas ze záznamu", not "Archivní nahrávky"`;
+    if (r.credits.includes('Archivní nahrávky')) return '"Archivní nahrávky" is the label she replaced';
+    if (!r.credits.includes('Světla')) return 'the lights credit for Marek Cimbál is missing';
+    if (!r.creditsText.includes('1 hodina')) return 'running time must read "1 hodina" — her correction, 2026-08-31';
+    if (r.creditsText.includes('1 h 15 min')) return 'the old running time is still on the page';
+    if (!r.creditsText.includes('0+')) return 'age must read 0+ — her correction, 2026-08-31';
     if (!r.foglar) return 'Foglar credit line missing';
     if (!r.premiere) return 'premiere date missing';
     if (!r.blurb) return 'blurb (with "v nové size") missing from the production page';
@@ -584,6 +673,9 @@ onPage('/repertoar/hra-lasky-a-nahody/',
     aliska: [...document.querySelectorAll('.cast a')].some((a) => a.getAttribute('href') === '/soubor/aliska/'),
     photos: document.querySelectorAll('.gallery img').length,
     idivadlo: Boolean(document.querySelector('a[href*="i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody"]')),
+    heading: document.querySelector('h1')?.textContent.replace(/\\s+/g, ' ').trim(),
+    headingSplit: Boolean(document.querySelector('h1 .production-title__rest')),
+    creditsText: document.querySelector('.credits')?.textContent.replace(/\\s+/g, ' ').trim(),
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -592,20 +684,69 @@ onPage('/repertoar/hra-lasky-a-nahody/',
     if (!r.aliska) return 'Aliska missing from cast links';
     if (r.photos !== 0) return "no identifiable photos exist for this production — showing any misattributes someone's work";
     if (!r.idivadlo) return 'i-divadlo source link missing';
+    if (r.heading !== 'Hra lásky a náhody') return `heading was ${JSON.stringify(r.heading)}`;
+    if (r.headingSplit) return 'the whole title is the heading — it must not be split into two sizes';
+    if (!r.creditsText.includes('12+')) return 'age must read 12+ — her correction, 2026-08-31';
+    if (!r.creditsText.includes('Světla')) return 'the lights credit for Marek Cimbál is missing';
+    // She has not given a running time for this one; inventing one would be
+    // worse than the gap. QA.md asks her.
+    if (r.creditsText.includes('Délka')) return 'no running time has been given for Hra lásky — do not invent one';
     return null;
   },
 );
 
 onPage('/soubor/',
-  'ensemble lists all eleven people, each linking to their page',
-  `JSON.stringify([...document.querySelectorAll('.ensemble a')]
-     .map((a) => a.getAttribute('href')))`,
+  'her roster, in her order, split into soubor and hosté, two columns, no frames',
+  `JSON.stringify({
+    headings: [...document.querySelectorAll('.ensemble__heading')].map((h) => h.textContent.trim()),
+    groups: [...document.querySelectorAll('.ensemble')].map((list) => ({
+      columns: getComputedStyle(list).gridTemplateColumns.split(' ').length,
+      people: [...list.querySelectorAll('.ensemble__link')].map((link) => ({
+        href: link.getAttribute('href'),
+        name: link.querySelector('.ensemble__name')?.textContent.trim(),
+        role: link.querySelector('.ensemble__role')?.textContent.trim(),
+        portrait: Boolean(link.querySelector('.ensemble__portrait')),
+        // "!nedělat rámečky!" - the instruction is about this page, and only
+        // this page. A border creeping back in has to fail here.
+        framed: getComputedStyle(link).borderTopWidth !== '0px'
+          || getComputedStyle(link.parentElement).borderTopWidth !== '0px',
+      })),
+    })),
+  })`,
   (raw) => {
-    const links = JSON.parse(raw);
-    if (links.length !== 11) return `expected 11 person links, got ${links.length}`;
-    for (const slug of ['prokop-zach', 'aliska', 'maxmilian-kocek', 'maximilian-dolansky', 'matous-vysata']) {
-      if (!links.includes(`/soubor/${slug}/`)) return `missing link to /soubor/${slug}/`;
+    const r = JSON.parse(raw);
+    if (JSON.stringify(r.headings) !== JSON.stringify(['Soubor', 'Hosté'])) {
+      return `group headings were ${JSON.stringify(r.headings)} — she asked for the two lists kept apart`;
     }
+    if (r.groups.length !== 2) return `expected two lists, got ${r.groups.length}`;
+    for (const group of r.groups) {
+      if (group.columns !== 2) return `a list renders ${group.columns} columns — she asked for exactly two`;
+      const framed = group.people.filter((person) => person.framed);
+      if (framed.length) return `framed: ${framed.map((p) => p.name).join(', ')} — "!nedělat rámečky!"`;
+      const noPortrait = group.people.filter((person) => !person.portrait);
+      if (noPortrait.length) return `no portrait slot for ${noPortrait.map((p) => p.name).join(', ')}`;
+    }
+
+    // Her list, in her numbering, with her own role wording.
+    const soubor = r.groups[0].people;
+    const hoste = r.groups[1].people;
+    const expectedSoubor = [
+      'Prokop Zach', 'Ondřej Stupka', 'Zuzana Matušková', 'Marek Cimbál',
+      'Šimon Fikar', 'Jiří Dlouhý', 'Matouš Vyšata', 'Maximilián Dolanský',
+    ];
+    if (JSON.stringify(soubor.map((p) => p.name)) !== JSON.stringify(expectedSoubor)) {
+      return `soubor is ${JSON.stringify(soubor.map((p) => p.name))} — her order, her list`;
+    }
+    for (const name of ['Mikuláš Polák', 'Ondřej Kapusta', 'Roman Zach', 'Tomáš Turek']) {
+      if (!hoste.some((person) => person.name === name)) return `${name} is missing from hosté`;
+    }
+    if (soubor[0].role !== 'umělecký šéf divadla, režisér, scénograf, herec') {
+      return `Prokop Zach's function reads ${JSON.stringify(soubor[0].role)} — her wording, verbatim`;
+    }
+    if (!soubor[3].role.includes('osvětlovač')) return "Marek Cimbál's lights are missing from his function";
+    const links = [...soubor, ...hoste].map((person) => person.href);
+    if (links.length !== 15) return `expected 15 people, got ${links.length}`;
+    if (new Set(links).size !== links.length) return 'somebody is listed twice';
     return null;
   },
 );
@@ -656,15 +797,26 @@ onPage('/soubor/aliska/',
 );
 
 onPage('/o-nas/',
-  'O nás holds marked placeholder prose, nothing invented',
+  'O Kolekci Parchant carries her text, published as she wrote it',
   `JSON.stringify({
+    heading: document.querySelector('.page-heading')?.textContent.trim(),
     placeholder: Boolean(document.querySelector('[data-placeholder]')),
-    mentionsPending: document.querySelector('[data-placeholder]')?.textContent.includes('drží místo') ?? false,
+    text: document.querySelector('.prose')?.textContent.replace(/\\s+/g, ' ').trim(),
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    if (!r.placeholder) return 'O nás prose is still pending from the client and must be marked data-placeholder';
-    if (!r.mentionsPending) return 'placeholder text must say it is holding space, so nobody mistakes it for real copy';
+    if (r.heading !== 'O Kolekci Parchant') return `heading was ${JSON.stringify(r.heading)}`;
+    if (r.placeholder) return 'her text has arrived, so nothing here may still be marked as placeholder';
+    // Her three slips are load-bearing in this check: correcting her words
+    // without asking is exactly what it is here to prevent. QA.md asks her.
+    for (const phrase of [
+      'byl založen mladým hercem Prokopem Zachem v dob jeho studií',
+      'To se pomohlo s pomocí herce Ondřeje Stupky',
+      'přidal Max Dolanský Zuzana Matušková',
+      'na půdě punkového prostoru Studia Citadela',
+    ]) {
+      if (!r.text?.includes(phrase)) return `her wording is altered or missing: ${JSON.stringify(phrase)}`;
+    }
     return null;
   },
 );
@@ -851,7 +1003,7 @@ try {
   });
 
   // Condensed, the button is meant to be bare bars: no border, no fill, and
-  // the cherry that was its background carried into the bars themselves
+  // the brick that was its background carried into the bars themselves
   // (2026-08-18: "udelej jen tmave carky bez okraju a pozadi. prenes pozadi
   // velkeho menu do carek na konci cesty"). Its padding has to actually reach
   // the condensed values too - the first cut of the scroll-driven rules sat
@@ -897,20 +1049,20 @@ try {
         return { top, scrolled };
       })()`);
       const { top, scrolled } = measured;
-      const CHERRY = [170, 10, 39];
+      const BRICK = [148, 49, 32];
       const CREAM = [255, 254, 205];
       const near = (colour, target) => colour
         && colour[3] > 0.99
         && target.every((channel, index) => Math.abs(colour[index] - channel) <= 2);
       const wrong = [];
-      if (!near(top.background, CHERRY)) wrong.push(`at the top the button is not cherry (${top.background})`);
+      if (!near(top.background, BRICK)) wrong.push(`at the top the button is not brick (${top.background})`);
       if (!near(top.bar, CREAM)) wrong.push(`at the top the bars are not cream (${top.bar})`);
       if (scrolled.background?.[3] !== 0) wrong.push(`condensed the button still has a fill (alpha ${scrolled.background?.[3]})`);
       if (scrolled.border?.[3] !== 0) wrong.push(`condensed the button still has a border (alpha ${scrolled.border?.[3]})`);
-      if (!near(scrolled.bar, CHERRY)) wrong.push(`condensed the bars are not cherry (${scrolled.bar})`);
+      if (!near(scrolled.bar, BRICK)) wrong.push(`condensed the bars are not brick (${scrolled.bar})`);
       if (!(scrolled.padding < top.padding)) wrong.push(`padding did not shrink: ${top.padding} -> ${scrolled.padding}`);
       if (scrolled.gap !== 0) wrong.push(`condensed the gap beside the dropped label is still ${scrolled.gap}px`);
-      const label = '[/] condensed burger reduces to bare cherry bars';
+      const label = '[/] condensed burger reduces to bare brick bars';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });

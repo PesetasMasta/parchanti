@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import ProductionTitle from '../../components/ProductionTitle.astro';
 
 export async function getStaticPaths() {
   const people = await getCollection('people');
@@ -37,7 +38,7 @@ const description = `${person.data.name} (${person.data.role}) — Kolekce Parch
         {productions.map((production) => (
           <li>
             <a class="link" href={`/repertoar/${production.id}/`}>
-              {production.data.titleLead} {production.data.titleRest}
+              {[production.data.titleLead, production.data.titleRest].filter(Boolean).join(' ')}
             </a>
           </li>
         ))}

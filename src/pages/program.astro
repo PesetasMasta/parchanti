@@ -1,13 +1,26 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import PerformanceDate from '../components/PerformanceDate.astro';
 import program from '../../data/program.json';
+import { upcoming } from '../lib/program.js';
+
+// Running time, age and poster live on the production, so each date is joined
+// to its production by slug. Toníkova cesta and Červánky have no page and so
+// no production entry; their dates render title, time and date only.
+const productions = await getCollection('productions');
+const productionOf = new Map(productions.map((production) => [production.id, production]));
+
+// Past dates drop off by themselves on the next build, rather than sitting on
+// the page until someone edits the file by hand.
+const dates = upcoming(program.dates);
 ---
 <Base title="Program — Kolekce Parchant" description="Termíny představení souboru Kolekce Parchant ve Studiu Citadela v Praze.">
   <section class="page">
     <div class="page__inner">
       <h1 class="display page-heading">Program</h1>
 
-      {program.dates.length === 0 ? (
+      {dates.length === 0 ? (
         <div class="program__empty">
           <p class="program__empty-title display">Zatím žádný vypsaný termín</p>
           <p>Jakmile vypíšeme nové termíny, najdete je tady.</p>
@@ -15,21 +28,16 @@ import program from '../../data/program.json';
         </div>
       ) : (
         <div class="program__list">
-          {program.dates.map((date) => (
-            <article class="ticket" data-state={date.state}>
-              <p class="ticket__date display">{date.when}</p>
-              <p>
-                {date.slug
-                  ? <a class="link" href={`/repertoar/${date.slug}/`}>{date.title}</a>
-                  : date.title}
-                {date.note && <span class="ticket__note"> &mdash; {date.note}</span>}
-              </p>
-              {/* No ticketing yet, so no link is rendered rather than an empty one. */}
-              {date.url && <p><a class="link" href={date.url}>Vstupenky</a></p>}
-            </article>
+          {dates.map((date) => (
+            <PerformanceDate entry={date} production={date.slug ? productionOf.get(date.slug) : undefined} />
           ))}
         </div>
       )}
+
+      <!-- Client request 2026-08-31, item 6: "nekde vecpat to ze 'prostor
+           neni bezbariérový'". Here, next to the dates someone is deciding
+           between, and again on /o-prostoru/ with the address and the trams. -->
+      <p class="access-note">Prostor není bezbariérový.</p>
     </div>
   </section>
 </Base>
@@ -49,5 +57,5 @@ import program from '../../data/program.json';
     color: var(--accent);
   }
 
-  .program__list { display: grid; gap: 1rem; max-width: var(--measure); }
+  .program__list { max-width: var(--measure); }
 </style>

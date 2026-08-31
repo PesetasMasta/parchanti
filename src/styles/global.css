@@ -37,29 +37,54 @@
 /* ---------------------------------------------------------------------------
    One visual system for the whole site, so it lives in one file.
 
-   Palette from the client's colour boards: Lime Sherbet ground family plus
-   Barbados Cherry. One red only - the previous punch red #EB313F is dropped
-   (spec 2026-08-17). Cherry on cream is ~7.3:1 and passes at any size.
+   Palette sampled from the client's own logo (2026-08-31: "změna barev dle
+   loga na instagramu"), off the artwork she sent rather than off the feed.
+   The mark is a red letterpress name on a green watercolour disc:
+
+     the wash runs #B9DC86 (light) to #8FC480 (mid)  -> --lime, --olive
+     the letters are #B73D28                         -> --brick
+
+   --brick keeps that red's hue (9deg) and saturation (64%) exactly and gives
+   up nine points of lightness, 44% to 35%. That is not a taste decision: the
+   sampled red reads 3.69:1 on the green ground, so every link and eyebrow
+   sitting on the cloud wash would have been unreadable. At #943120 the same
+   red carries 5.2:1 there, with headroom for browser rounding, and 7.5:1 on
+   cream. One red only, as before - a second, lighter one for large type would
+   put the old two-red problem back.
+
+   Cream is unchanged: it is the paper the cards are printed on, and the logo
+   has no cream in it to sample.
+
    Cream never sits on lime or olive (~2:1); those grounds take ink.
-   scripts/check.mjs enforces the contrast on every page.
+   scripts/check.mjs enforces the contrast on every page, at 320px and 390px.
 
    Deliberately single-theme: printed poster, paper, no dark mode.
    --------------------------------------------------------------------------- */
 :root {
   color-scheme: only light;
 
-  --cream:  #FFFECD;
-  --lime:   #CDD78A;
-  --olive:  #B0BC68;
-  --cherry: #AA0A27;
-  --ink:    #1E1B14;
+  --cream: #FFFECD;
+  --lime:  #BFDF90;
+  --olive: #8FC480;
+  --brick: #943120;
+  --ink:   #1E1B14;
 
-  /* Which accent the ground underneath can carry. Cherry by default, because
-     the sage ground is light: 4.92:1 on lime, 7.3:1 on cream, 7.55:1 on the
+  /* Which accent the ground underneath can carry. Brick by default, because
+     the green ground is light: 5.2:1 on lime, 7.5:1 on cream, 7.5:1 on the
      white bar. The dark bands below flip it to cream. One token instead of a
      hand-kept list of selectors per surface - a new card inherits the right
      answer rather than needing one. */
-  --accent: var(--cherry);
+  --accent: var(--brick);
+
+  /* The termíny frame she has to choose between (2026-08-31, item 2: "Barva
+     rámu na terminy (bílá anebo vpít zelenou a červenou)"). Both variants
+     ship in one build, selected by data-ticket-frame on <html>, so
+     scripts/shot-frames.mjs can photograph each without rebuilding and she
+     picks from a picture rather than from a description. White is the default
+     because it is the option she named first; change the default here once
+     she has decided, and the loser comes out. */
+  --ticket-frame: #FFFFFF;
+  --ticket-frame-inner: transparent;
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -90,6 +115,14 @@
 
 @media (min-width: 60rem) {
   :root { --cloud-tile: 1100px; }
+}
+
+/* Her second option, read as one frame carrying both colours: olive outside,
+   brick as an inset rule. Set on <html> so every ticket on the page changes
+   together. */
+:root[data-ticket-frame="duo"] {
+  --ticket-frame: var(--olive);
+  --ticket-frame-inner: var(--brick);
 }
 
 * { box-sizing: border-box; }
@@ -129,7 +162,7 @@ body {
 
 img { max-width: 100%; height: auto; }
 
-/* The dark bands. Cherry is 1.9:1 on ink, so anything reading --accent inside
+/* The dark bands. Brick is 1.6:1 on ink, so anything reading --accent inside
    them has to get cream instead; the generic contrast assertion in
    scripts/check.mjs fails the build if a new dark surface skips this. */
 .footer,
@@ -182,9 +215,9 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* Cherry, which the mark picks up through currentColor. It reads 7.6:1 on
-   the white bar; on the wall the same file comes through cream. */
-.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--cherry); }
+/* Brick, which the mark picks up through currentColor. It reads 7.5:1 on the
+   white bar; inside the dark bands the same file comes through cream. */
+.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--brick); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
@@ -212,7 +245,7 @@ img { max-width: 100%; height: auto; }
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--cream);
-  background: var(--cherry);
+  background: var(--brick);
   border: 3px solid var(--ink);
   cursor: pointer;
 }
@@ -310,13 +343,13 @@ img { max-width: 100%; height: auto; }
       calc(0.9rem - 0.35rem * var(--condense));
   }
 
-  /* At the end of the journey the button sheds its chrome and the cherry it
+  /* At the end of the journey the button sheds its chrome and the brick it
      was filled with moves into the bars, so what is left is three bars on the
      masthead's own cream (2026-08-18: "jen tmave carky bez okraju a pozadi.
      prenes pozadi velkeho menu do carek na konci cesty").
 
      Confined to the last quarter on purpose, and measured rather than guessed.
-     The bars have to be light on the cherry fill and dark once it is gone, and
+     The bars have to be light on the brick fill and dark once it is gone, and
      no colour is both: any continuous path crosses a point where the bars and
      what is behind them are the same pink and the button reads as an empty
      block. Run across the back half that dead spot was ~37px of scroll wide
@@ -328,12 +361,12 @@ img { max-width: 100%; height: auto; }
      shrink at the moment it becomes the only thing to aim at. */
   .burger {
     --burger-chrome: clamp(0, calc((var(--condense) - 0.75) * 4), 1);
-    background: color-mix(in srgb, var(--cherry), transparent calc(100% * var(--burger-chrome)));
+    background: color-mix(in srgb, var(--brick), transparent calc(100% * var(--burger-chrome)));
     border-color: color-mix(in srgb, var(--ink), transparent calc(100% * var(--burger-chrome)));
   }
 
   .burger__bars {
-    --bar: color-mix(in srgb, var(--cream), var(--cherry) calc(100% * var(--burger-chrome)));
+    --bar: color-mix(in srgb, var(--cream), var(--brick) calc(100% * var(--burger-chrome)));
     background:
       linear-gradient(var(--bar) 0 0) 0 0 / 100% 3px no-repeat,
       linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat,
@@ -354,9 +387,9 @@ img { max-width: 100%; height: auto; }
   display: none;
   place-content: center;
   padding: var(--gutter);
-  background: var(--cherry);
+  background: var(--brick);
   /* On the wrapper, not only the links, so <li> nodes never fall back to the
-     inherited ink body colour against cherry. */
+     inherited ink body colour against brick. */
   color: var(--cream);
 }
 
@@ -376,6 +409,18 @@ img { max-width: 100%; height: auto; }
 .nav__link:focus-visible { color: var(--lime); }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* The back control is a button, so it needs the chrome taken off to sit in
+   the same list as the links. Left-aligned rather than centred: the list is
+   centred as a block and its items are ranged left. */
+.nav__back {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
 
 /* --- page scaffold -------------------------------------------------------- */
 .page { padding: var(--band-padding) var(--gutter); }
@@ -436,17 +481,93 @@ img { max-width: 100%; height: auto; }
   letter-spacing: 0.1em;
   font-size: 0.85rem;
   color: var(--cream);
-  background: var(--cherry);
+  background: var(--brick);
   border: 3px solid var(--ink);
   text-decoration: none;
 }
 
+/* --- production titles ----------------------------------------------------
+
+   Set by ProductionTitle.astro, so the rule is global rather than scoped to
+   any one page: the same component sets titles on the homepage, /repertoar/,
+   the production pages and the date blocks. A production with no subtitle
+   renders no span at all and stays one heading (client, 2026-08-31). */
+.production-title__rest { display: block; font-size: 0.5em; color: var(--accent); }
+
 /* --- ticket cards: performance-date entries on both /program and the
-   homepage's next-performance strip --------------------------------------- */
-.ticket { padding: 1.5rem; background: var(--cream); border: 3px solid var(--ink); }
-.ticket__date { font-size: 1.5rem; color: var(--accent); margin: 0 0 0.35rem; }
-.ticket p { margin: 0 0 0.35rem; }
+   homepage's next-performance strip ----------------------------------------
+
+   Title, time and date stacked, mini poster beside them
+   (2026-08-31: "název a čas a datum zarovnat pod sebe a vedle toho mini
+   plakat"). Two columns at every width, including 320px: a poster below the
+   text would stop being the thing standing next to it. */
+.ticket {
+  display: grid;
+  grid-template-columns: minmax(4rem, 5.5rem) 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--cream);
+  border: 3px solid var(--ticket-frame);
+  /* The duo frame's second colour, as an inset ring. Drawn this way so the
+     white setting stays a single 3px rule rather than a double frame with a
+     transparent half. */
+  box-shadow: inset 0 0 0 3px var(--ticket-frame-inner);
+}
+
+.ticket__poster img,
+.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); }
+
+/* Poster proportions, so the slot is the shape a poster will be. */
+.ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--olive); }
+
+/* Long production names have to wrap inside the remaining column. */
+.ticket__body { min-width: 0; }
+
+.ticket__title { margin: 0; font-size: clamp(1.3rem, 5.5vw, 1.8rem); overflow-wrap: break-word; }
+
+/* The card is small, so the global half-size subtitle came out around 10px
+   here. Given back a little of the difference rather than made equal - it is
+   still a subtitle. */
+.ticket__title .production-title__rest { font-size: 0.62em; }
+.ticket__title a { color: var(--accent); text-decoration: none; }
+.ticket__title a:hover,
+.ticket__title a:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
+
+.ticket__time { margin: 0.4rem 0 0; font-size: clamp(1.5rem, 6.5vw, 2.1rem); }
+
+.ticket__day {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* "premiéra", "první repríza" - her label for a date, secondary to the title. */
+.ticket__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+/* Running time and age, which she asked to see beside every date. */
+.ticket__meta { margin: 0.5rem 0 0; font-size: 0.85rem; }
+
+.ticket p:last-child { margin-bottom: 0; }
 .ticket[data-state="sold_out"] { opacity: 0.55; }
-/* "premiéra", "první repríza" — her label for a date, secondary to the title. */
-.ticket__note { color: var(--ink); opacity: 0.75; }
+
 .program__list { display: grid; gap: 1rem; }
+
+/* The line she asked to have squeezed in somewhere (2026-08-31, item 6).
+   It goes on /program/ and on /o-prostoru/, where the address already is. */
+.access-note {
+  margin: 2rem 0 0;
+  max-width: var(--measure);
+  padding: 0.9rem 1rem;
+  border: 3px dashed var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+}

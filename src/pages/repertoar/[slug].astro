@@ -1,6 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import ProductionTitle from '../../components/ProductionTitle.astro';
+import { czechDuration } from '../../lib/program.js';
 
 export async function getStaticPaths() {
   const productions = await getCollection('productions');
@@ -18,14 +20,20 @@ const data = production.data;
 const people = await getCollection('people');
 const nameOf = new Map(people.map((person) => [person.id, person.data.name]));
 
-const title = `${data.titleLead} ${data.titleRest} — Kolekce Parchant`;
+const title = `${[data.titleLead, data.titleRest].filter(Boolean).join(' ')} — Kolekce Parchant`;
+
+// Running time and age are fields now, not free text inside creditsAfter, so
+// the program page can render them too. They still read as credit rows here.
+const measurements = [
+  data.durationMinutes && { label: 'Délka', text: czechDuration(data.durationMinutes) },
+  data.ageRating && { label: 'Přístupnost', text: data.ageRating },
+].filter(Boolean);
 ---
 <Base title={title} description={data.blurb}>
   <article class="page">
     <div class="page__inner">
       <h1 class="display page-heading production__title">
-        {data.titleLead}{' '}
-        <span class="production__title-rest">{data.titleRest}</span>
+        <ProductionTitle titleLead={data.titleLead} titleRest={data.titleRest} />
       </h1>
 
       <p class="production__blurb">{data.blurb}</p>
@@ -63,6 +71,13 @@ const title = `${data.titleLead} ${data.titleRest} — Kolekce Parchant`;
             </>
           ))}
         </dd>
+
+        {measurements.map((row) => (
+          <>
+            <dt>{row.label}</dt>
+            <dd>{row.text}</dd>
+          </>
+        ))}
 
         {data.creditsAfter.map((row) => (
           <>
@@ -109,8 +124,6 @@ const title = `${data.titleLead} ${data.titleRest} — Kolekce Parchant`;
 
 <style>
   .production__title { font-size: clamp(2.4rem, 11vw, 4.5rem); color: inherit; }
-
-  .production__title-rest { display: block; font-size: 0.5em; color: var(--accent); }
 
   .production__blurb {
     max-width: var(--measure);

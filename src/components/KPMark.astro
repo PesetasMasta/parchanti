@@ -3,10 +3,14 @@
 // cleaned up: her drawn ring, the K standing in a framed panel, the P looped
 // over it, sparkles off the right shoulder.
 //
-// Everything is currentColor, so one component serves the cherry mark on the
+// Everything is currentColor, so one component serves the brick mark on the
 // white bar and the cream one on the wall. `letters` drops the ring and its
 // decoration: below roughly 80px the frame and the zigzag collapse into a
 // smudge, so anything smaller than that takes the lockup alone.
+//
+// Both places that render the mark now pass `letters` - the masthead at 43px
+// and the footer at 48px. The full drawing is kept for a surface large enough
+// to carry it; nothing renders it today.
 interface Props {
   letters?: boolean;
 }

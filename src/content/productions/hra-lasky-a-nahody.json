@@ -1,6 +1,5 @@
 {
-  "titleLead": "Hra lásky",
-  "titleRest": "a náhody",
+  "titleLead": "Hra lásky a náhody",
   "blurb": "Klasická francouzská komedie z roku 1730 od Marivauxe v novém českém designu od Kolekce Parchant.",
   "creditsBefore": [
     {
@@ -22,6 +21,15 @@
     },
     {
       "label": "Hudba",
+      "parts": [
+        {
+          "text": "Marek Cimbál",
+          "slug": "marek-cimbal"
+        }
+      ]
+    },
+    {
+      "label": "Světla",
       "parts": [
         {
           "text": "Marek Cimbál",
@@ -66,5 +74,6 @@
   "idivadlo": "https://www.i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody",
   "photos": [],
   "order": 2,
-  "annotation": "Slavná komedie francouzského klasika. Ona předstírá, že je služka. On dělá, že je sluha. Oba chtějí „nenápadně“ zjistit, koho si mají vzít. Výsledek? Láska na první pohled mezi dvěma lidmi, kteří si myslí, že milují úplně někoho jiného. Zkrátka romantika, chaos a převleky. Ať žije láska! A záměny!"
+  "annotation": "Slavná komedie francouzského klasika. Ona předstírá, že je služka. On dělá, že je sluha. Oba chtějí „nenápadně“ zjistit, koho si mají vzít. Výsledek? Láska na první pohled mezi dvěma lidmi, kteří si myslí, že milují úplně někoho jiného. Zkrátka romantika, chaos a převleky. Ať žije láska! A záměny!",
+  "ageRating": "12+"
 }

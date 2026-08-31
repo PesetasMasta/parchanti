@@ -28,9 +28,9 @@
       <feFuncA type="table" tableValues="1 1"/>
     </feComponentTransfer>
     <feComponentTransfer>
-      <feFuncR type="table" tableValues="0.804 1.0"/>
-      <feFuncG type="table" tableValues="0.843 0.996"/>
-      <feFuncB type="table" tableValues="0.541 0.804"/>
+      <feFuncR type="table" tableValues="0.749 1.0"/>
+      <feFuncG type="table" tableValues="0.875 0.996"/>
+      <feFuncB type="table" tableValues="0.565 0.804"/>
     </feComponentTransfer>
   </filter>
   <rect width="1200" height="1200" filter="url(#clouds)"/>

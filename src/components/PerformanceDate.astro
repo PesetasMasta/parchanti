@@ -1,0 +1,72 @@
+---
+// One performance date, as the client described it twice in the same message
+// (2026-08-31): "název a čas a datum zarovnat pod sebe a vedle toho mini
+// plakat" for the homepage, and the same block plus running time and age for
+// the program page. She described one block, so this is one component used in
+// both places rather than two that drift apart.
+import { czechDate, czechDuration } from '../lib/program.js';
+import ProductionTitle from './ProductionTitle.astro';
+
+interface Props {
+  entry: {
+    date: string;
+    time: string;
+    title: string;
+    slug?: string;
+    note?: string;
+    url?: string;
+    state: string;
+  };
+  // The production this date belongs to, when it has a page. Toníkova cesta
+  // and Červánky have neither, so they render the title and nothing else -
+  // which is correct until those pages exist.
+  production?: { data: Record<string, any> };
+}
+
+const { entry, production } = Astro.props;
+const data = production?.data;
+
+const meta = [
+  data?.durationMinutes && czechDuration(data.durationMinutes),
+  data?.ageRating,
+].filter(Boolean);
+---
+<article class="ticket" data-state={entry.state}>
+  <div class="ticket__poster">
+    {data?.poster ? (
+      <img
+        src={data.poster.src}
+        width={data.poster.width}
+        height={data.poster.height}
+        alt={data.poster.alt}
+        loading="lazy"
+      />
+    ) : (
+      /* No poster artwork exists in the repo for any production yet. A
+         marked blank holds the slot she asked for so the layout can be
+         judged; a photo panel is not a poster and must not stand in. */
+      <div class="ticket__poster-blank" data-placeholder aria-hidden="true"></div>
+    )}
+  </div>
+
+  <div class="ticket__body">
+    <p class="ticket__title display">
+      {entry.slug
+        ? <a href={`/repertoar/${entry.slug}/`}>
+            {data
+              ? <ProductionTitle titleLead={data.titleLead} titleRest={data.titleRest} />
+              : entry.title}
+          </a>
+        : entry.title}
+    </p>
+    <p class="ticket__time display">{entry.time}</p>
+    <p class="ticket__day">{czechDate(entry.date)}</p>
+
+    {entry.note && <p class="ticket__note">{entry.note}</p>}
+
+    {meta.length > 0 && <p class="ticket__meta">{meta.join(' · ')}</p>}
+
+    {/* No ticketing yet, so no link is rendered rather than an empty one. */}
+    {entry.url && <p><a class="link" href={entry.url}>Vstupenky</a></p>}
+  </div>
+</article>
