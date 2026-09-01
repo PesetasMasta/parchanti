@@ -134,8 +134,10 @@ const measurements = [
   .press {
     margin-top: 2.5rem;
     padding: 1.5rem;
-    background: var(--cream);
+    background: var(--paper);
+    background-clip: padding-box;
     border: 3px solid var(--ink);
+    border-radius: var(--radius-card);
     max-width: var(--measure);
   }
 
@@ -160,5 +162,5 @@ const measurements = [
 
   .gallery__item { margin: 0; }
 
-  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); }
+  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 </style>

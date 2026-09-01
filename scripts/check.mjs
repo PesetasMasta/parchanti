@@ -1049,14 +1049,14 @@ try {
         return { top, scrolled };
       })()`);
       const { top, scrolled } = measured;
-      const BRICK = [148, 49, 32];
-      const CREAM = [255, 254, 205];
+      const BRICK = [183, 61, 40];  // --brick, the logo's red at full strength
+      const WHITE = [255, 255, 255];
       const near = (colour, target) => colour
         && colour[3] > 0.99
         && target.every((channel, index) => Math.abs(colour[index] - channel) <= 2);
       const wrong = [];
       if (!near(top.background, BRICK)) wrong.push(`at the top the button is not brick (${top.background})`);
-      if (!near(top.bar, CREAM)) wrong.push(`at the top the bars are not cream (${top.bar})`);
+      if (!near(top.bar, WHITE)) wrong.push(`at the top the bars are not white (${top.bar})`);
       if (scrolled.background?.[3] !== 0) wrong.push(`condensed the button still has a fill (alpha ${scrolled.background?.[3]})`);
       if (scrolled.border?.[3] !== 0) wrong.push(`condensed the button still has a border (alpha ${scrolled.border?.[3]})`);
       if (!near(scrolled.bar, BRICK)) wrong.push(`condensed the bars are not brick (${scrolled.bar})`);

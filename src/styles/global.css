@@ -44,13 +44,33 @@
      the wash runs #B9DC86 (light) to #8FC480 (mid)  -> --lime, --olive
      the letters are #B73D28                         -> --brick
 
-   --brick keeps that red's hue (9deg) and saturation (64%) exactly and gives
-   up nine points of lightness, 44% to 35%. That is not a taste decision: the
-   sampled red reads 3.69:1 on the green ground, so every link and eyebrow
-   sitting on the cloud wash would have been unreadable. At #943120 the same
-   red carries 5.2:1 there, with headroom for browser rounding, and 7.5:1 on
-   cream. One red only, as before - a second, lighter one for large type would
-   put the old two-red problem back.
+   --brick is that red exactly, unaltered (client, 2026-09-01: "a jeste ta
+   cervena aby byla syta jako na tom logu"). It paints every filled surface:
+   the mark, the buttons, the burger, the nav overlay, the card and ticket
+   frames. Cream on it reads 5.5:1 and white 5.7:1, so a filled surface can
+   carry the logo's red at full strength and stay readable.
+
+   --brick-deep is the same red darkened for one job: red as *text* sitting on
+   the green wash. At full strength that is 3.8:1 on lime and 2.8:1 on olive,
+   under the 4.5:1 body floor, so every link and eyebrow on the wash would
+   have been unreadable. --brick-deep keeps the hue (9deg) and the saturation
+   (64%) exactly and gives up nine points of lightness, 44% to 35%: 5.2:1 on
+   lime, with headroom for browser rounding, and 7.5:1 on cream.
+
+   Still one red, not two: the pair is one ink at two lightnesses, split along
+   the ground it is printed on rather than by taste. On paper - the white
+   termíny card, the cream ones - --accent is the full --brick, because 5.5:1
+   on cream and 5.7:1 on white clear the body floor. Directly on the green
+   wash it drops to --brick-deep, because there the full red is 3.8:1. Text
+   never names either one, so a new link inherits the readable answer without
+   having to know the split exists.
+
+   The white paper she chose is what made this possible: while the ticket
+   painted its paper as a background-image (so the frame could carry a
+   gradient) the contrast harness looked straight through it to the lime and
+   scored the small labels at 3.82:1. Her choice deleted the gradient, the
+   ticket went back to a plain background-colour, and the card's own ground
+   became visible to the measurement.
 
    Cream is unchanged: it is the paper the cards are printed on, and the logo
    has no cream in it to sample.
@@ -66,25 +86,45 @@
   --cream: #FFFECD;
   --lime:  #BFDF90;
   --olive: #8FC480;
-  --brick: #943120;
+  --brick: #B73D28;       /* the logo's red, as sampled - every filled surface */
+  --brick-deep: #943120;  /* the same red, dark enough to be read on the wash */
   --ink:   #1E1B14;
 
-  /* Which accent the ground underneath can carry. Brick by default, because
-     the green ground is light: 5.2:1 on lime, 7.5:1 on cream, 7.5:1 on the
-     white bar. The dark bands below flip it to cream. One token instead of a
-     hand-kept list of selectors per surface - a new card inherits the right
-     answer rather than needing one. */
-  --accent: var(--brick);
+  /* Which accent the ground underneath can carry. The deep brick by default,
+     because the green ground is light: 5.2:1 on lime, 7.5:1 on cream, 7.5:1
+     on the white bar. The dark bands below flip it to cream. One token
+     instead of a hand-kept list of selectors per surface - a new card
+     inherits the right answer rather than needing one. */
+  --accent: var(--brick-deep);
 
-  /* The termíny frame she has to choose between (2026-08-31, item 2: "Barva
-     rámu na terminy (bílá anebo vpít zelenou a červenou)"). Both variants
-     ship in one build, selected by data-ticket-frame on <html>, so
-     scripts/shot-frames.mjs can photograph each without rebuilding and she
-     picks from a picture rather than from a description. White is the default
-     because it is the option she named first; change the default here once
-     she has decided, and the loser comes out. */
+  /* What follows is the client's picks off the variant board (2026-09-01),
+     written in as the only values the file has: white paper for the termíny
+     cards, rounded corners, no halo under text on the wash, white lettering
+     in the buttons, opaque surfaces. The losing variants and the data-*
+     switches that carried them are gone - the board was built so a decision
+     would delete code rather than add it. */
+
+  /* Rounded, at her ask. Everything else about this site argues the other way
+     - the 3px rules, the hand-lettered poster it is drawn from, the
+     typewriter face - so this is a deliberate softening rather than a
+     refinement, and it stays one value per role instead of a number scattered
+     through the rules. */
+  --radius-card: 14px;
+  --radius-inner: 10px;
+  --radius-button: 10px;
+
+  --paper: var(--cream);
+  --masthead-bg: #FFFFFF;       /* the bar */
+  --button-bg: var(--brick);    /* the CTA and the burger */
+  --button-text: #FFFFFF;       /* her pick over cream: the buttons read colder
+                                   and harder than the paper they sit on */
+
+  /* The termíny card is white paper, not the cream the other framed blocks
+     are printed on: a clean white block on the green wash instead of a
+     printed slip. Frame and paper are the same white - two tokens because
+     they are two jobs, not because they differ today. */
+  --ticket-paper: #FFFFFF;
   --ticket-frame: #FFFFFF;
-  --ticket-frame-inner: transparent;
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -115,14 +155,6 @@
 
 @media (min-width: 60rem) {
   :root { --cloud-tile: 1100px; }
-}
-
-/* Her second option, read as one frame carrying both colours: olive outside,
-   brick as an inset rule. Set on <html> so every ticket on the page changes
-   together. */
-:root[data-ticket-frame="duo"] {
-  --ticket-frame: var(--olive);
-  --ticket-frame-inner: var(--brick);
 }
 
 * { box-sizing: border-box; }
@@ -161,6 +193,18 @@ body {
 }
 
 img { max-width: 100%; height: auto; }
+
+/* The printed blocks, which have their own paper under them: the logo's red
+   is readable at full strength there (5.7:1 on the ticket's white, 5.5:1 on
+   the cream of the other two), so they take --brick rather than the darkened
+   one. Without this a ticket's frame and its title, three pixels apart, would
+   be two different reds - which is the whole thing the split is meant to
+   avoid. Only red printed straight onto the green wash keeps --brick-deep. */
+.ticket,
+.production-card,
+.press {
+  --accent: var(--brick);
+}
 
 /* The dark bands. Brick is 1.6:1 on ink, so anything reading --accent inside
    them has to get cream instead; the generic contrast assertion in
@@ -204,7 +248,7 @@ img { max-width: 100%; height: auto; }
   justify-content: space-between;
   gap: 1rem;
   padding: 0 var(--gutter);
-  background: #FFFFFF;
+  background: var(--masthead-bg);
   border-bottom: 3px solid var(--ink);
   transition: height 0.2s ease;
 }
@@ -215,8 +259,9 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* Brick, which the mark picks up through currentColor. It reads 7.5:1 on the
-   white bar; inside the dark bands the same file comes through cream. */
+/* Brick, which the mark picks up through currentColor - the logo's own red,
+   the same token the buttons are filled with. It reads 5.7:1 on the white
+   bar; inside the dark bands the same file comes through cream. */
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--brick); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
@@ -244,9 +289,16 @@ img { max-width: 100%; height: auto; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--cream);
-  background: var(--brick);
+  color: var(--button-text);
+  background: var(--button-bg);
+  /* Clip the fill to the padding box. Two things go wrong without it: a
+     translucent fill paints under the ink rule and washes it out, and on a
+     rounded corner the border's inner edge antialiases against the fill
+     beneath it, so the stroke reads fat and mushy on the diagonal while
+     staying crisp along the straight edges. */
+  background-clip: padding-box;
   border: 3px solid var(--ink);
+  border-radius: var(--radius-button);
   cursor: pointer;
 }
 
@@ -255,14 +307,14 @@ img { max-width: 100%; height: auto; }
   width: 1.25rem;
   height: 0.75rem;
   background:
-    linear-gradient(var(--cream) 0 0) 0 0 / 100% 3px no-repeat,
-    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat,
-    linear-gradient(var(--cream) 0 0) 0 100% / 100% 3px no-repeat;
+    linear-gradient(var(--button-text) 0 0) 0 0 / 100% 3px no-repeat,
+    linear-gradient(var(--button-text) 0 0) 0 50% / 100% 3px no-repeat,
+    linear-gradient(var(--button-text) 0 0) 0 100% / 100% 3px no-repeat;
 }
 
 .burger[aria-expanded="true"] .burger__bars {
   background:
-    linear-gradient(var(--cream) 0 0) 0 50% / 100% 3px no-repeat;
+    linear-gradient(var(--button-text) 0 0) 0 50% / 100% 3px no-repeat;
 }
 
 /* --- condensing continuously ---------------------------------------------
@@ -361,12 +413,12 @@ img { max-width: 100%; height: auto; }
      shrink at the moment it becomes the only thing to aim at. */
   .burger {
     --burger-chrome: clamp(0, calc((var(--condense) - 0.75) * 4), 1);
-    background: color-mix(in srgb, var(--brick), transparent calc(100% * var(--burger-chrome)));
+    background: color-mix(in srgb, var(--button-bg), transparent calc(100% * var(--burger-chrome)));
     border-color: color-mix(in srgb, var(--ink), transparent calc(100% * var(--burger-chrome)));
   }
 
   .burger__bars {
-    --bar: color-mix(in srgb, var(--cream), var(--brick) calc(100% * var(--burger-chrome)));
+    --bar: color-mix(in srgb, var(--button-text), var(--brick) calc(100% * var(--burger-chrome)));
     background:
       linear-gradient(var(--bar) 0 0) 0 0 / 100% 3px no-repeat,
       linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat,
@@ -436,8 +488,21 @@ img { max-width: 100%; height: auto; }
      the arithmetic. */
   font-size: clamp(1.9rem, 9vw, 4rem);
   overflow-wrap: break-word;
-  color: var(--accent);
+  /* The one red on the wash that takes --brick rather than --accent. It can:
+     30px at its floor is WCAG large text, which answers to 3:1 rather than
+     4.5:1, and the full red holds 3.82:1 against the darkest tone the wash
+     reaches. It is also the biggest red on the page, so it is the one that
+     has to agree with the mark above it. Any smaller red on the wash - .link,
+     a subtitle span - keeps --accent and stays darkened, and so does this
+     heading on any ground darker than the wash (see .o-nas below). */
+  color: var(--brick);
 }
+
+/* The one page that paints its own olive band instead of letting the wash
+   through. Olive is dark enough that the full red falls to 2.80:1 there, so
+   the heading gives up the match and takes the darkened red back - 3.82:1,
+   which is what large type owes. */
+.o-nas .page-heading { color: var(--accent); }
 
 .prose { max-width: var(--measure); }
 .prose p { margin: 0 0 1em; text-wrap: pretty; }
@@ -480,9 +545,12 @@ img { max-width: 100%; height: auto; }
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.85rem;
-  color: var(--cream);
-  background: var(--brick);
+  color: var(--button-text);
+  background: var(--button-bg);
+  /* See .burger: the fill must stop at the padding box. */
+  background-clip: padding-box;
   border: 3px solid var(--ink);
+  border-radius: var(--radius-button);
   text-decoration: none;
 }
 
@@ -506,16 +574,16 @@ img { max-width: 100%; height: auto; }
   grid-template-columns: minmax(4rem, 5.5rem) 1fr;
   gap: 1rem;
   padding: 1rem;
-  background: var(--cream);
+  /* A plain colour on each, now that no variant hands the frame a gradient:
+     the two-layer background-clip trick that made a gradient border possible
+     went with the variants it existed for. */
+  background: var(--ticket-paper);
   border: 3px solid var(--ticket-frame);
-  /* The duo frame's second colour, as an inset ring. Drawn this way so the
-     white setting stays a single 3px rule rather than a double frame with a
-     transparent half. */
-  box-shadow: inset 0 0 0 3px var(--ticket-frame-inner);
+  border-radius: var(--radius-card);
 }
 
 .ticket__poster img,
-.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); }
+.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 
 /* Poster proportions, so the slot is the shape a poster will be. */
 .ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--olive); }
@@ -568,6 +636,7 @@ img { max-width: 100%; height: auto; }
   max-width: var(--measure);
   padding: 0.9rem 1rem;
   border: 3px dashed var(--ink);
+  border-radius: var(--radius-card);
   font-size: 0.9rem;
   font-weight: 700;
 }

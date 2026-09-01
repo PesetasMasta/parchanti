@@ -41,15 +41,19 @@ same idea independently:
 
 | Token | Hex | Where it goes |
 |---|---|---|
-| cream | `#FFFECD` | page ground; text on cherry |
-| lime | `#CDD78A` | primary accent bands |
-| olive | `#B0BC68` | secondary bands, photo placeholders |
-| cherry | `#AA0A27` | the red — mark, display type, links, ribbons |
+| cream | `#FFFECD` | page ground; text on brick |
+| lime | `#BFDF90` | the cloud wash, light stop |
+| olive | `#8FC480` | the cloud wash, mid stop |
+| brick | `#B73D28` | the logo's red — mark, buttons, burger, nav, frames |
+| brick-deep | `#943120` | the same red as text on the wash (via `--accent`) |
 | ink | `#1E1B14` | body text, extrusion, rules |
 
-One red, deliberately. Cherry on cream is about 7.3:1, which clears WCAG body
-text at any size, so a single red does the whole job (an earlier punch red
-`#EB313F` was dropped for exactly this reason and must not come back). The
+One red, deliberately, at two lightnesses. `--brick` is the client's logo red
+untouched and fills surfaces; `--brick-deep` is the same hue and saturation
+nine points darker, and is the only red allowed to be *text* on the green wash
+(3.8:1 there at full strength, 5.2:1 deep). Text never names either one — it
+takes `--accent`, so a new link inherits the readable answer. An earlier punch
+red `#EB313F` was dropped for exactly this reason and must not come back. The
 rule that survives: cream never sits on lime or olive, both close to 2:1 — those
 grounds take ink instead. `check.mjs` enforces WCAG contrast transitively on
 every page at 320px and 390px and fails the build rather than trusting anyone

@@ -150,7 +150,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     text-wrap: pretty;
   }
 
-  .hero__photo { display: block; border: 3px solid var(--ink); }
+  .hero__photo { display: block; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 
   .next__eyebrow {
     margin: 0 0 1rem;
@@ -165,6 +165,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     max-width: var(--measure);
     padding: 1.5rem;
     border: 3px dashed var(--ink);
+    border-radius: var(--radius-card);
   }
 
   .next__empty p { margin: 0 0 0.75rem; }
@@ -181,10 +182,10 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   /* "Rám inscenaci hra lásky a šípy - červenej rám" (2026-08-31, item 4).
      The inner picture frame stays ink, so the card reads as a red mount
      around a black-framed image rather than as two red rules. */
-  .production-card { padding: 1.25rem; background: var(--cream); border: 3px solid var(--brick); }
+  .production-card { padding: 1.25rem; background: var(--paper); background-clip: padding-box; border: 3px solid var(--brick); border-radius: var(--radius-card); }
 
   .production-card img,
-  .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); }
+  .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 
   .production-card__blank { aspect-ratio: 900 / 750; background: var(--olive); }
 
