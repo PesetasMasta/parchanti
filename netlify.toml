@@ -1,0 +1,10 @@
+# Astro emits a plain static site into dist/; no adapter, nothing server-side.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# scripts/check.mjs drives a real browser, so it stays a local/CI gate rather
+# than part of the Netlify build. Run `npm run check` before pushing.

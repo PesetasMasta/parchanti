@@ -20,3 +20,6 @@ FEEDBACK.md
 
 # IG message draft; stays out of the public repo.
 ig-zprava.md
+
+# Netlify site link (site ID); local state, not shared.
+.netlify/
