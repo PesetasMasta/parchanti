@@ -447,38 +447,37 @@ img { max-width: 100%; height: auto; }
 
 .nav[data-open] { display: grid; }
 
-/* The way out of the overlay. Same chrome and same corner as the burger it
-   covers, but printed the other way round - paper fill and an ink rule, since
-   the burger's brick fill would vanish into the brick ground. */
+/* The way out of the overlay: a bare cross in the same cream as the links
+   (2026-09-02, her ask). It started as a chip with the word "Zavřít" in it,
+   which read as one more thing to press rather than as the way out. No fill
+   and no rule, so the only new mark on the ground is the cross itself. The
+   button is 44px square even though the cross is smaller - the visible mark
+   is not the tap target. */
 .nav__close {
   position: absolute;
   top: var(--gutter);
   right: var(--gutter);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.9rem;
-  font: inherit;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  background: var(--paper);
-  /* See .burger: the fill must stop at the padding box. */
-  background-clip: padding-box;
-  border: 3px solid var(--ink);
-  border-radius: var(--radius-button);
+  display: grid;
+  place-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  /* .nav sets cream on the wrapper, so the cross tracks the links rather than
+     naming the colour a second time. */
+  color: inherit;
   cursor: pointer;
 }
 
 /* Drawn the way the burger draws its bars - two gradients, no extra nodes -
    and turned 45deg so the same two strokes read as a cross. */
 .nav__close-x {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.6rem;
+  height: 1.6rem;
   background:
-    linear-gradient(var(--ink) 0 0) 50% 50% / 100% 3px no-repeat,
-    linear-gradient(var(--ink) 0 0) 50% 50% / 3px 100% no-repeat;
+    linear-gradient(currentColor 0 0) 50% 50% / 100% 3px no-repeat,
+    linear-gradient(currentColor 0 0) 50% 50% / 3px 100% no-repeat;
   transform: rotate(45deg);
 }
 

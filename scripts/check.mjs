@@ -329,6 +329,12 @@ onPage('/',
     closeButton.click();
     const closedByButton = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
     burger.click();
+    // Tapping the ground outside the list closes it; tapping a link must not.
+    nav.click();
+    const closedByBackdrop = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    burger.click();
+    nav.querySelector('.nav__list').click();
+    const survivesListClick = nav.hasAttribute('data-open');
     // Same selector the trap itself uses, or the wrap assertions below would
     // be measuring a different list from the one the overlay traps.
     const links = [...nav.querySelectorAll('.nav__close, .nav__link:not([hidden])')];
@@ -343,7 +349,7 @@ onPage('/',
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
     const focusReturned = document.activeElement === burger;
-    return JSON.stringify({ closed, opened, dialog, closeVisible, closedByButton, wrapsForward, wrapsBack, reclosed, focusReturned });
+    return JSON.stringify({ closed, opened, dialog, closeVisible, closedByButton, closedByBackdrop, survivesListClick, wrapsForward, wrapsBack, reclosed, focusReturned });
   })()`,
   (raw) => {
     const bad = Object.entries(JSON.parse(raw)).filter(([, ok]) => !ok).map(([name]) => name);

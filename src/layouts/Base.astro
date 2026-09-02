@@ -74,7 +74,6 @@ const currentPath = Astro.url.pathname;
        the menu at all. First in the dialog so it is the first thing focus and
        a screen reader meet. -->
   <button class="nav__close" type="button" aria-label="Zavřít menu">
-    <span class="nav__close-label">Zavřít</span>
     <span class="nav__close-x" aria-hidden="true"></span>
   </button>
   <ul class="nav__list">
@@ -140,6 +139,14 @@ const currentPath = Astro.url.pathname;
   });
 
   nav.querySelector('.nav__close').addEventListener('click', () => setNav(false));
+
+  // Tapping the ground outside the list closes it too (client, 2026-09-02).
+  // Guarded on the overlay being the target itself: a tap that lands on a
+  // link, or in the gaps inside the list, still does what it looks like it
+  // does rather than dismissing the menu underneath the thumb.
+  nav.addEventListener('click', (event) => {
+    if (event.target === nav) setNav(false);
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') setNav(false);
