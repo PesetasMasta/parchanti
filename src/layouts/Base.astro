@@ -86,14 +86,6 @@ const currentPath = Astro.url.pathname;
         >{item.label}</a>
       </li>
     ))}
-    <!-- Client request 2026-08-31: "Přidat do meny funkci vracení se na
-         předchozí stránku." A button, not a link: it has no destination to
-         put in an href, and a dead href="#" would be a link that is not one.
-         Hidden until the script finds history to go back to - with no script
-         it could not work anyway, so the markup default is hidden. -->
-    <li>
-      <button class="nav__link nav__back" type="button" hidden>Zpět</button>
-    </li>
   </ul>
 </nav>
 
@@ -119,12 +111,10 @@ const currentPath = Astro.url.pathname;
   const burger = document.querySelector('.burger');
   const nav = document.querySelector('#nav');
 
-  // Everything focusable in the overlay, in DOM order. Queried per keypress
-  // rather than cached: the back button is revealed after load, and the trap
-  // must include it exactly when it is visible. The close control is in the
-  // trap too - leaving it out would let Tab step onto the one control the
-  // overlay cannot do without and then straight off the end of the list.
-  const focusables = () => [...nav.querySelectorAll('.nav__close, .nav__link:not([hidden])')];
+  // Everything focusable in the overlay, in DOM order. The close control is
+  // in the trap too - leaving it out would let Tab step onto the one control
+  // the overlay cannot do without and then straight off the end of the list.
+  const focusables = () => [...nav.querySelectorAll('.nav__close, .nav__link')];
 
   function setNav(open) {
     burger.setAttribute('aria-expanded', String(open));
@@ -168,15 +158,6 @@ const currentPath = Astro.url.pathname;
       links[0].focus();
     }
   });
-
-  // Back to the previous page. Shown only when there is somewhere to go: a
-  // fresh tab opened straight onto this page has a single history entry, and
-  // an inert menu item is worse than an absent one.
-  const back = document.querySelector('.nav__back');
-  if (history.length > 1) {
-    back.hidden = false;
-    back.addEventListener('click', () => { history.back(); });
-  }
 
   // Condense the masthead once the page scrolls: the name drops away and the
   // mark steps down (CSS handles both off data-condensed). The transition is

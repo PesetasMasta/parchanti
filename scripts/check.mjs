@@ -358,21 +358,14 @@ onPage('/',
 );
 
 onPage('/',
-  'nav lists the six section pages in order, then the back control',
+  'nav lists the six section pages in order, and nothing else',
   `JSON.stringify({
     links: [...document.querySelectorAll('#nav a.nav__link')]
       .map((a) => a.getAttribute('href') + '|' + a.textContent.trim()),
-    back: (() => {
-      const button = document.querySelector('.nav__back');
-      if (!button) return null;
-      return {
-        label: button.textContent.trim(),
-        // A button, not an anchor: it has no destination, and a dead href
-        // would be a link that goes nowhere.
-        isButton: button.tagName === 'BUTTON',
-        last: button.closest('li') === document.querySelector('.nav__list li:last-child'),
-      };
-    })(),
+    // She asked for a Zpět control 2026-08-31 and reported 2026-09-02 that
+    // nobody understood it ("to zpět jsme nepochopili"); it is gone, and the
+    // list must stay the six sections alone.
+    items: document.querySelectorAll('.nav__list li').length,
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -381,10 +374,7 @@ onPage('/',
       '/o-nas/|O Kolekci Parchant', '/o-prostoru/|O prostoru', '/fotky/|Fotky',
     ];
     if (JSON.stringify(r.links) !== JSON.stringify(expected)) return `got ${JSON.stringify(r.links)}`;
-    if (!r.back) return 'the back control she asked for is missing from the menu';
-    if (r.back.label !== 'Zpět') return `back control reads ${JSON.stringify(r.back.label)}`;
-    if (!r.back.isButton) return 'the back control must be a button — it has no destination to put in an href';
-    if (!r.back.last) return 'the back control belongs after the section pages, not among them';
+    if (r.items !== expected.length) return `menu has ${r.items} items, expected the ${expected.length} sections alone`;
     return null;
   },
 );

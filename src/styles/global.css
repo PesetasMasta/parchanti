@@ -496,18 +496,6 @@ img { max-width: 100%; height: auto; }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
 
-/* The back control is a button, so it needs the chrome taken off to sit in
-   the same list as the links. Left-aligned rather than centred: the list is
-   centred as a block and its items are ranged left. */
-.nav__back {
-  display: block;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-
 /* --- page scaffold -------------------------------------------------------- */
 .page { padding: var(--band-padding) var(--gutter); }
 
