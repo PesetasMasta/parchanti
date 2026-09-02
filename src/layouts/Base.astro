@@ -66,6 +66,17 @@ const currentPath = Astro.url.pathname;
 </header>
 
 <nav class="nav" id="nav" role="dialog" aria-modal="true" aria-label="Hlavní navigace">
+  <!-- Client request 2026-09-02: "Aby se dalo menu zavřít." Not a
+       discoverability complaint - the overlay is z-index 4 over the
+       masthead's 3, so the burger that opened it is not on screen to close it
+       again, and every control that was visible navigated somewhere. Escape
+       worked, but a phone has no Escape key: on touch there was no way out of
+       the menu at all. First in the dialog so it is the first thing focus and
+       a screen reader meet. -->
+  <button class="nav__close" type="button" aria-label="Zavřít menu">
+    <span class="nav__close-label">Zavřít</span>
+    <span class="nav__close-x" aria-hidden="true"></span>
+  </button>
   <ul class="nav__list">
     {MENU.map((item) => (
       <li>
@@ -111,8 +122,10 @@ const currentPath = Astro.url.pathname;
 
   // Everything focusable in the overlay, in DOM order. Queried per keypress
   // rather than cached: the back button is revealed after load, and the trap
-  // must include it exactly when it is visible.
-  const focusables = () => [...nav.querySelectorAll('.nav__link:not([hidden])')];
+  // must include it exactly when it is visible. The close control is in the
+  // trap too - leaving it out would let Tab step onto the one control the
+  // overlay cannot do without and then straight off the end of the list.
+  const focusables = () => [...nav.querySelectorAll('.nav__close, .nav__link:not([hidden])')];
 
   function setNav(open) {
     burger.setAttribute('aria-expanded', String(open));
@@ -125,6 +138,8 @@ const currentPath = Astro.url.pathname;
   burger.addEventListener('click', () => {
     setNav(burger.getAttribute('aria-expanded') === 'false');
   });
+
+  nav.querySelector('.nav__close').addEventListener('click', () => setNav(false));
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') setNav(false);

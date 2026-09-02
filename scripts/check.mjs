@@ -314,7 +314,7 @@ generic(
 );
 
 onPage('/',
-  'nav overlay: closed at rest, opens, Escape closes, focus traps',
+  'nav overlay: closed at rest, opens, a visible control closes it, Escape closes, focus traps',
   `(async () => {
     const burger = document.querySelector('.burger');
     const nav = document.querySelector('#nav');
@@ -322,7 +322,16 @@ onPage('/',
     burger.click();
     const opened = burger.getAttribute('aria-expanded') === 'true' && nav.hasAttribute('data-open');
     const dialog = nav.getAttribute('role') === 'dialog' && nav.getAttribute('aria-modal') === 'true';
-    const links = [...nav.querySelectorAll('.nav__link')];
+    // The overlay covers the masthead, so the burger cannot close it and
+    // Escape is keyboard-only. On a phone this control is the only way out.
+    const closeButton = nav.querySelector('.nav__close');
+    const closeVisible = !!closeButton && closeButton.getBoundingClientRect().width > 0;
+    closeButton.click();
+    const closedByButton = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
+    burger.click();
+    // Same selector the trap itself uses, or the wrap assertions below would
+    // be measuring a different list from the one the overlay traps.
+    const links = [...nav.querySelectorAll('.nav__close, .nav__link:not([hidden])')];
     // Trap: Tab on the last link wraps to the first, Shift+Tab on the first
     // wraps to the last. The overlay is the entire navigation model.
     links[links.length - 1].focus();
@@ -334,7 +343,7 @@ onPage('/',
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     const reclosed = burger.getAttribute('aria-expanded') === 'false' && !nav.hasAttribute('data-open');
     const focusReturned = document.activeElement === burger;
-    return JSON.stringify({ closed, opened, dialog, wrapsForward, wrapsBack, reclosed, focusReturned });
+    return JSON.stringify({ closed, opened, dialog, closeVisible, closedByButton, wrapsForward, wrapsBack, reclosed, focusReturned });
   })()`,
   (raw) => {
     const bad = Object.entries(JSON.parse(raw)).filter(([, ok]) => !ok).map(([name]) => name);
@@ -586,10 +595,13 @@ onPage('/program/',
       if (!date.slug && card.meta) return `card ${index + 1} (${date.title}) has no page, so it cannot show ${JSON.stringify(card.meta)}`;
     }
     const sipy = p.cards.find((card) => card.title.startsWith('Rychlé šípy'));
-    if (!sipy || !sipy.meta?.includes('1 hodina')) return `Rychlé šípy must show the running time she gave: got ${JSON.stringify(sipy?.meta)}`;
+    if (!sipy || !sipy.meta?.includes('60 min')) return `Rychlé šípy must show the running time she gave: got ${JSON.stringify(sipy?.meta)}`;
     if (!sipy.meta.includes('0+')) return `Rychlé šípy must show 0+: got ${JSON.stringify(sipy.meta)}`;
     const hra = p.cards.find((card) => card.title.startsWith('Hra lásky'));
-    if (!hra || hra.meta !== '12+') return `Hra lásky must show 12+ and no running time (she has not given one): got ${JSON.stringify(hra?.meta)}`;
+    // She gave the running time 2026-09-02, so the card that used to carry
+    // only an age now carries both.
+    if (!hra || !hra.meta?.includes('80 min')) return `Hra lásky must show the running time she gave: got ${JSON.stringify(hra?.meta)}`;
+    if (!hra.meta.includes('12+')) return `Hra lásky must show 12+: got ${JSON.stringify(hra.meta)}`;
     return null;
   },
 );
@@ -654,8 +666,10 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     if (!r.credits.includes('Hlas ze záznamu')) return `credit labels are ${JSON.stringify(r.credits)} — she asked for "hlas ze záznamu", not "Archivní nahrávky"`;
     if (r.credits.includes('Archivní nahrávky')) return '"Archivní nahrávky" is the label she replaced';
     if (!r.credits.includes('Světla')) return 'the lights credit for Marek Cimbál is missing';
-    if (!r.creditsText.includes('1 hodina')) return 'running time must read "1 hodina" — her correction, 2026-08-31';
-    if (r.creditsText.includes('1 h 15 min')) return 'the old running time is still on the page';
+    // Minutes, not hours: her 2026-09-02 instruction reverses the 2026-08-31
+    // one that asked for "hodinu" here.
+    if (!r.creditsText.includes('60 min')) return 'running time must read "60 min" — her correction, 2026-09-02';
+    if (r.creditsText.includes('hodina')) return 'the running time is still written in hours';
     if (!r.creditsText.includes('0+')) return 'age must read 0+ — her correction, 2026-08-31';
     if (!r.foglar) return 'Foglar credit line missing';
     if (!r.premiere) return 'premiere date missing';
@@ -690,7 +704,9 @@ onPage('/repertoar/hra-lasky-a-nahody/',
     if (!r.creditsText.includes('Světla')) return 'the lights credit for Marek Cimbál is missing';
     // She has not given a running time for this one; inventing one would be
     // worse than the gap. QA.md asks her.
-    if (r.creditsText.includes('Délka')) return 'no running time has been given for Hra lásky — do not invent one';
+    // She gave it 2026-09-02 ("u hry lásky a náhody dát stopáž 80 min"), so
+    // the row that had to stay absent is now required, and in minutes.
+    if (!r.creditsText.includes('80 min')) return 'Hra lásky must show the 80 min running time she gave 2026-09-02';
     return null;
   },
 );

@@ -447,6 +447,41 @@ img { max-width: 100%; height: auto; }
 
 .nav[data-open] { display: grid; }
 
+/* The way out of the overlay. Same chrome and same corner as the burger it
+   covers, but printed the other way round - paper fill and an ink rule, since
+   the burger's brick fill would vanish into the brick ground. */
+.nav__close {
+  position: absolute;
+  top: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: var(--paper);
+  /* See .burger: the fill must stop at the padding box. */
+  background-clip: padding-box;
+  border: 3px solid var(--ink);
+  border-radius: var(--radius-button);
+  cursor: pointer;
+}
+
+/* Drawn the way the burger draws its bars - two gradients, no extra nodes -
+   and turned 45deg so the same two strokes read as a cross. */
+.nav__close-x {
+  width: 1.1rem;
+  height: 1.1rem;
+  background:
+    linear-gradient(var(--ink) 0 0) 50% 50% / 100% 3px no-repeat,
+    linear-gradient(var(--ink) 0 0) 50% 50% / 3px 100% no-repeat;
+  transform: rotate(45deg);
+}
+
 .nav__list { margin: 0; padding: 0; list-style: none; display: grid; gap: clamp(0.5rem, 2vw, 1rem); }
 
 .nav__link {

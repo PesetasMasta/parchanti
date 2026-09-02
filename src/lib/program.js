@@ -35,13 +35,11 @@ export function upcoming(dates, today = todayISO()) {
   return dates.filter((entry) => entry.date >= today);
 }
 
-// "hodinu", as she asked for šípy, rather than "60 min".
+// Minutes, always: "je důležitý to psát v minutách" (client, 2026-09-02).
+// This reverses her own 2026-08-31 correction - "u šípu dej čas hodinu" - which
+// is the only reason this ever had an hours branch to delete. Kept as a
+// function rather than inlined at the two call sites so the next revision of
+// her mind lands in one place.
 export function czechDuration(minutes) {
-  if (minutes % 60 === 0) {
-    const hours = minutes / 60;
-    if (hours === 1) return '1 hodina';
-    return hours < 5 ? `${hours} hodiny` : `${hours} hodin`;
-  }
-  const hours = Math.floor(minutes / 60);
-  return hours ? `${hours} h ${minutes % 60} min` : `${minutes} min`;
+  return `${minutes} min`;
 }
