@@ -433,20 +433,64 @@ img { max-width: 100%; height: auto; }
 
 
 /* --- full-screen nav overlay --------------------------------------------- */
+/* The overlay opens in two beats and closes in one (client, 2026-09-02): the
+   red ground arrives first, then the lines one after another; on the way out
+   everything goes together.
+
+   Held down by visibility rather than by display, because display cannot be
+   transitioned and the menu now has to animate out as well as in. visibility
+   still takes the overlay out of the tab order and out of the accessibility
+   tree, and it inherits - so the closed menu's white links compute to hidden
+   too, which is what keeps check.mjs from measuring them against the green
+   wash they are never seen on.
+
+   The visibility delay on the way down has to outlast the longest thing
+   leaving (200ms), or the overlay would vanish before its own fade. */
 .nav {
   position: fixed;
   inset: 0;
   z-index: 4;
-  display: none;
+  display: grid;
   place-content: center;
   padding: var(--gutter);
-  background: var(--brick);
+  visibility: hidden;
+  background-color: transparent;
   /* On the wrapper, not only the links, so <li> nodes never fall back to the
      inherited ink body colour against brick. */
   color: var(--white);
+  transition: background-color 260ms ease, visibility 0s linear 260ms;
 }
 
-.nav[data-open] { display: grid; }
+.nav[data-open] {
+  visibility: visible;
+  background-color: var(--brick);
+  transition: background-color 260ms ease, visibility 0s;
+}
+
+/* The lines. Only the open state carries delays, so closing takes them off
+   and the whole panel leaves at once instead of unravelling in sequence. */
+.nav__close,
+.nav__list li {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.nav[data-open] .nav__close,
+.nav[data-open] .nav__list li {
+  opacity: 1;
+  transform: none;
+}
+
+/* The way out lands first: on a phone it is the only one, so it should not be
+   the last thing to arrive. */
+.nav[data-open] .nav__close { transition-delay: 170ms; }
+.nav[data-open] .nav__list li:nth-child(1) { transition-delay: 220ms; }
+.nav[data-open] .nav__list li:nth-child(2) { transition-delay: 280ms; }
+.nav[data-open] .nav__list li:nth-child(3) { transition-delay: 340ms; }
+.nav[data-open] .nav__list li:nth-child(4) { transition-delay: 400ms; }
+.nav[data-open] .nav__list li:nth-child(5) { transition-delay: 460ms; }
+.nav[data-open] .nav__list li:nth-child(6) { transition-delay: 520ms; }
 
 /* The way out of the overlay: a bare cross in the same white as the links
    (2026-09-02, her ask). It started as a chip with the word "Zavřít" in it,
