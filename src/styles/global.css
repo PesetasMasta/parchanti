@@ -47,23 +47,23 @@
    --brick is that red exactly, unaltered (client, 2026-09-01: "a jeste ta
    cervena aby byla syta jako na tom logu"). It paints every filled surface:
    the mark, the buttons, the burger, the nav overlay, the card and ticket
-   frames. Cream on it reads 5.5:1 and white 5.7:1, so a filled surface can
-   carry the logo's red at full strength and stay readable.
+   frames. White on it reads 5.7:1, so a filled surface can carry the logo's
+   red at full strength and stay readable.
 
    --brick-deep is the same red darkened for one job: red as *text* sitting on
    the green wash. At full strength that is 3.8:1 on lime and 2.8:1 on olive,
    under the 4.5:1 body floor, so every link and eyebrow on the wash would
    have been unreadable. --brick-deep keeps the hue (9deg) and the saturation
    (64%) exactly and gives up nine points of lightness, 44% to 35%: 5.2:1 on
-   lime, with headroom for browser rounding, and 7.5:1 on cream.
+   lime, with headroom for browser rounding, and 7.9:1 on white.
 
    Still one red, not two: the pair is one ink at two lightnesses, split along
-   the ground it is printed on rather than by taste. On paper - the white
-   termíny card, the cream ones - --accent is the full --brick, because 5.5:1
-   on cream and 5.7:1 on white clear the body floor. Directly on the green
-   wash it drops to --brick-deep, because there the full red is 3.8:1. Text
-   never names either one, so a new link inherits the readable answer without
-   having to know the split exists.
+   the ground it is printed on rather than by taste. On paper - every printed
+   block is white now - --accent is the full --brick, because 5.7:1 on white
+   clears the body floor. Directly on the green wash it drops to --brick-deep,
+   because there the full red is 3.8:1. Text never names either one, so a new
+   link inherits the readable answer without having to know the split
+   exists.
 
    The white paper she chose is what made this possible: while the ticket
    painted its paper as a background-image (so the frame could carry a
@@ -72,10 +72,13 @@
    ticket went back to a plain background-colour, and the card's own ground
    became visible to the measurement.
 
-   Cream is unchanged: it is the paper the cards are printed on, and the logo
-   has no cream in it to sample.
+   The cream that used to be the paper is gone (client, 2026-09-02: "chceme to
+   pryč, misto ni zustane bila"). It was not one surface but three jobs - the
+   paper the cards print on, the colour the dark bands read their text in, and
+   half the tint of the cloud wash - so the yellow was in the background of
+   every page, not on any one element. White does all three.
 
-   Cream never sits on lime or olive (~2:1); those grounds take ink.
+   White never sits on lime or olive (~1.9:1); those grounds take ink.
    scripts/check.mjs enforces the contrast on every page, at 320px and 390px.
 
    Deliberately single-theme: printed poster, paper, no dark mode.
@@ -83,7 +86,7 @@
 :root {
   color-scheme: only light;
 
-  --cream: #FFFECD;
+  --white: #FFFFFF;       /* the paper, and the ink the dark bands are read in */
   --lime:  #BFDF90;
   --olive: #8FC480;
   --brick: #B73D28;       /* the logo's red, as sampled - every filled surface */
@@ -91,8 +94,8 @@
   --ink:   #1E1B14;
 
   /* Which accent the ground underneath can carry. The deep brick by default,
-     because the green ground is light: 5.2:1 on lime, 7.5:1 on cream, 7.5:1
-     on the white bar. The dark bands below flip it to cream. One token
+     because the green ground is light: 5.2:1 on lime and 7.9:1 on the white
+     of the cards and the bar. The dark bands below flip it to white. One token
      instead of a hand-kept list of selectors per surface - a new card
      inherits the right answer rather than needing one. */
   --accent: var(--brick-deep);
@@ -113,18 +116,17 @@
   --radius-inner: 10px;
   --radius-button: 10px;
 
-  --paper: var(--cream);
-  --masthead-bg: #FFFFFF;       /* the bar */
+  --paper: var(--white);
+  --masthead-bg: var(--white);  /* the bar */
   --button-bg: var(--brick);    /* the CTA and the burger */
-  --button-text: #FFFFFF;       /* her pick over cream: the buttons read colder
-                                   and harder than the paper they sit on */
+  --button-text: var(--white);
 
-  /* The termíny card is white paper, not the cream the other framed blocks
-     are printed on: a clean white block on the green wash instead of a
-     printed slip. Frame and paper are the same white - two tokens because
-     they are two jobs, not because they differ today. */
-  --ticket-paper: #FFFFFF;
-  --ticket-frame: #FFFFFF;
+  /* Frame and paper are the same white - two tokens because they are two
+     jobs, not because they differ today. Every printed block is now that same
+     white, so the termíny card no longer differs from the rest; the tokens
+     stay so the frame can be given its own colour without hunting for it. */
+  --ticket-paper: var(--white);
+  --ticket-frame: var(--white);
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -168,7 +170,7 @@ html { scroll-padding-top: 4.5rem; }
 
 /* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
    noise, not a sourced wallpaper: nothing to licence, two kilobytes, and
-   tinted only between lime and cream.
+   tinted only between lime and white.
 
    On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
    textem?"). A background on body propagates to the canvas, which covers the
@@ -181,7 +183,7 @@ html { scroll-padding-top: 4.5rem; }
 
    The lime behind it is the fallback, the darkest tone the wash ever reaches,
    and what check.mjs measures contrast against. Bands that break the wash -
-   .o-nas in olive, cream cards - paint over it as before. */
+   .o-nas in olive, white cards - paint over it as before. */
 body {
   margin: 0;
   background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
@@ -195,9 +197,8 @@ body {
 img { max-width: 100%; height: auto; }
 
 /* The printed blocks, which have their own paper under them: the logo's red
-   is readable at full strength there (5.7:1 on the ticket's white, 5.5:1 on
-   the cream of the other two), so they take --brick rather than the darkened
-   one. Without this a ticket's frame and its title, three pixels apart, would
+   is readable at full strength there (5.7:1 on their white), so they take
+   --brick rather than the darkened one. Without this a ticket's frame and its title, three pixels apart, would
    be two different reds - which is the whole thing the split is meant to
    avoid. Only red printed straight onto the green wash keeps --brick-deep. */
 .ticket,
@@ -207,11 +208,11 @@ img { max-width: 100%; height: auto; }
 }
 
 /* The dark bands. Brick is 1.6:1 on ink, so anything reading --accent inside
-   them has to get cream instead; the generic contrast assertion in
+   them has to get white instead; the generic contrast assertion in
    scripts/check.mjs fails the build if a new dark surface skips this. */
 .footer,
 .nav {
-  --accent: var(--cream);
+  --accent: var(--white);
 }
 
 .display {
@@ -261,7 +262,7 @@ img { max-width: 100%; height: auto; }
 
 /* Brick, which the mark picks up through currentColor - the logo's own red,
    the same token the buttons are filled with. It reads 5.7:1 on the white
-   bar; inside the dark bands the same file comes through cream. */
+   bar; inside the dark bands the same file comes through white. */
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--brick); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
@@ -397,7 +398,7 @@ img { max-width: 100%; height: auto; }
 
   /* At the end of the journey the button sheds its chrome and the brick it
      was filled with moves into the bars, so what is left is three bars on the
-     masthead's own cream (2026-08-18: "jen tmave carky bez okraju a pozadi.
+     masthead's own white (2026-08-18: "jen tmave carky bez okraju a pozadi.
      prenes pozadi velkeho menu do carek na konci cesty").
 
      Confined to the last quarter on purpose, and measured rather than guessed.
@@ -442,12 +443,12 @@ img { max-width: 100%; height: auto; }
   background: var(--brick);
   /* On the wrapper, not only the links, so <li> nodes never fall back to the
      inherited ink body colour against brick. */
-  color: var(--cream);
+  color: var(--white);
 }
 
 .nav[data-open] { display: grid; }
 
-/* The way out of the overlay: a bare cross in the same cream as the links
+/* The way out of the overlay: a bare cross in the same white as the links
    (2026-09-02, her ask). It started as a chip with the word "Zavřít" in it,
    which read as one more thing to press rather than as the way out. No fill
    and no rule, so the only new mark on the ground is the cross itself. The
@@ -464,7 +465,7 @@ img { max-width: 100%; height: auto; }
   padding: 0;
   border: 0;
   background: none;
-  /* .nav sets cream on the wrapper, so the cross tracks the links rather than
+  /* .nav sets white on the wrapper, so the cross tracks the links rather than
      naming the colour a second time. */
   color: inherit;
   cursor: pointer;
@@ -487,7 +488,7 @@ img { max-width: 100%; height: auto; }
   font-family: var(--display);
   font-size: clamp(2.2rem, 10vw, 4.5rem);
   line-height: 1.15;
-  color: var(--cream);
+  color: var(--white);
   text-decoration: none;
 }
 
@@ -550,13 +551,13 @@ img { max-width: 100%; height: auto; }
 .credits dd { margin: 0; }
 
 /* --- footer ---------------------------------------------------------------- */
-.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--cream); }
+.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--white); }
 
 .footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
 
 .footer__links { margin: 0 0 1.5rem; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
 
-.footer__links a { color: var(--cream); font-weight: 700; text-underline-offset: 0.2em; }
+.footer__links a { color: var(--white); font-weight: 700; text-underline-offset: 0.2em; }
 
 .footer__address { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
