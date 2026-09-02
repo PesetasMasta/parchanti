@@ -126,5 +126,11 @@
   ],
   "order": 1,
   "durationMinutes": 60,
-  "ageRating": "0+"
+  "ageRating": "0+",
+  "poster": {
+    "src": "/assets/posters/rychle-sipy-a-zahada-klubovny.jpg",
+    "alt": "Ručně kreslený plakát: červený nápis Rychlé šípy nad žlutým pozadím, láhev limonády, noviny Tam Tam, fotoaparát a psí obojek vedle rukou psaného seznamu tvůrců a obsazení.",
+    "width": 820,
+    "height": 1162
+  }
 }

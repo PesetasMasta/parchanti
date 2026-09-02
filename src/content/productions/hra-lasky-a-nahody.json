@@ -75,5 +75,11 @@
   "photos": [],
   "order": 2,
   "annotation": "Slavná komedie francouzského klasika. Ona předstírá, že je služka. On dělá, že je sluha. Oba chtějí „nenápadně“ zjistit, koho si mají vzít. Výsledek? Láska na první pohled mezi dvěma lidmi, kteří si myslí, že milují úplně někoho jiného. Zkrátka romantika, chaos a převleky. Ať žije láska! A záměny!",
-  "ageRating": "12+"
+  "ageRating": "12+",
+  "poster": {
+    "src": "/assets/posters/hra-lasky-a-nahody.jpg",
+    "alt": "Plakát na černém pozadí: sedm herců v barevně prosvícené koláži nad poli sytých barev, pod nimi jména obsazení a nápis Studio Citadela, Kolekce Parchant.",
+    "width": 820,
+    "height": 1039
+  }
 }
