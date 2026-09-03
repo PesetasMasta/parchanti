@@ -1,6 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
   <!-- The client's sage cloud ground, generated rather than sourced: fractal
-       Perlin noise tinted between the palette's own lime and cream.
+       Perlin noise tinted between the palette's own lime and white.
+
+       White, not cream, since 2026-09-02: "chceme to pryč, misto ni zustane
+       bila". Cream was half of this tint, so the yellow she is objecting to
+       was in the background of every page rather than on any one element -
+       only the blue channel's top stop moves, 0.804 to 1.0.
 
        Square and seamless. stitchTiles only wraps when the noise fits the tile
        a whole number of times, so the base frequency is 4/1200 exactly, and
@@ -10,7 +15,7 @@
 
        The linear pass before the tint is what makes the wash visible at all.
        fractalNoise clusters around its midpoint, so tinting it directly used
-       only the middle third of lime..cream and the result read as flat on a
+       only the middle third of lime..white and the result read as flat on a
        phone. Stretching first spends the whole range: same two colours, three
        times the modulation, 0.5% of the tile clipped at the lime end.
 
@@ -29,8 +34,8 @@
     </feComponentTransfer>
     <feComponentTransfer>
       <feFuncR type="table" tableValues="0.749 1.0"/>
-      <feFuncG type="table" tableValues="0.875 0.996"/>
-      <feFuncB type="table" tableValues="0.565 0.804"/>
+      <feFuncG type="table" tableValues="0.875 1.0"/>
+      <feFuncB type="table" tableValues="0.565 1.0"/>
     </feComponentTransfer>
   </filter>
   <rect width="1200" height="1200" filter="url(#clouds)"/>

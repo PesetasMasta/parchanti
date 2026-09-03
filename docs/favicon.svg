@@ -1,62 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <rect width="200" height="200" fill="#FFFECD"/>
-  <g color="#B73D28">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="23 31 144 144">
+  <!-- The mark as it is today: the letters alone, the P pulled ten units into
+       the K, and no rule under its bowl.
 
-  <!-- Traced from the client's pen sketch (2026-08-19). Her structure kept:
-       drawn ring, K standing in a framed panel, P looped over the top of it,
-       sparkles off the right shoulder. All currentColor, so one file serves
-       the white bar, the dark ground and the footer. -->
+       The letters and not the full drawing on purpose. A favicon is seen at
+       16 to 32px, and below roughly 80px the ring, the zigzag frame and the
+       sparkles stop being legible and read as texture around the letters -
+       which is the same reason the masthead and the footer both take the
+       lockup alone.
 
-  <!-- everything that is frame rather than letter -->
-  <g class="kp-frame" fill="none" stroke="currentColor" stroke-linejoin="round">
-    <path d="M98 7 C150 4 195 46 193 101 C191 154 150 196 99 193 C47 190 8 151 7 99 C6 47 46 10 98 7 Z" stroke-width="5"/>
-    <path d="M186 86 C191 130 157 179 107 184 C75 187 45 172 29 146" stroke-width="2.5" stroke-linecap="round"/>
-    <path d="M31 43 H128 V163 H31 Z" stroke-width="3.5"/>
-    <path d="M38 43 V163" stroke-width="2"/>
-    <path d="M43 51 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5" stroke-width="2.2"/>
-    <path d="M43 155 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5 l6 -5 l6 5" stroke-width="2.2"/>
-    <path d="M22 92 c-7 0 -9 10 -2 11 c6 1 8 -8 1 -10" stroke-width="2"/>
-    <path d="M22 108 c-7 0 -9 10 -2 11 c6 1 8 -8 1 -10" stroke-width="2"/>
+       No plate behind it. The cream one it used to sit on is a colour the
+       site no longer has, and a transparent icon takes the shape of whatever
+       tab bar it lands in rather than punching a pale square into a dark one.
+
+       The viewBox is square and centred on the letters, so the mark fills the
+       icon instead of floating in the corner of a 200-unit box. -->
+  <g fill="#B73D28">
+    <path d="M33 52 H70 V61 H33 Z"/>
+    <path d="M45 52 H58 V142 H45 Z"/>
+    <path d="M31 133 H72 V142 H31 Z"/>
   </g>
-  <g class="kp-frame" fill="currentColor">
-    <circle cx="46" cy="146" r="3.4"/>
-    <circle cx="57" cy="152" r="2.8"/>
-    <circle cx="47" cy="157" r="2.2"/>
-  </g>
-
-  <!-- K: slab stem, slab foot, two arms reaching under the P -->
-  <g class="kp-letters">
-    <g fill="currentColor">
-      <path d="M33 52 H70 V61 H33 Z"/>
-      <path d="M45 52 H58 V142 H45 Z"/>
-      <path d="M31 133 H72 V142 H31 Z"/>
-    </g>
-    <g fill="none" stroke="currentColor" stroke-linecap="butt">
-      <path d="M57 99 L97 56" stroke-width="11"/>
-      <path d="M57 101 L100 142" stroke-width="12"/>
-    </g>
-
-    <!-- P laid over the K -->
-    <g fill="currentColor">
-      <path d="M91 44 H125 V54 H91 Z"/>
-      <path d="M101 44 H115 V162 H101 Z"/>
-      <path d="M89 153 H127 V162 H89 Z"/>
-      <path d="M115 50
-               C145 50 169 63 169 88
-               C169 113 145 126 115 126
-               L115 112
-               C137 112 155 102 155 88
-               C155 74 137 64 115 64
-               Z"/>
-      <path d="M106 126 H172 V135 H106 Z"/>
-    </g>
+  <g fill="none" stroke="#B73D28" stroke-linecap="butt">
+    <path d="M57 99 L97 56" stroke-width="11"/>
+    <path d="M57 101 L100 142" stroke-width="12"/>
   </g>
 
-  <!-- sparkles off the right shoulder -->
-  <g class="kp-frame" fill="currentColor">
-    <path d="M172 34 l3.2 10.5 l10.5 3.2 l-10.5 3.2 l-3.2 10.5 l-3.2 -10.5 l-10.5 -3.2 l10.5 -3.2 Z"/>
-    <path d="M181 68 l2.2 7 l7 2.2 l-7 2.2 l-2.2 7 l-2.2 -7 l-7 -2.2 l7 -2.2 Z"/>
-    <path d="M154 30 l1.7 5.4 l5.4 1.7 l-5.4 1.7 l-1.7 5.4 l-1.7 -5.4 l-5.4 -1.7 l5.4 -1.7 Z"/>
-  </g>
+  <!-- P laid over the K, translated to match KPMark.astro -->
+  <g fill="#B73D28" transform="translate(-10,0)">
+    <path d="M91 44 H125 V54 H91 Z"/>
+    <path d="M101 44 H115 V162 H101 Z"/>
+    <path d="M89 153 H127 V162 H89 Z"/>
+    <path d="M115 50
+             C145 50 169 63 169 88
+             C169 113 145 126 115 126
+             L115 112
+             C137 112 155 102 155 88
+             C155 74 137 64 115 64
+             Z"/>
   </g>
 </svg>
