@@ -33,8 +33,13 @@ const { letters = false } = Astro.props;
       <path d="M57 101 L100 142" stroke-width="12"/>
     </g>
 
-    <!-- P laid over the K -->
-    <g fill="currentColor">
+    <!-- P laid over the K, pulled ten units left so the two letters interlock
+         rather than merely touch (client, 2026-09-03: "zkus jeste P posunout
+         trochu do K, prolnout ta dve pismena"). A translate rather than four
+         rewritten paths: her traced outlines stay exactly as drawn, and the
+         amount is one number to change. Ten is as far as it goes before the
+         bowl starts covering the K's upper arm. -->
+    <g fill="currentColor" transform="translate(-10,0)">
       <path d="M91 44 H125 V54 H91 Z"/>
       <path d="M101 44 H115 V162 H101 Z"/>
       <path d="M89 153 H127 V162 H89 Z"/>
@@ -85,8 +90,13 @@ const { letters = false } = Astro.props;
       <path d="M57 101 L100 142" stroke-width="12"/>
     </g>
 
-    <!-- P laid over the K -->
-    <g fill="currentColor">
+    <!-- P laid over the K, pulled ten units left so the two letters interlock
+         rather than merely touch (client, 2026-09-03: "zkus jeste P posunout
+         trochu do K, prolnout ta dve pismena"). A translate rather than four
+         rewritten paths: her traced outlines stay exactly as drawn, and the
+         amount is one number to change. Ten is as far as it goes before the
+         bowl starts covering the K's upper arm. -->
+    <g fill="currentColor" transform="translate(-10,0)">
       <path d="M91 44 H125 V54 H91 Z"/>
       <path d="M101 44 H115 V162 H101 Z"/>
       <path d="M89 153 H127 V162 H89 Z"/>

@@ -451,7 +451,11 @@ img { max-width: 100%; height: auto; }
   inset: 0;
   z-index: 4;
   display: grid;
-  place-content: center;
+  /* "safe" matters as much as "center": a centred grid whose content is
+     taller than the box pushes the overflow off the TOP, where no scroll can
+     reach it. Safe centring gives up the centring rather than the content. */
+  place-content: safe center;
+  overflow-y: auto;
   padding: var(--gutter);
   visibility: hidden;
   background-color: transparent;
@@ -528,9 +532,21 @@ img { max-width: 100%; height: auto; }
 
 .nav__list { margin: 0; padding: 0; list-style: none; display: grid; gap: clamp(0.5rem, 2vw, 1rem); }
 
+/* A phone on its side. The type is already sized off the short edge above;
+   this takes back the space around it, which is the other half of the fit. */
+@media (max-height: 30rem) {
+  .nav { padding: 0.75rem var(--gutter); }
+  .nav__list { gap: 0.15rem; }
+  .nav__close { top: 0.4rem; right: 0.4rem; }
+}
+
 .nav__link {
   font-family: var(--display);
-  font-size: clamp(2.2rem, 10vw, 4.5rem);
+  /* Sized off whichever way round the phone is. 10vw alone put 72px letters
+     in a 390px-tall landscape viewport: the list came out 660px, ran from
+     -135px to 525px, and neither end could be reached (client, 2026-09-03:
+     "menu je v landscape na mobilu nepouzitelny"). */
+  font-size: clamp(1.4rem, min(10vw, 9vh), 4.5rem);
   line-height: 1.15;
   color: var(--white);
   text-decoration: none;

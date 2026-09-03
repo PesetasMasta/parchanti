@@ -108,6 +108,15 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
         </div>
       </div>
     </article>
+
+    <!-- Somewhere to press, and a place that says how many there are and
+         which one this is. Outside the slides so it does not fade with
+         them. -->
+    <div class="hero__dots" role="group" aria-label="Sekce">
+      <button class="hero__dot" type="button" aria-label="Program" aria-current="true"></button>
+      <button class="hero__dot" type="button" aria-label="Repertoár"></button>
+      <button class="hero__dot" type="button" aria-label="Soubor"></button>
+    </div>
   </section>
 
   <section class="next page">
@@ -255,6 +264,40 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(4) { transition-delay: 500ms; }
   .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(5) { transition-delay: 580ms; }
 
+  .hero__dots {
+    position: absolute;
+    z-index: 2;
+    right: var(--gutter);
+    bottom: 1rem;
+    display: flex;
+    gap: 0.15rem;
+  }
+
+  /* The mark is small but the target is not: 44px of button around a 10px
+     dot, which is what a thumb needs and what the dots must not look like. */
+  .hero__dot {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+  }
+
+  .hero__dot::before {
+    content: "";
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    border: 2px solid var(--white);
+    background: transparent;
+    transition: background-color 200ms ease;
+  }
+
+  .hero__dot[aria-current]::before { background: var(--white); }
+
   .hero__eyebrow {
     margin: 0 0 1rem;
     font-weight: 700;
@@ -329,17 +372,49 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   // a section they never chose to look at.
   const reel = document.querySelector('[data-reel]');
   const slides = [...reel.querySelectorAll('.hero__slide')];
+  const dots = [...reel.querySelectorAll('.hero__dot')];
   let index = 0;
   let timer;
 
-  const advance = () => {
+  const show = (next) => {
     slides[index].removeAttribute('data-on');
-    index = (index + 1) % slides.length;
+    dots[index].removeAttribute('aria-current');
+    index = (next + slides.length) % slides.length;
     slides[index].setAttribute('data-on', '');
+    dots[index].setAttribute('aria-current', 'true');
   };
 
-  const start = () => { timer = setInterval(advance, 6000); };
+  const start = () => { timer = setInterval(() => show(index + 1), 6000); };
   const stop = () => { clearInterval(timer); };
+  // Someone who has just chosen a slide should get a full turn to read it,
+  // not the remainder of a tick that was already running.
+  const restart = () => { stop(); start(); };
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => { show(i); restart(); });
+  });
+
+  // Swipe. A drag that is mostly vertical is the page being scrolled, so the
+  // strip stays out of it; both listeners are passive for the same reason.
+  let startX = null;
+  let startY = null;
+
+  reel.addEventListener('touchstart', (event) => {
+    const touch = event.changedTouches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+  }, { passive: true });
+
+  reel.addEventListener('touchend', (event) => {
+    if (startX === null) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    startX = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    show(index + (dx < 0 ? 1 : -1));
+    restart();
+  }, { passive: true });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();

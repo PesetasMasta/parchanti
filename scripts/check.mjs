@@ -506,6 +506,13 @@ onPage('/',
     // The identity slide is the one in flow, so it sets the height and the
     // strip cannot resize as it turns.
     firstInFlow: getComputedStyle(document.querySelector('.hero__slide')).position === 'relative',
+    // Turning it by hand: one control per slide, the showing one marked, and
+    // a target a thumb can actually hit.
+    dots: [...document.querySelectorAll('.hero__dot')].map((dot) => ({
+      label: dot.getAttribute('aria-label'),
+      current: dot.hasAttribute('aria-current'),
+      size: Math.round(dot.getBoundingClientRect().width),
+    })),
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -518,6 +525,11 @@ onPage('/',
     if (JSON.stringify(hrefs) !== JSON.stringify(wanted)) return `slide buttons point at ${JSON.stringify(hrefs)}`;
     if (r.slides.some((s) => !s.photo)) return 'a slide has no photograph behind it';
     if (!r.firstInFlow) return 'the first slide is not in flow, so the strip will resize as it turns';
+    if (r.dots.length !== r.slides.length) return `${r.dots.length} controls for ${r.slides.length} slides`;
+    if (r.dots.filter((d) => d.current).length !== 1) return 'exactly one control must be marked as the one showing';
+    if (!r.dots[0].current) return 'the control marked current is not the slide showing at rest';
+    if (r.dots.some((d) => !d.label)) return 'a control has no accessible name';
+    if (r.dots.some((d) => d.size < 44)) return `smallest control is ${Math.min(...r.dots.map((d) => d.size))}px, under the 44px tap target`;
     return null;
   },
 );
