@@ -40,22 +40,14 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     ],
   })} />
 
-  <section class="hero page">
-    <div class="page__inner hero__grid">
-      <div class="hero__copy">
-        <p class="hero__eyebrow">Nezávislé divadlo &middot; Praha</p>
-        <h1 class="display hero__title">Kolekce Parchant</h1>
-
-        <!-- The short claim under the name is still pending from the client.
-             Deliberately separate from the pitch below: the backlog lists them
-             as two different items. Leave empty rather than inventing one. -->
-        <p class="hero__claim" data-placeholder></p>
-
-        <p class="hero__pitch">Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!</p>
-
-        <p><a class="button" href="/program/">Program</a></p>
-      </div>
-
+  <!-- The hero turns by itself through three slides, one per section, each
+       with its own button (client, 2026-09-02/03). The first slide is the
+       identity one and carries everything the page owns: the h1, the claim
+       slot still waiting on her, and her pitch verbatim. It is also the only
+       slide in normal flow - the other two are laid over it - so the tallest
+       slide sets the height and the strip cannot jump as it turns. -->
+  <section class="hero page" data-reel>
+    <article class="hero__slide" data-on>
       <img
         class="hero__photo"
         src="/assets/panels/hero.png"
@@ -63,7 +55,59 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
         height="1077"
         alt="Šest herců stojí vedle sebe v řadě v podkroví s lany a petrolejkou nad hlavou."
       />
-    </div>
+      <div class="hero__copy">
+        <div class="page__inner">
+          <p class="hero__eyebrow">Nezávislé divadlo &middot; Praha</p>
+          <h1 class="display hero__title">Kolekce Parchant</h1>
+
+          <!-- The short claim under the name is still pending from the client.
+               Deliberately separate from the pitch below: the backlog lists
+               them as two different items. Leave empty rather than inventing
+               one. -->
+          <p class="hero__claim" data-placeholder></p>
+
+          <p class="hero__pitch">Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!</p>
+
+          <p><a class="button" href="/program/">Program</a></p>
+        </div>
+      </div>
+    </article>
+
+    <article class="hero__slide">
+      <img
+        class="hero__photo"
+        src="/assets/panels/sipy-2.png"
+        width="900"
+        height="788"
+        alt="Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny."
+      />
+      <div class="hero__copy">
+        <div class="page__inner">
+          <p class="hero__eyebrow">Repertoár</p>
+          <p class="display hero__title">Co hrajeme</p>
+          <p class="hero__pitch">Inscenace, které máme na repertoáru.</p>
+          <p><a class="button" href="/repertoar/">Repertoár</a></p>
+        </div>
+      </div>
+    </article>
+
+    <article class="hero__slide">
+      <img
+        class="hero__photo"
+        src="/assets/panels/ensemble.png"
+        width="1100"
+        height="913"
+        alt="Skupina herců stojí těsně vedle sebe a dívá se do objektivu."
+      />
+      <div class="hero__copy">
+        <div class="page__inner">
+          <p class="hero__eyebrow">Soubor</p>
+          <p class="display hero__title">Kdo jsme</p>
+          <p class="hero__pitch">Lidé, kteří Kolekci Parchant tvoří.</p>
+          <p><a class="button" href="/soubor/">Soubor</a></p>
+        </div>
+      </div>
+    </article>
   </section>
 
   <section class="next page">
@@ -116,41 +160,126 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 </Base>
 
 <style>
-  /* Transparent so the cloud ground on body shows through. */
-  .hero { background: transparent; }
-
-  .hero__grid { display: grid; gap: 2rem; }
-
-  /* Phone-first: halves stack, name first. Side by side from tablet up. */
-  @media (min-width: 48rem) {
-    .hero__grid { grid-template-columns: 1fr 1fr; align-items: center; }
+  /* The strip is its own dark band rather than a block on the wash, so it
+     drops the page padding and paints edge to edge. */
+  .hero {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    /* One number for the height of the picture and for the room the slides
+       reserve above their copy, so the two cannot drift apart. */
+    --hero-photo: min(62vw, 24rem);
   }
 
+  /* Only the first slide is in flow. The other two are laid over it, so the
+     identity slide - the one with the most words in it - decides the height
+     and the strip never resizes as it turns. */
+  .hero__slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-top: var(--hero-photo);
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 900ms ease, visibility 0s linear 900ms;
+  }
+
+  /* Padding, not a margin on the copy: the slide has no border or padding of
+     its own, so a top margin on its first child collapses straight through it
+     and moves the slide instead of making room inside it - which left the
+     photograph with nowhere to be and the wash showing where it should have
+     been. */
+  .hero__slide:first-child { position: relative; }
+
+  .hero__slide[data-on] {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 900ms ease, visibility 0s;
+  }
+
+  /* Cropped to the band it is actually seen in, not stretched over the whole
+     slide. Covering the slide made the picture taller than the window above
+     the copy, so the visible third was whatever happened to be at the top of
+     the frame - ropes and ceiling rather than the people. */
+  .hero__photo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--hero-photo);
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* A solid band, not a wash over the picture: the contrast harness reads a
+     background-colour and looks straight through a gradient to whatever is
+     behind it, and white over an unknown photograph is not a contrast anyone
+     can promise. The photo fades into the band through ::before instead. */
+  /* The band carries the page gutter itself, because .hero drops the padding
+     .page would have given it in order to paint edge to edge. */
+  .hero__copy {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    padding: 1.75rem var(--gutter) 2.25rem;
+    background-color: var(--ink);
+    color: var(--white);
+  }
+
+  .hero__copy::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 7rem;
+    background: linear-gradient(to top, var(--ink), rgba(30, 27, 20, 0));
+  }
+
+  /* The copy arrives after the picture has settled, one line at a time, and
+     leaves together - the same two beats as the menu. */
+  .hero__copy > .page__inner > * {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 420ms ease, transform 420ms ease;
+  }
+
+  .hero__slide[data-on] .hero__copy > .page__inner > * { opacity: 1; transform: none; }
+
+  .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(1) { transition-delay: 260ms; }
+  .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(2) { transition-delay: 340ms; }
+  .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(3) { transition-delay: 420ms; }
+  .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(4) { transition-delay: 500ms; }
+  .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(5) { transition-delay: 580ms; }
+
   .hero__eyebrow {
-    margin: 0 0 1.25rem;
+    margin: 0 0 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.22em;
     font-size: 0.8rem;
+    color: var(--white);
   }
 
   .hero__title {
     margin: 0;
-    font-size: clamp(3rem, 13vw, 6.5rem);
-    color: var(--accent);
+    font-size: clamp(2.4rem, 11vw, 5rem);
+    line-height: 1;
+    color: var(--white);
   }
 
   .hero__claim:empty { display: none; }
 
   .hero__pitch {
     max-width: var(--measure);
-    margin: 1.5rem 0;
-    font-size: clamp(1.15rem, 1rem + 1vw, 1.5rem);
+    margin: 1.25rem 0;
+    font-size: clamp(1.05rem, 1rem + 0.6vw, 1.3rem);
     font-weight: 600;
     text-wrap: pretty;
   }
-
-  .hero__photo { display: block; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 
   .next__eyebrow {
     margin: 0 0 1rem;
@@ -193,3 +322,29 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .next__list { max-width: var(--measure); }
 </style>
+
+<script>
+  // One slide per section, turning by itself. Paused while the tab is hidden:
+  // a strip that has advanced six times behind someone's back is showing them
+  // a section they never chose to look at.
+  const reel = document.querySelector('[data-reel]');
+  const slides = [...reel.querySelectorAll('.hero__slide')];
+  let index = 0;
+  let timer;
+
+  const advance = () => {
+    slides[index].removeAttribute('data-on');
+    index = (index + 1) % slides.length;
+    slides[index].setAttribute('data-on', '');
+  };
+
+  const start = () => { timer = setInterval(advance, 6000); };
+  const stop = () => { clearInterval(timer); };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else start();
+  });
+
+  start();
+</script>

@@ -496,6 +496,33 @@ onPage('/',
 );
 
 onPage('/',
+  'hero turns through three slides, one per section, each with its own button',
+  `JSON.stringify({
+    slides: [...document.querySelectorAll('.hero__slide')].map((slide) => ({
+      on: slide.hasAttribute('data-on'),
+      href: slide.querySelector('a.button')?.getAttribute('href'),
+      photo: slide.querySelector('img.hero__photo')?.getAttribute('src'),
+    })),
+    // The identity slide is the one in flow, so it sets the height and the
+    // strip cannot resize as it turns.
+    firstInFlow: getComputedStyle(document.querySelector('.hero__slide')).position === 'relative',
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.slides.length !== 3) return `expected 3 slides, got ${r.slides.length}`;
+    const on = r.slides.filter((s) => s.on).length;
+    if (on !== 1) return `${on} slides are showing at rest, expected exactly 1`;
+    if (!r.slides[0].on) return 'the identity slide must be the one showing at rest';
+    const hrefs = r.slides.map((s) => s.href);
+    const wanted = ['/program/', '/repertoar/', '/soubor/'];
+    if (JSON.stringify(hrefs) !== JSON.stringify(wanted)) return `slide buttons point at ${JSON.stringify(hrefs)}`;
+    if (r.slides.some((s) => !s.photo)) return 'a slide has no photograph behind it';
+    if (!r.firstInFlow) return 'the first slide is not in flow, so the strip will resize as it turns';
+    return null;
+  },
+);
+
+onPage('/',
   'next-performance strip sits below the hero and shows the next date still to be played',
   `JSON.stringify({
     belowHero: (() => {

@@ -649,8 +649,11 @@ img { max-width: 100%; height: auto; }
   border-radius: var(--radius-card);
 }
 
+/* Square, at her ask (2026-09-03: "u terminu hranaty ramecek"). The rounding
+   she picked on 2026-09-01 stays everywhere else; this is the one frame that
+   reads as a frame around a picture, and she wants it cornered. */
 .ticket__poster img,
-.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
+.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: 0; }
 
 /* Poster proportions, so the slot is the shape a poster will be. */
 .ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--olive); }
