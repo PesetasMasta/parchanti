@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <!-- W3, the current wash at six times the frequency and an extra octave. Same
+       cloud maths, no longer cloud scale: the blobs get small enough to read
+       as render rather than as sky.
+
+       Same tint ramp as the shipping wash, lime floor up to Lime Sherbet, so
+       these compare against it and against each other; only the noise
+       differs. Every baseFrequency times 1200 is a whole number, which is
+       what stitchTiles needs in order to wrap.
+
+       No double hyphens in here. A comment containing one is not well-formed
+       XML and the browser silently paints nothing, which is exactly how the
+       shipping ground was broken for four commits. -->
+  <filter id="w" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="6" seed="9" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer>
+      <feFuncR type="linear" slope="2.2" intercept="-0.6"/>
+      <feFuncG type="linear" slope="2.2" intercept="-0.6"/>
+      <feFuncB type="linear" slope="2.2" intercept="-0.6"/>
+      <feFuncA type="table" tableValues="1 1"/>
+    </feComponentTransfer>
+    <feComponentTransfer>
+      <feFuncR type="table" tableValues="0.659 0.804"/>
+      <feFuncG type="table" tableValues="0.710 0.843"/>
+      <feFuncB type="table" tableValues="0.420 0.541"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="1200" height="1200" filter="url(#w)"/>
+</svg>

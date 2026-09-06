@@ -107,6 +107,24 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
 .band--s3 { background: url("assets/grain-sparse-3.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
 .band--s4 { background: url("assets/grain-sparse-4.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
 
+/* --- W: the ground itself, as a wall -------------------------------------
+   Everything above changes what sits OVER the wash. These change the wash.
+   Each carries the S1 grain on top, since that is the tooth you picked, so
+   what differs between them is only what the ground itself is doing. ------ */
+.band--w { position: relative; }
+.band--w::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 50%, rgb(var(--ink-rgb) / 0) 45%, rgb(var(--ink-rgb) / 0.22) 100%);
+}
+.band--w > * { position: relative; z-index: 1; }
+.band--w1 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--w2 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-drips.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--w3 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-mottle.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--w4 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-cast.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+
 .zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
 </style>
 </head>
@@ -137,6 +155,12 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       them rarer; S3 and S4 make them bigger and further apart. Those are the
       two things "řidší" can mean and they look nothing alike, so pick by
       pointing.
+    </p>
+    <p>
+      <a href="#wall" style="color: var(--sherbet)">Jump to the wall grounds
+      &rsaquo;</a> — everything else on this page changes what sits OVER the
+      wash. Those four change the wash itself, from cloud to wall, and each
+      carries the S1 grain you picked.
     </p>
   </header>
 
@@ -235,6 +259,42 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
     <div class="band band--s band--s4">
       <h3>Repertoár</h3>
       <p>Divadelní soubor, který se nebojí provokovat. At this size the grain stops being texture and starts being marks on the paper.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant" id="wall">
+    <div class="variant__bar"><span class="variant__id">W — the ground as a wall</span><p class="variant__note">All four carry S1 grain and G5's vignette. What changes is the wash underneath.</p></div>
+    <div class="band band--w band--w1">
+      <h3>W1 · omítka</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. turbulence instead of fractalNoise — the one word that stops it being cloud. Zero crossings become creases, so the field reads as veined plaster.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">W2</span><p class="variant__note">Anisotropic: six times finer down the wall than across it.</p></div>
+    <div class="band band--w band--w2">
+      <h3>W2 · zatékání</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. The creases stretch into vertical runs, the way damp and trowel marks do. Closest to the photograph you first sent.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">W3</span><p class="variant__note">The current wash, six times the frequency. Same maths, smaller blobs.</p></div>
+    <div class="band band--w band--w3">
+      <h3>W3 · jemné mraky</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. The most conservative move: still cloud, but at a scale that reads as render rather than as sky.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">W4</span><p class="variant__note">Two fields multiplied: long stains over fine aggregate.</p></div>
+    <div class="band band--w band--w4">
+      <h3>W4 · beton</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. A real wall has structure at two scales at once, which is the thing a single noise field cannot say.</p>
       <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
     </div>
   </div>
