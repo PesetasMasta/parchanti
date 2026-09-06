@@ -113,7 +113,6 @@
   --radius-button: 10px;
 
   --paper: var(--white);
-  --masthead-bg: var(--white);  /* the bar */
   --button-bg: var(--brick);    /* the CTA and the burger */
   --button-text: var(--white);
 
@@ -253,7 +252,15 @@ img { max-width: 100%; height: auto; }
   justify-content: space-between;
   gap: 1rem;
   padding: 0 var(--gutter);
-  background: var(--masthead-bg);
+  /* The bar is the page's own ground, not a white shelf above it (2026-09-06:
+     "header dej taky do zelene ... dej tam ten co mame na main"). The same
+     declaration as body, so there is one wash on the site rather than a bar
+     that has to be kept in step with it by hand.
+
+     Its tile does not line up with the page's - the bar is fixed and the page
+     scrolls under it - and it is not meant to: the 3px rule below states the
+     edge, so a seam nobody can see is not one worth chasing. */
+  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
   border-bottom: 3px solid var(--ink);
   transition: height 0.2s ease;
 }
@@ -264,10 +271,19 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* Brick, which the mark picks up through currentColor - the logo's own red,
-   the same token the buttons are filled with. It reads 5.7:1 on the white
-   bar; inside the dark bands the same file comes through white. */
-.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--brick); }
+/* The red sits on the mark, not on the link. It used to sit on the link and
+   reach the mark through inheritance, which was harmless while the bar was
+   white and became a lie when it went green: the link's colour is what the
+   contrast harness measures the name against, and it was reporting the red -
+   3.4:1 - for a line of text that is painted in ink and always was. The mark
+   is a graphic and answers to 3:1, which the red clears; the name is text and
+   answers to 4.5:1, which the ink clears at 7.8:1. Two jobs, two
+   declarations. Inside the dark bands the same file comes through white. */
+.masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
+
+/* currentColor inside the file resolves against the svg, so this is what
+   paints the mark. */
+.masthead__home svg { color: var(--brick); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
@@ -309,7 +325,7 @@ img { max-width: 100%; height: auto; }
      beneath it, so the stroke reads fat and mushy on the diagonal while
      staying crisp along the straight edges. */
   background-clip: padding-box;
-  border: 3px solid var(--ink);
+  border: 0;
   border-radius: var(--radius-button);
   cursor: pointer;
 }
@@ -420,13 +436,12 @@ img { max-width: 100%; height: auto; }
      and plainly visible in a screenshot; over the last quarter it is ~8px, a
      frame or two, and both resting states are well clear of it.
 
-     The border fades to transparent rather than to zero width: the button
-     keeps its size, so the bars do not shift and the tap target does not
-     shrink at the moment it becomes the only thing to aim at. */
+     Only the fill fades now: the button has no border to take with it, and
+     its padding is untouched, so the bars do not shift and the tap target
+     does not shrink at the moment it becomes the only thing to aim at. */
   .burger {
     --burger-chrome: clamp(0, calc((var(--condense) - 0.75) * 4), 1);
     background: color-mix(in srgb, var(--button-bg), transparent calc(100% * var(--burger-chrome)));
-    border-color: color-mix(in srgb, var(--ink), transparent calc(100% * var(--burger-chrome)));
   }
 
   .burger__bars {

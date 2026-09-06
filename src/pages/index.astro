@@ -500,8 +500,13 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      One date at a time, turning by itself, after the festival drum on
      radiobloodstream.com. The dates are a queue rather than a list: the next
      one is the answer to the question the section asks, and the ones behind
-     it are there for anyone who wants to look further. */
-  .drum { max-width: var(--measure); }
+     it are there for anyone who wants to look further.
+
+     Full content width, not the reading measure (2026-09-06: "nejblizsi
+     predstaveni roztahni na sirku kontentu"): the ticket is a poster beside a
+     few short lines, not a paragraph, so the measure was constraining
+     something that is not prose. */
+  .drum { max-width: none; }
 
   .next__head {
     display: flex;

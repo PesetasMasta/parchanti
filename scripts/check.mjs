@@ -1133,7 +1133,7 @@ try {
           const style = getComputedStyle(burger);
           return {
             background: sample(style.backgroundColor),
-            border: sample(style.borderTopColor),
+            borderWidth: parseFloat(style.borderTopWidth),
             bar: sample(getComputedStyle(bars).getPropertyValue('--bar').trim()),
             padding: parseFloat(style.paddingLeft),
             gap: parseFloat(style.columnGap),
@@ -1155,7 +1155,12 @@ try {
       if (!near(top.background, BRICK)) wrong.push(`at the top the button is not brick (${top.background})`);
       if (!near(top.bar, WHITE)) wrong.push(`at the top the bars are not white (${top.bar})`);
       if (scrolled.background?.[3] !== 0) wrong.push(`condensed the button still has a fill (alpha ${scrolled.background?.[3]})`);
-      if (scrolled.border?.[3] !== 0) wrong.push(`condensed the button still has a border (alpha ${scrolled.border?.[3]})`);
+      // The button has no rule at either end of the journey now, so the
+      // assertion is width rather than a colour fading to transparent: a
+      // border-color still computes to something opaque when nothing is
+      // drawn, and reading it was how a removed border went on "passing".
+      if (top.borderWidth !== 0) wrong.push(`at the top the button has a ${top.borderWidth}px border`);
+      if (scrolled.borderWidth !== 0) wrong.push(`condensed the button has a ${scrolled.borderWidth}px border`);
       if (!near(scrolled.bar, BRICK)) wrong.push(`condensed the bars are not brick (${scrolled.bar})`);
       if (!(scrolled.padding < top.padding)) wrong.push(`padding did not shrink: ${top.padding} -> ${scrolled.padding}`);
       if (scrolled.gap !== 0) wrong.push(`condensed the gap beside the dropped label is still ${scrolled.gap}px`);
