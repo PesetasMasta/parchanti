@@ -21,9 +21,14 @@ interface Props {
   // and Červánky have neither, so they render the title and nothing else -
   // which is correct until those pages exist.
   production?: { data: Record<string, any> };
+  // Set on the program page so the calendar above has something to link a day
+  // to. Omitted everywhere else rather than minted unconditionally: an id is
+  // a promise that something links here, and two of these on one page would
+  // be a duplicate id.
+  id?: string;
 }
 
-const { entry, production } = Astro.props;
+const { entry, production, id } = Astro.props;
 const data = production?.data;
 
 const meta = [
@@ -31,7 +36,7 @@ const meta = [
   data?.ageRating,
 ].filter(Boolean);
 ---
-<article class="ticket" data-state={entry.state}>
+<article class="ticket" id={id} data-state={entry.state}>
   <div class="ticket__poster">
     {data?.poster ? (
       <img

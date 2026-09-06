@@ -43,3 +43,49 @@ export function upcoming(dates, today = todayISO()) {
 export function czechDuration(minutes) {
   return `${minutes} min`;
 }
+
+// Czech month names, and the Monday-first weekday order a Czech calendar is
+// read in. WEEKDAYS above is Sunday-first because that is what getUTCDay
+// returns; this is the reading order, which is a different thing.
+export const MONTH_NAMES = [
+  'leden', 'únor', 'březen', 'duben', 'květen', 'červen',
+  'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec',
+];
+
+export const WEEKDAYS_SHORT = ['po', 'út', 'st', 'čt', 'pá', 'so', 'ne'];
+
+export function czechMonth(iso) {
+  const [year, month] = iso.split('-').map(Number);
+  return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+// Monday-first index, 0 = Monday.
+export function weekdayIndex(iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  return (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7;
+}
+
+// The months these dates fall in, each as rows of seven cells: leading blanks
+// to reach the first weekday, then every day of the month with whatever is
+// played on it. Built here rather than in the page so the calendar is
+// rendered at build time - it works before any script runs, and the browser is
+// never asked to compute a calendar the build already knows.
+export function monthGrids(dates) {
+  const keys = [...new Set(dates.map((entry) => entry.date.slice(0, 7)))];
+
+  return keys.map((key) => {
+    const [year, month] = key.split('-').map(Number);
+    // Day 0 of the next month is the last day of this one.
+    const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+    const cells = Array.from({ length: weekdayIndex(`${key}-01`) }, () => null);
+    for (let day = 1; day <= length; day += 1) {
+      const iso = `${key}-${String(day).padStart(2, '0')}`;
+      cells.push({ day, iso, entries: dates.filter((entry) => entry.date === iso) });
+    }
+
+    const weeks = [];
+    for (let index = 0; index < cells.length; index += 7) weeks.push(cells.slice(index, index + 7));
+    return { key, label: czechMonth(`${key}-01`), weeks };
+  });
+}

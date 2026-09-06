@@ -2,7 +2,8 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import ProductionTitle from '../../components/ProductionTitle.astro';
-import { czechDuration } from '../../lib/program.js';
+import program from '../../../data/program.json';
+import { czechDate, czechDuration, upcoming } from '../../lib/program.js';
 
 export async function getStaticPaths() {
   const productions = await getCollection('productions');
@@ -24,6 +25,11 @@ const title = `${[data.titleLead, data.titleRest].filter(Boolean).join(' ')} —
 
 // Running time and age are fields now, not free text inside creditsAfter, so
 // the program page can render them too. They still read as credit rows here.
+// When you can actually see it. The programme is the one place these live, so
+// they are filtered out of it by slug rather than repeated on the production -
+// a date cannot then be right on one page and stale on the other.
+const playdates = upcoming(program.dates).filter((entry) => entry.slug === production.id);
+
 const measurements = [
   data.durationMinutes && { label: 'Délka', text: czechDuration(data.durationMinutes) },
   data.ageRating && { label: 'Přístupnost', text: data.ageRating },
@@ -39,6 +45,33 @@ const measurements = [
       <p class="production__blurb">{data.blurb}</p>
 
       <p class="prose production__annotation">{data.annotation}</p>
+
+      <!-- High on the page on purpose: someone reading about a production is
+           usually deciding whether they can go, and the answer to that should
+           not be below the credits. -->
+      <section class="playdates">
+        <h2 class="playdates__heading">Kdy hrajeme</h2>
+        {playdates.length === 0 ? (
+          <p class="playdates__empty">
+            Zatím nemáme vypsaný termín. Nové najdete v <a class="link" href="/program/">programu</a>.
+          </p>
+        ) : (
+          <Fragment>
+            <ul class="playdates__list">
+              {playdates.map((entry) => (
+                <li>
+                  <a class="playdates__date" href={`/program/#termin-${entry.date}`}>
+                    <span class="playdates__day display">{czechDate(entry.date)}</span>
+                    <span class="playdates__time display">{entry.time}</span>
+                    {entry.note && <span class="playdates__note">{entry.note}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p><a class="link" href="/program/">Celý program</a></p>
+          </Fragment>
+        )}
+      </section>
 
       <dl class="credits">
         {data.creditsBefore.map((row) => (
@@ -124,6 +157,57 @@ const measurements = [
 
 <style>
   .production__title { font-size: clamp(2.4rem, 11vw, 4.5rem); color: inherit; }
+
+  .playdates { margin: 2rem 0; max-width: var(--measure); }
+
+  .playdates__heading {
+    margin: 0 0 0.75rem;
+    font-family: var(--body);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+
+  .playdates__list {
+    margin: 0 0 0.75rem;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Each date is a link into the programme, at the day it names. The pair is
+     one object rather than a row of text: a date and a time belong together
+     and wrap together. */
+  .playdates__date {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--paper);
+    background-clip: padding-box;
+    border: 3px solid var(--brick);
+    border-radius: var(--radius-button);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .playdates__day { font-size: 1rem; }
+  .playdates__time { font-size: 1rem; color: var(--accent); }
+
+  .playdates__note {
+    font-family: var(--body);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .playdates__empty { margin: 0; }
 
   .production__blurb {
     max-width: var(--measure);

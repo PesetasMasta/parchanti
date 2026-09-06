@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PerformanceDate from '../components/PerformanceDate.astro';
 import program from '../../data/program.json';
-import { upcoming } from '../lib/program.js';
+import { upcoming, monthGrids, WEEKDAYS_SHORT } from '../lib/program.js';
 
 // Running time, age and poster live on the production, so each date is joined
 // to its production by slug. Toníkova cesta and Červánky have no page and so
@@ -14,6 +14,14 @@ const productionOf = new Map(productions.map((production) => [production.id, pro
 // Past dates drop off by themselves on the next build, rather than sitting on
 // the page until someone edits the file by hand.
 const dates = upcoming(program.dates);
+
+// One grid per month the season touches, built at build time. The calendar is
+// therefore real HTML before any script runs: every played day is a link to
+// its own date further down the page, so it works with scripting off and the
+// script only adds the paging and the marking.
+const months = monthGrids(dates);
+
+const dateId = (iso) => `termin-${iso}`;
 ---
 <Base title="Program — Kolekce Parchant" description="Termíny představení souboru Kolekce Parchant ve Studiu Citadela v Praze.">
   <section class="page">
@@ -27,11 +35,66 @@ const dates = upcoming(program.dates);
           <p><a class="link" href="https://www.instagram.com/kolekce_parchant">Sledovat na Instagramu</a></p>
         </div>
       ) : (
-        <div class="program__list">
-          {dates.map((date) => (
-            <PerformanceDate entry={date} production={date.slug ? productionOf.get(date.slug) : undefined} />
-          ))}
-        </div>
+        <Fragment>
+          <!-- Every month is rendered, all of them visible until the script
+               collapses them to one and reveals the arrows. With scripting off
+               that leaves the whole season on the page as four grids, which is
+               a worse calendar but a working one. -->
+          <div class="calendar" data-calendar>
+            <div class="calendar__bar" data-calendar-bar hidden>
+              <button class="calendar__step" type="button" data-calendar-prev aria-label="Předchozí měsíc">&lsaquo;</button>
+              <p class="calendar__label display" data-calendar-label aria-live="polite"></p>
+              <button class="calendar__step" type="button" data-calendar-next aria-label="Další měsíc">&rsaquo;</button>
+            </div>
+
+            {months.map((month) => (
+              <section class="calendar__month" data-month={month.key}>
+                <h2 class="calendar__caption display">{month.label}</h2>
+                <table class="calendar__grid">
+                  <thead>
+                    <tr>{WEEKDAYS_SHORT.map((day) => <th scope="col">{day}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {month.weeks.map((week) => (
+                      <tr>
+                        {week.map((cell) => (
+                          <td>
+                            {cell === null ? null : cell.entries.length === 0 ? (
+                              /* A day nobody plays is a number, not a control.
+                                 Most of the month is these, and they are quiet
+                                 so that the played days are the only thing the
+                                 eye has to find. */
+                              <span class="calendar__quiet">{cell.day}</span>
+                            ) : (
+                              <a
+                                class="calendar__day"
+                                href={`#${dateId(cell.iso)}`}
+                                aria-label={`${cell.day}. ${Number(month.key.slice(5))}. ${cell.entries[0].title}, ${cell.entries[0].time}`}
+                              >
+                                {cell.day}
+                                <span>{cell.entries[0].time}</span>
+                              </a>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            ))}
+          </div>
+
+          <div class="program__list">
+            {dates.map((date) => (
+              <PerformanceDate
+                entry={date}
+                production={date.slug ? productionOf.get(date.slug) : undefined}
+                id={dateId(date.date)}
+              />
+            ))}
+          </div>
+        </Fragment>
       )}
 
       <!-- Client request 2026-08-31, item 6: "nekde vecpat to ze 'prostor
@@ -59,4 +122,157 @@ const dates = upcoming(program.dates);
   }
 
   .program__list { max-width: var(--measure); }
+
+  /* --- the calendar ------------------------------------------------------- */
+  .calendar { max-width: 30rem; margin-bottom: 2.5rem; }
+
+  .calendar__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .calendar__label { margin: 0; font-size: 1.25rem; }
+
+  .calendar__step {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-content: center;
+    padding: 0;
+    border: 3px solid var(--accent);
+    border-radius: var(--radius-button);
+    background: transparent;
+    color: var(--accent);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .calendar__step[disabled] { opacity: 0.35; cursor: default; }
+
+  /* The per-month caption is how the month is named with scripting off. Once
+     the bar takes that job the captions would say it twice, so the script
+     marks the calendar and this hides them. */
+  .calendar[data-paged] .calendar__caption { display: none; }
+  .calendar:not([data-paged]) .calendar__month + .calendar__month { margin-top: 2rem; }
+
+  .calendar__caption { margin: 0 0 0.75rem; font-size: 1.25rem; }
+
+  .calendar__grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+  .calendar__grid th {
+    padding-bottom: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .calendar__grid td { padding: 2px; text-align: center; }
+
+  .calendar__quiet {
+    display: grid;
+    place-content: center;
+    aspect-ratio: 1;
+    font-size: 0.85rem;
+    /* Ink at low alpha rather than a grey: a grey on the wash is a colour the
+       palette does not have. */
+    color: rgb(var(--ink-rgb) / 0.45);
+  }
+
+  .calendar__day {
+    display: grid;
+    place-content: center;
+    gap: 2px;
+    aspect-ratio: 1;
+    background: var(--paper);
+    background-clip: padding-box;
+    border: 3px solid var(--brick);
+    border-radius: var(--radius-inner);
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .calendar__day span { font-family: var(--display); font-size: 0.6rem; font-weight: 400; color: var(--brick); }
+
+  .calendar__day[data-picked] { background: var(--brick); color: var(--white); }
+  .calendar__day[data-picked] span { color: var(--white); }
+
+  /* The date the calendar sent you to. Ink rather than red: the ticket is
+     already framed in red, and a red ring around a red frame says nothing. */
+  .ticket[data-hit] { outline: 3px solid var(--ink); outline-offset: 4px; }
+
+  .program__list .ticket { scroll-margin-top: 6rem; }
 </style>
+
+<script>
+  // Collapses the season's month grids to one at a time and reveals the
+  // arrows. Everything below is enhancement: the calendar is already links to
+  // dates further down the page, so with this script gone the page still
+  // works - it just shows every month at once and scrolls instead of paging.
+  const calendar = document.querySelector('[data-calendar]');
+
+  if (calendar) {
+    const months = [...calendar.querySelectorAll('.calendar__month')];
+    const bar = calendar.querySelector('[data-calendar-bar]');
+    const label = calendar.querySelector('[data-calendar-label]');
+    const prev = calendar.querySelector('[data-calendar-prev]');
+    const next = calendar.querySelector('[data-calendar-next]');
+
+    let index = 0;
+
+    const show = () => {
+      months.forEach((month, position) => { month.hidden = position !== index; });
+      label.textContent = months[index].querySelector('.calendar__caption').textContent;
+      prev.disabled = index === 0;
+      // The season is what it is: there is nothing before September and
+      // nothing after December, so the arrows stop rather than paging into
+      // empty months the company is not playing.
+      next.disabled = index === months.length - 1;
+    };
+
+    calendar.setAttribute('data-paged', '');
+    bar.hidden = false;
+    show();
+
+    prev.addEventListener('click', () => { index = Math.max(0, index - 1); show(); });
+    next.addEventListener('click', () => { index = Math.min(months.length - 1, index + 1); show(); });
+
+    // Marking the day and the date it points at. The link does the scrolling
+    // itself; this only says which one was asked for, on both ends, so the
+    // eye can find the answer in a list of fourteen.
+    const mark = (iso) => {
+      for (const day of calendar.querySelectorAll('.calendar__day')) {
+        day.toggleAttribute('data-picked', day.getAttribute('href') === `#termin-${iso}`);
+      }
+      for (const ticket of document.querySelectorAll('.program__list .ticket')) {
+        ticket.toggleAttribute('data-hit', ticket.id === `termin-${iso}`);
+      }
+    };
+
+    calendar.addEventListener('click', (event) => {
+      const day = event.target.closest('.calendar__day');
+      if (day) mark(day.getAttribute('href').replace('#termin-', ''));
+    });
+
+    // Arriving on /program/#termin-... from a production page, which links
+    // straight at a date.
+    const fromHash = () => {
+      if (location.hash.startsWith('#termin-')) {
+        const iso = location.hash.replace('#termin-', '');
+        const month = months.findIndex((section) => section.dataset.month === iso.slice(0, 7));
+        if (month >= 0) { index = month; show(); }
+        mark(iso);
+        document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' });
+      }
+    };
+
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+  }
+</script>
