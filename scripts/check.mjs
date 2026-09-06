@@ -209,9 +209,14 @@ generic(
 generic(
   'nothing overflows horizontally',
   `(() => {
+    // An element inside something that scrolls or clips cannot widen the
+    // page: the scroller absorbs it, the clip cuts it off. The walk stops at
+    // body on purpose - body carries overflow-x: hidden to catch exactly this
+    // class of bug, so counting it here would exempt every element on the
+    // page and leave the check asserting nothing.
     const inScroller = (el) => {
-      for (let node = el.parentElement; node; node = node.parentElement) {
-        if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+      for (let node = el.parentElement; node && node !== document.body; node = node.parentElement) {
+        if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(node).overflowX)) return true;
       }
       return false;
     };
@@ -545,10 +550,21 @@ onPage('/',
     })(),
     emptyVisible: Boolean(document.querySelector('.next__empty')),
     cards: document.querySelectorAll('.next .ticket').length,
-    title: document.querySelector('.next .ticket__title')?.textContent.replace(/\\s+/g, ' ').trim(),
-    time: document.querySelector('.next .ticket__time')?.textContent.trim(),
-    day: document.querySelector('.next .ticket__day')?.textContent.trim(),
-    poster: Boolean(document.querySelector('.next .ticket__poster img, .next .ticket__poster-blank')),
+    // Read off the slide that is first in DOM order, not off whichever one
+    // the drum happens to be showing: the strip turns by itself, so anything
+    // asserted about "the visible one" would depend on how long the harness
+    // took to get here. Slot 0 is built as the soonest date; that is the
+    // invariant worth pinning.
+    title: document.querySelector('.next .drum__slide[data-index="0"] .ticket__title')?.textContent.replace(/\\s+/g, ' ').trim(),
+    time: document.querySelector('.next .drum__slide[data-index="0"] .ticket__time')?.textContent.trim(),
+    day: document.querySelector('.next .drum__slide[data-index="0"] .ticket__day')?.textContent.trim(),
+    poster: Boolean(document.querySelector('.next .drum__slide[data-index="0"] .ticket__poster img, .next .drum__slide[data-index="0"] .ticket__poster-blank')),
+    dots: [...document.querySelectorAll('.drum__dot')].map((dot) => ({
+      label: dot.getAttribute('aria-label'),
+      current: dot.hasAttribute('aria-current'),
+      size: Math.round(dot.getBoundingClientRect().width),
+    })),
+    clipped: getComputedStyle(document.querySelector('.drum__window') || document.body).overflowX,
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -561,7 +577,17 @@ onPage('/',
       return r.cards === 0 ? null : `expected no tickets, got ${r.cards}`;
     }
     if (r.emptyVisible) return 'dates are still to come, but the empty state is showing';
-    if (r.cards !== 1) return `expected exactly one next performance, got ${r.cards}`;
+    // The drum turns through the next few dates. Six is the cap in
+    // index.astro; fewer than six left to play means fewer slides.
+    const wanted = Math.min(upcoming(program.dates).length, 6);
+    if (r.cards !== wanted) return `expected ${wanted} dates in the drum, got ${r.cards}`;
+    // Off-window slides are translated a whole width sideways, so the window
+    // has to clip them or the page scrolls.
+    if (!/(hidden|clip)/.test(r.clipped)) return `the drum window does not clip its slides (overflow-x: ${r.clipped})`;
+    if (r.dots.length !== r.cards) return `${r.dots.length} controls for ${r.cards} dates`;
+    if (r.dots.filter((d) => d.current).length !== 1) return 'exactly one control must be marked as the one showing';
+    if (r.dots.some((d) => !d.label)) return 'a control has no accessible name';
+    if (r.dots.some((d) => d.size < 44)) return `smallest control is ${Math.min(...r.dots.map((d) => d.size))}px, under the 44px tap target`;
     // The bug this exists for: the strip used to render dates[0], so it would
     // have advertised 17. 9. from 18. 9. onwards with nobody noticing.
     if (r.day !== czechDate(next.date)) return `shows ${JSON.stringify(r.day)}, but the next date still to be played is ${czechDate(next.date)}`;
@@ -573,13 +599,33 @@ onPage('/',
 );
 
 onPage('/',
-  'two production cards in order, linking to their pages',
-  `JSON.stringify([...document.querySelectorAll('.production-card')]
-     .map((card) => card.querySelector('a')?.getAttribute('href')))`,
+  'repertoire strip: the productions with pages link to them, the rest are title-only',
+  `JSON.stringify({
+    cards: [...document.querySelectorAll('.production-card')].map((card) => ({
+      href: card.querySelector('a')?.getAttribute('href') ?? null,
+      title: card.querySelector('.production-card__title')?.textContent.replace(/\\s+/g, ' ').trim(),
+    })),
+    scrolls: /(auto|scroll)/.test(getComputedStyle(document.querySelector('.teaser__strip') || document.body).overflowX),
+  })`,
   (raw) => {
-    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
-    const actual = JSON.parse(raw);
-    return JSON.stringify(actual) === JSON.stringify(expected) ? null : `got ${JSON.stringify(actual)}`;
+    const r = JSON.parse(raw);
+    const linked = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    // Everything she plays that has no page yet, taken from her own dates -
+    // the same derivation the page makes, so the two cannot drift.
+    const bare = [...new Set(program.dates.filter((d) => !d.slug).map((d) => d.title))];
+    if (r.cards.length !== linked.length + bare.length) {
+      return `expected ${linked.length + bare.length} cards, got ${r.cards.length}`;
+    }
+    const hrefs = r.cards.slice(0, linked.length).map((c) => c.href);
+    if (JSON.stringify(hrefs) !== JSON.stringify(linked)) return `linked cards point at ${JSON.stringify(hrefs)}`;
+    // The point of the title-only card: it must not link anywhere, because
+    // there is nowhere for it to go, and it must still say which play it is.
+    for (const card of r.cards.slice(linked.length)) {
+      if (card.href) return `${JSON.stringify(card.title)} has no page but links to ${card.href}`;
+      if (!bare.includes(card.title)) return `unexpected title-only card ${JSON.stringify(card.title)}`;
+    }
+    if (!r.scrolls) return 'the strip does not scroll sideways, so the cards past the second are unreachable';
+    return null;
   },
 );
 
@@ -1169,7 +1215,7 @@ try {
     }
   });
 
-  // The plaster ground rides on body, which propagates to the canvas: that is
+  // The cloud ground rides on body, which propagates to the canvas: that is
   // what makes it cover a document of any length and scroll with the text.
   // Checked as computed values, since the tile size and the repeat are the two
   // things that would silently go back to a stretched single image.
@@ -1182,15 +1228,15 @@ try {
           repeat: style.backgroundRepeat,
           attachment: style.backgroundAttachment,
           image: style.backgroundImage,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
         };
       })()`);
       const wrong = [];
-      if (!measured.image.includes('wall.webp')) wrong.push(`image is ${measured.image}`);
+      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
       if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
       if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
       if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      const label = '[/] plaster ground tiles on body and scrolls with the page';
+      const label = '[/] cloud ground tiles on body and scrolls with the page';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });

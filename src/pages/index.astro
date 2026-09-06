@@ -10,11 +10,24 @@ const productions = (await getCollection('productions'))
   .sort((a, b) => a.data.order - b.data.order);
 const productionOf = new Map(productions.map((production) => [production.id, production]));
 
-// The next performance still to be played, not simply the first line of the
-// file. Until the dates carried an ISO field nothing could compare them to
-// today, so this strip would have gone on advertising 17. 9. from 18. 9.
-// onwards. check.mjs fails the build if the date shown here is behind it.
-const next = upcoming(program.dates).slice(0, 1);
+// The next performances still to be played, not simply the first lines of
+// the file. Until the dates carried an ISO field nothing could compare them
+// to today, so this strip would have gone on advertising 17. 9. from 18. 9.
+// onwards. check.mjs fails the build if the first date shown here is behind
+// it, so slot 0 stays the soonest one.
+//
+// Six, not one: the strip turns through them like the festival drum on
+// radiobloodstream.com. More than six and the dots stop being countable at a
+// glance, which is the only thing they are for.
+const drumDates = upcoming(program.dates).slice(0, 6);
+
+// Titles she performs that have no page in the repo yet - Toníkova cesta and
+// Červánky. Taken from her own programme rather than typed here, so the strip
+// cannot claim a production she has stopped playing, and so a new title
+// arrives on the page the moment it arrives in her dates. They render as
+// title-only cards: there is no blurb, no photograph and no cast for either,
+// and inventing one is the failure mode this repo guards hardest against.
+const otherTitles = [...new Set(program.dates.filter((date) => !date.slug).map((date) => date.title))];
 
 const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia Citadela v Praze. Rychlé šípy a záhada klubovny, Hra lásky a náhody.';
 ---
@@ -121,18 +134,44 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   <section class="next page">
     <div class="page__inner">
-      <h2 class="next__eyebrow">Nejbližší představení</h2>
       <!-- No upcoming dates is the normal launch state, said honestly. -->
-      {next.length === 0 ? (
-        <div class="next__empty">
-          <p>Zatím žádný vypsaný termín. Jakmile vypíšeme nové, najdete je tady.</p>
-          <p><a class="link" href="https://www.instagram.com/kolekce_parchant">Sledovat na Instagramu</a></p>
-        </div>
+      {drumDates.length === 0 ? (
+        <Fragment>
+          <div class="next__head"><h2 class="next__eyebrow">Nejbližší představení</h2></div>
+          <div class="next__empty">
+            <p>Zatím žádný vypsaný termín. Jakmile vypíšeme nové, najdete je tady.</p>
+            <p><a class="link" href="https://www.instagram.com/kolekce_parchant">Sledovat na Instagramu</a></p>
+          </div>
+        </Fragment>
       ) : (
-        <div class="next__list">
-          {next.map((date) => (
-            <PerformanceDate entry={date} production={date.slug ? productionOf.get(date.slug) : undefined} />
-          ))}
+        <div class="drum" data-drum>
+          <div class="next__head">
+            <h2 class="next__eyebrow">Nejbližší představení</h2>
+            <!-- Filled in by script, never by the build: this is a static
+                 site, so a countdown rendered at build time is wrong from the
+                 next midnight onward. Empty and hidden until the browser has
+                 a clock, which is also why it carries no fallback text. -->
+            <p class="drum__countdown" data-countdown hidden></p>
+          </div>
+
+          <div class="drum__window" data-drum-window>
+            {drumDates.map((date, index) => (
+              <div class="drum__slide" data-date={date.date} data-index={index}>
+                <PerformanceDate entry={date} production={date.slug ? productionOf.get(date.slug) : undefined} />
+              </div>
+            ))}
+          </div>
+
+          <div class="drum__dots" role="group" aria-label="Termíny">
+            {drumDates.map((date, index) => (
+              <button
+                class="drum__dot"
+                type="button"
+                aria-label={date.when}
+                aria-current={index === 0 ? 'true' : undefined}
+              ></button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -141,8 +180,13 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   <section class="teaser page">
     <div class="page__inner">
       <h2 class="display page-heading">Repertoár</h2>
-      <div class="teaser__grid">
+      <!-- Scrolls sideways rather than stacking: there are four titles now,
+           not two, and a 2x2 grid of them pushes the rest of the page below
+           the fold on a phone. -->
+      <div class="teaser__strip">
+      <ul class="teaser__grid">
         {productions.map((production) => (
+          <li>
           <article class="production-card">
             <!-- No identifiable photo exists for this production; an olive
                  block is honest, a misattributed photo is not. -->
@@ -162,7 +206,21 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
             </h3>
             <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
           </article>
+          </li>
         ))}
+
+        {/* Title and nothing else. No page to link to and no copy to show, so
+            the card says the one thing that is known and stops. */}
+        {otherTitles.map((title) => (
+          <li>
+          <article class="production-card">
+            <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
+            <h3 class="display production-card__title">{title}</h3>
+            <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
+          </article>
+          </li>
+        ))}
+      </ul>
       </div>
     </div>
   </section>
@@ -345,10 +403,54 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .teaser { background: transparent; }
 
-  .teaser__grid { display: grid; gap: 1.5rem; }
+  /* Bleeds to the gutter on both sides so a card is cut off at the edge of
+     the screen rather than ending neatly inside it - the cut is the only
+     honest signal that there is more to the right. The negative margin
+     cancels .page's padding exactly, and the strip puts the same padding back
+     inside itself so the first card still lines up with the heading. */
+  .teaser__strip {
+    margin-inline: calc(var(--gutter) * -1);
+    padding-block: 0.25rem 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    /* So a snapped card stops at the gutter rather than flush against the
+       edge of the screen, which would undo the padding below. */
+    scroll-padding-inline: var(--gutter);
+  }
 
-  @media (min-width: 48rem) {
-    .teaser__grid { grid-template-columns: 1fr 1fr; }
+  /* The gutter lives on the scrolling content, not on the scroll container:
+     end padding on a scroll container is not scrollable space, so the last
+     card ended hard against the right edge of the screen while the first one
+     sat correctly inside it.
+
+     width: max-content is what makes that work. Left to stretch, the grid box
+     is the width of the container and its columns overflow it, so its end
+     padding stays pinned at the container's edge and the last card overruns
+     it - moving the padding here fixed nothing on its own. Sized to its
+     content, the box ends after the last column and the padding lands where
+     it is wanted. */
+  .teaser__grid {
+    width: max-content;
+    padding-inline: var(--gutter);
+  }
+
+  .teaser__grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(14rem, 18rem);
+    gap: 1.5rem;
+    align-items: start;
+    margin: 0;
+    list-style: none;
+  }
+
+  .teaser__grid > li { scroll-snap-align: start; }
+
+  .production-card__note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ink);
   }
 
   /* "Rám inscenaci hra lásky a šípy - červenej rám" (2026-08-31, item 4).
@@ -363,7 +465,127 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .production-card__title { margin: 1rem 0 0.5rem; font-size: clamp(1.5rem, 6vw, 2.2rem); }
 
-  .next__list { max-width: var(--measure); }
+  /* --- the hero falls into the page ---------------------------------------
+
+     The hero ends in a solid ink band and the wash starts immediately under
+     it; the gradient carries one into the other (2026-09-06: "mezi hero a
+     strankou udelej gradient").
+
+     The extra top padding is not spacing, it is the safety margin that makes
+     the fade legal: check.mjs decides what a line of text is printed on by
+     walking up for a background-COLOR, and a gradient on a pseudo-element is
+     invisible to it. Text sitting in the dark half of this ramp would be
+     unreadable while the harness went on measuring it against the wash and
+     passing. The band is 5rem and the padding clears 5rem, so nothing is ever
+     printed on the part of it that is still dark. */
+  .next {
+    position: relative;
+    padding-top: calc(var(--band-padding) + 5rem);
+  }
+
+  .next::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5rem;
+    pointer-events: none;
+    /* Toward the ink's own rgba, never `transparent` - transparent is
+       transparent BLACK, and interpolating to it drags the ramp through a
+       grey that reads as dirt on a green ground. */
+    background: linear-gradient(to bottom, var(--ink), rgba(30, 27, 20, 0));
+  }
+
+  /* --- the drum ------------------------------------------------------------
+
+     One date at a time, turning by itself, after the festival drum on
+     radiobloodstream.com. The dates are a queue rather than a list: the next
+     one is the answer to the question the section asks, and the ones behind
+     it are there for anyone who wants to look further. */
+  .drum { max-width: var(--measure); }
+
+  .next__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .next__head .next__eyebrow { margin: 0; }
+
+  /* A stamp on the ticket, and the one place on the wash that carries the
+     full cherry as a fill rather than as ink: white on it is 7.5:1, so the
+     badge is readable wherever the drum happens to be. */
+  .drum__countdown {
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    background: var(--brick);
+    color: var(--white);
+    border-radius: var(--radius-button);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* Every slide is stacked in the same grid cell, so the tallest one sets the
+     height and the window cannot resize as it turns - the same reason the
+     hero keeps its first slide in flow. transform does not affect layout, so
+     moving the slides sideways leaves that height alone.
+
+     touch-action: pan-y hands vertical drags back to the page: the drum is
+     halfway down a scrolling document and must never trap a scroll. */
+  .drum__window {
+    display: grid;
+    overflow: hidden;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+
+  .drum__window[data-dragging] { cursor: grabbing; }
+
+  .drum__slide {
+    grid-area: 1 / 1;
+    min-width: 0;
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* A drag must not leave a half-selected paragraph behind it. */
+  .drum__window[data-dragging] .drum__slide { user-select: none; }
+
+  .drum__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.15rem;
+    margin-top: 0.25rem;
+  }
+
+  /* 44px of button around a 10px dot - what a thumb needs, and what the dot
+     must not look like. Same shape as the hero's, in the wash's ink rather
+     than the band's white. */
+  .drum__dot {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+  }
+
+  .drum__dot::before {
+    content: "";
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: transparent;
+    transition: background-color 200ms ease;
+  }
+
+  .drum__dot[aria-current]::before { background: var(--accent); }
 </style>
 
 <script>
@@ -422,4 +644,190 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   });
 
   start();
+</script>
+
+<script>
+  // The drum: one performance date in the window, turning by itself, dragged
+  // 1:1 by finger or mouse and snapping to the next on release. Ported from
+  // the festival strip on radiobloodstream.com, which is React; this is the
+  // same behaviour written against the DOM, because nothing else on this site
+  // needs a framework and one strip is not a reason to start.
+  const drum = document.querySelector('[data-drum]');
+
+  if (drum) {
+    const window_ = drum.querySelector('[data-drum-window]');
+    const slides = [...drum.querySelectorAll('.drum__slide')];
+    const dots = [...drum.querySelectorAll('.drum__dot')];
+    const badge = drum.querySelector('[data-countdown]');
+    const count = slides.length;
+
+    const SWIPE_THRESHOLD = 40;
+    const ROTATE_MS = 8000;
+
+    let slot = 0;
+    let previous = 0;
+    let dragX = 0;
+    let dragging = false;
+    let startX = null;
+    let startY = null;
+    let dragged = false;
+    let timer = null;
+    let hovered = false;
+
+    // How many days from today to an ISO date, in local calendar days: both
+    // ends are floored to midnight, so the answer does not change with the
+    // hour of the visit.
+    const daysUntil = (iso) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const [year, month, day] = iso.split('-').map(Number);
+      return Math.round((new Date(year, month - 1, day) - today) / 86400000);
+    };
+
+    // Czech counts three ways, and getting it wrong is the kind of thing that
+    // makes a site read as machine-written: 1 den, 2-4 dny, 5+ dnů. One and
+    // zero have words of their own instead.
+    const countdownLabel = (iso) => {
+      const days = daysUntil(iso);
+      if (days < 0) return '';
+      if (days === 0) return 'Dnes hrajeme';
+      if (days === 1) return 'Zítra';
+      if (days < 5) return `Za ${days} dny`;
+      return `Za ${days} dnů`;
+    };
+
+    // Shortest way round the ring, so slide 0 approaches slide 5 from the
+    // left rather than travelling back across the whole strip.
+    const positionFor = (index, at) => {
+      let position = index - at;
+      if (position > count / 2) position -= count;
+      if (position <= -count / 2) position += count;
+      return position;
+    };
+
+    const layout = () => {
+      slides.forEach((slide, index) => {
+        const position = positionFor(index, slot);
+        // A slide that has just wrapped from one end of the ring to the other
+        // must jump, not fly across the window in front of the reader.
+        const wrapped = Math.abs(position - positionFor(index, previous)) > 1;
+        slide.style.transition = dragging || wrapped ? 'none' : '';
+        slide.style.transform = `translateX(calc(${position * 100}% + ${dragX}px))`;
+        // Only the slide in the window is offered to a screen reader or to
+        // the tab key; the rest are off-screen and would otherwise scroll the
+        // page sideways when focused.
+        slide.inert = position !== 0;
+        slide.setAttribute('aria-hidden', position === 0 ? 'false' : 'true');
+      });
+
+      dots.forEach((dot, index) => {
+        if (index === slot) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+
+      if (badge) {
+        const label = countdownLabel(slides[slot].dataset.date);
+        badge.textContent = label;
+        badge.hidden = !label;
+      }
+    };
+
+    const go = (next) => {
+      previous = slot;
+      slot = (next + count) % count;
+      layout();
+    };
+
+    // Someone who has just chosen a date should get a full turn to read it,
+    // not the remainder of a tick that was already running.
+    const stop = () => { clearInterval(timer); timer = null; };
+    const start = () => {
+      stop();
+      if (count < 2) return;
+      // A strip that turns on its own is motion; anyone who has asked for
+      // less of it gets the dots and the drag instead.
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      timer = setInterval(() => {
+        if (!dragging && !hovered) go(slot + 1);
+      }, ROTATE_MS);
+    };
+    const restart = () => { stop(); start(); };
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => { go(index); restart(); });
+    });
+
+    window_.addEventListener('pointerdown', (event) => {
+      if (count < 2) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      dragging = true;
+      dragged = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      window_.setAttribute('data-dragging', '');
+    });
+
+    window_.addEventListener('pointermove', (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      // A drag that is mostly vertical is the page being scrolled. Let go of
+      // it entirely rather than fighting the scroll for the gesture.
+      if (!dragged && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+        startX = null;
+        dragging = false;
+        dragX = 0;
+        window_.removeAttribute('data-dragging');
+        layout();
+        return;
+      }
+      if (!dragged && Math.abs(dx) > 5) {
+        dragged = true;
+        // Captured only once a real drag starts: capturing on pointerdown
+        // retargets the eventual click to the window, which swallowed plain
+        // taps on the ticket's own links.
+        try { window_.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ }
+      }
+      if (!dragged) return;
+      dragX = dx;
+      layout();
+    });
+
+    const release = (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX;
+      startX = null;
+      dragging = false;
+      dragX = 0;
+      window_.removeAttribute('data-dragging');
+      if (Math.abs(dx) >= SWIPE_THRESHOLD) go(slot + (dx < 0 ? 1 : -1));
+      else layout();
+      restart();
+    };
+
+    window_.addEventListener('pointerup', release);
+    window_.addEventListener('pointercancel', release);
+
+    // A drag must not count as a click on the ticket's link.
+    window_.addEventListener('click', (event) => {
+      if (dragged) {
+        event.preventDefault();
+        event.stopPropagation();
+        dragged = false;
+      }
+    }, true);
+
+    window_.addEventListener('mouseenter', () => { hovered = true; });
+    window_.addEventListener('mouseleave', () => { hovered = false; });
+
+    // A drum that has turned six times behind someone's back is showing them
+    // a date they never chose to look at.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    layout();
+    start();
+  }
 </script>

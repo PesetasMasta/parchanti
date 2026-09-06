@@ -144,16 +144,15 @@
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
 
-  /* One plaster tile. Held small on a phone so a 390px screen gets the grain
-     at a plausible size rather than one magnified patch of it, and opened up
-     on a wide screen so the tile does not visibly repeat. The asset is 1100px
-     square, so the wide value is its native size and the narrow one
-     downsamples it, which only makes the tooth finer. */
-  --wall-tile: 720px;
+  /* One cloud tile. Held small on a phone so a 390px screen still gets whole
+     cloud shapes across it, and opened up on a wide screen so the tile does
+     not visibly repeat. The asset is an SVG, so neither value resamples
+     anything - the noise is drawn at whatever size it is asked for. */
+  --cloud-tile: 720px;
 }
 
 @media (min-width: 60rem) {
-  :root { --wall-tile: 1100px; }
+  :root { --cloud-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -165,21 +164,18 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
-/* The plaster ground. Drawn from the wall photograph the client sent
-   (2026-09-06), recoloured into the sherbet: the shot is a dark green
-   concrete wall, so what survives from it is its tooth, not its colour.
+/* The cloud ground, generated rather than sourced: two kilobytes of Perlin
+   noise in public/assets/clouds.svg, nothing to licence, and resolution-free.
 
-   Built once, offline, and committed as an asset rather than regenerated:
-   the photograph was flat-fielded to drop its lighting gradient (only the
-   grain is wanted, not the vignette), rolled half a tile so its wrap
-   discontinuity moved into the middle, and that centre cross healed - which
-   is what makes it tile. Mirror-tiling was tried first and rejected: on a
-   ground this large the symmetry reads as a plaid.
+   It replaced a recoloured wall photograph (2026-09-06): the photograph cost
+   40KB, had to be flat-fielded and seam-healed by hand to tile at all, and
+   bought grain the SVG can state in two tint stops. The plaster is gone; the
+   direction it established is not - the wash still darkens away from the
+   sherbet rather than blooming toward white.
 
-   Its luminance ramp runs from --lime up to the Lime Sherbet itself, so
-   --lime is the darkest tone the wash ever reaches and stays the honest
-   thing for check.mjs to measure contrast against, exactly as the cloud
-   wash was.
+   Its ramp runs --lime up to Lime Sherbet, so --lime is the darkest tone the
+   wash ever reaches and stays the honest thing for check.mjs to measure
+   contrast against.
 
    On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
    textem?"). A background on body propagates to the canvas, which covers the
@@ -194,7 +190,7 @@ html { scroll-padding-top: 4.5rem; }
    as before. */
 body {
   margin: 0;
-  background: url("/assets/wall.webp") 0 0 / var(--wall-tile) var(--wall-tile) repeat var(--lime);
+  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
@@ -289,15 +285,22 @@ img { max-width: 100%; height: auto; }
 .masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
 .masthead[data-condensed] .burger__label { display: none; }
 
+/* Sized off .button rather than off the body (2026-09-06: "menu tlacitko
+   mensi, ve stylu ostatnich tlacitek"). `font: inherit` handed it the body
+   size, ~17px against the 0.85rem every other button is set in, so the one
+   button that appears on every page was also the largest one on it. The
+   padding and the tracking follow .button for the same reason; the 3px rule,
+   the radius and the bars are unchanged. */
 .burger {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.9rem;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
   font: inherit;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--button-text);
   background: var(--button-bg);
   /* Clip the fill to the padding box. Two things go wrong without it: a
@@ -313,8 +316,8 @@ img { max-width: 100%; height: auto; }
 
 /* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
 .burger__bars {
-  width: 1.25rem;
-  height: 0.75rem;
+  width: 1.05rem;
+  height: 0.62rem;
   background:
     linear-gradient(var(--button-text) 0 0) 0 0 / 100% 3px no-repeat,
     linear-gradient(var(--button-text) 0 0) 0 50% / 100% 3px no-repeat,
@@ -622,7 +625,37 @@ img { max-width: 100%; height: auto; }
 .credits dd { margin: 0; }
 
 /* --- footer ---------------------------------------------------------------- */
-.footer { padding: var(--band-padding) var(--gutter); background: var(--ink); color: var(--white); }
+
+/* The wash does not stop at the footer's edge, it falls into it (2026-09-06:
+   "mezi strankou a footer zase gradient - plynuly prechod do tmave casti").
+
+   The fade lives in the footer's own top margin rather than over the section
+   above it. That is not tidiness: check.mjs reads a background-COLOR to decide
+   what a line of text is printed on and looks straight through a gradient, so
+   a fade laid over the page would darken real text while the harness went on
+   measuring it against the wash. Given its own empty margin the gradient has
+   nothing to darken but itself, and the measurement stays true. */
+.footer {
+  position: relative;
+  margin-top: 6rem;
+  padding: var(--band-padding) var(--gutter);
+  background: var(--ink);
+  color: var(--white);
+}
+
+.footer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 6rem;
+  pointer-events: none;
+  /* Toward the ink's own rgba, never `transparent`: transparent is
+     transparent BLACK, and interpolating to it drags the ramp through a grey
+     that reads as dirt on a green ground. */
+  background: linear-gradient(to bottom, rgba(30, 27, 20, 0), var(--ink));
+}
 
 .footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
 
