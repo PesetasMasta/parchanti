@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Parchanti — mockupy</title>
+
+<style>
+/* Both subsets: Š, Í and Ě live in latin-ext, and Czech copy hits them
+   constantly - "DALŠÍ" came out "DALSI" with only the latin file loaded. */
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --lime: #A8B56B;
+  --sherbet: #CDD78A;
+  --olive: #93A05C;
+  --brick: #AA0A27;
+  --brick-deep: #80071D;
+  --ink: #1E1B14;
+  --white: #fff;
+  --display: "Cutive Mono", "Courier New", monospace;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --tile: 1100px;
+  --wash: url("/public/assets/clouds.svg") 0 0 / var(--tile) var(--tile) repeat var(--lime);
+  color-scheme: only light;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--ink); }
+img { max-width: 100%; display: block; }
+
+/* ---- review chrome. Deliberately not the site: this sheet must never be
+       mistaken for a page, so it is ink-on-dark with a mono voice. -------- */
+.sheet { max-width: 78rem; margin-inline: auto; padding: 0 var(--gutter) 6rem; }
+.sheet__head { padding: 3.5rem 0 2rem; color: var(--sherbet); }
+.sheet__head h1 { font-family: var(--display); font-size: clamp(1.8rem, 5vw, 2.8rem); margin: 0 0 0.75rem; }
+.sheet__head p { max-width: 46ch; margin: 0 0 1.5rem; line-height: 1.6; color: #cfd3bb; }
+.jump { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; padding: 0; margin: 0; list-style: none; }
+.jump a { color: var(--sherbet); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
+.group { margin-top: 4rem; }
+.group > h2 { font-family: var(--display); font-size: 1.5rem; color: var(--sherbet); margin: 0 0 0.35rem; }
+.group > p { max-width: 60ch; margin: 0 0 2rem; color: #b9bda6; line-height: 1.6; font-size: 0.95rem; }
+
+.variant { margin-bottom: 3rem; border: 1px solid #4a4a3c; border-radius: 10px; overflow: hidden; background: #232019; }
+.variant__bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid #4a4a3c; }
+.variant__id { font-family: var(--display); font-size: 1rem; color: var(--sherbet); }
+.variant__note { font-size: 0.8rem; color: #9a9c86; margin: 0; }
+.variant__demo { position: relative; }
+
+/* ---- the pieces under test ---------------------------------------------- */
+.band-dark { background: var(--ink); height: 13rem; position: relative; }
+.band-dark__copy { position: absolute; left: var(--gutter); bottom: 1.25rem; color: var(--white); }
+.band-dark__copy p { margin: 0 0 0.4rem; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; }
+.band-dark__copy h3 { font-family: var(--display); font-size: clamp(1.6rem, 6vw, 2.6rem); margin: 0; font-weight: 400; }
+.band-wash { background: var(--wash); min-height: 12rem; padding: 2rem var(--gutter); }
+.band-wash h4 { font-family: var(--display); color: var(--brick); font-size: 1.8rem; margin: 0 0 0.5rem; font-weight: 400; }
+.band-wash p { max-width: 34rem; margin: 0; line-height: 1.55; }
+
+/* The transition itself. One element, one background, one mask - the mask is
+   the only thing that differs between variants, so they are comparable. */
+.seam { position: relative; height: var(--seam-h, 7rem); background: var(--wash); }
+.seam::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  -webkit-mask-image: var(--seam-mask);
+  mask-image: var(--seam-mask);
+}
+
+/* A1 convex: the ink bulges down at the centre and lifts at the shoulders. */
+.seam--convex { --seam-h: 7rem; --seam-mask: radial-gradient(150% 100% at 50% 0%, #000 42%, rgba(0,0,0,0) 100%); }
+/* A2 concave: the centre clears first, the corners hang on. */
+.seam--concave { --seam-h: 7rem; --seam-mask: radial-gradient(150% 110% at 50% 100%, rgba(0,0,0,0) 38%, #000 92%); }
+/* A3 deep convex: same curve, twice the run, so the blend is long. */
+.seam--deep { --seam-h: 13rem; --seam-mask: radial-gradient(170% 110% at 50% 0%, #000 30%, rgba(0,0,0,0) 100%); }
+/* A4 drift: the ellipse is off-centre, so the seam falls to one side. */
+.seam--drift { --seam-h: 10rem; --seam-mask: radial-gradient(150% 110% at 32% 0%, #000 34%, rgba(0,0,0,0) 100%); }
+/* B: the mirror, for under the page. */
+.seam--up { --seam-h: 9rem; --seam-mask: radial-gradient(150% 110% at 50% 100%, #000 42%, rgba(0,0,0,0) 100%); }
+.seam--up-concave { --seam-h: 9rem; --seam-mask: radial-gradient(150% 110% at 50% 0%, rgba(0,0,0,0) 38%, #000 92%); }
+.seam--flat { --seam-h: 7rem; --seam-mask: linear-gradient(to bottom, #000, rgba(0,0,0,0)); }
+
+.footer-demo { background: var(--ink); color: var(--white); padding: 2rem var(--gutter) 3rem; }
+.footer-demo a { color: var(--white); font-weight: 700; display: block; margin-bottom: 0.5rem; }
+
+/* ---- header variants ---------------------------------------------------- */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem var(--gutter); position: relative; }
+.bar__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
+.bar__mark { font-family: var(--display); font-size: 2rem; color: var(--brick); line-height: 1; }
+.bar__name { font-family: var(--display); font-size: 1.1rem; line-height: 1.15; }
+.bar__menu { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border: 0; border-radius: 10px; background: var(--brick); color: var(--white); font-family: var(--body); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.bar__bars { width: 1.05rem; height: 0.62rem; background: linear-gradient(var(--white) 0 0) 0 0/100% 3px no-repeat, linear-gradient(var(--white) 0 0) 0 50%/100% 3px no-repeat, linear-gradient(var(--white) 0 0) 0 100%/100% 3px no-repeat; }
+
+.bar--rule { background: var(--wash); border-bottom: 3px solid var(--ink); }
+.bar--bare { background: var(--wash); }
+.bar--curved { background: var(--wash); }
+
+/* ---- the deck ----------------------------------------------------------- */
+.deck-stage { background: var(--wash); padding: 2.5rem var(--gutter) 1.5rem; }
+.deck {
+  position: relative;
+  width: min(20rem, 78vw);
+  margin-inline: auto;
+  aspect-ratio: 3 / 4;
+  touch-action: pan-y;
+  /* The fan tilts the cards behind out past the deck's box, so the controls
+     need clearance the aspect-ratio does not give them. */
+  margin-bottom: 4.5rem;
+}
+.card {
+  position: absolute;
+  inset: 0;
+  padding: 1rem;
+  background: var(--white);
+  border: 3px solid var(--brick);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(30, 27, 20, 0.22);
+  cursor: grab;
+  transform-origin: 50% 120%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  user-select: none;
+}
+.card[data-dragging] { cursor: grabbing; }
+.card img, .card__blank { border: 3px solid var(--ink); border-radius: 10px; width: 100%; aspect-ratio: 6/5; object-fit: cover; }
+.card__blank { background: var(--olive); }
+.card h5 { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 0; }
+.card__sub { font-family: var(--display); color: var(--brick-deep); font-size: 0.85rem; margin: 0; }
+.card__note { font-size: 0.8rem; margin: auto 0 0; color: var(--ink); }
+.card__link { font-weight: 700; color: var(--brick-deep); font-size: 0.85rem; margin: auto 0 0; }
+
+.deck-controls { display: flex; align-items: center; justify-content: center; gap: 1rem; padding-top: 1.25rem; }
+.deck-controls button { font-family: var(--body); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.55rem 1rem; border: 0; border-radius: 10px; background: var(--brick); color: var(--white); cursor: pointer; }
+.deck-count { font-family: var(--display); font-size: 0.95rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="sheet__head">
+    <h1>Parchanti — mockupy</h1>
+    <p>
+      Local only. Four mechanisms side by side at real scale, because a seam
+      cannot be judged in a thumbnail. Nothing here is wired into the site —
+      pick the ones you want and they get built properly.
+    </p>
+    <ul class="jump">
+      <li><a href="#seam">1 · Hero seam</a></li>
+      <li><a href="#footer">2 · Footer seam</a></li>
+      <li><a href="#header">3 · Header</a></li>
+      <li><a href="#deck">4 · Deck</a></li>
+    </ul>
+  </header>
+
+  <!-- ================= 1. hero seam ================= -->
+  <section class="group" id="seam">
+    <h2>1 · Hero → page</h2>
+    <p>
+      All four are the same single element: the wash underneath, an ink layer
+      on top, and a mask that decides where the ink stops. Only the mask
+      changes, so they are directly comparable. A radial mask curves the seam;
+      how far apart its stops sit is how much it blends.
+    </p>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">A0</span><p class="variant__note">What is on main now — a straight linear fade, 5rem. Here as the baseline.</p></div>
+      <div class="variant__demo">
+        <div class="band-dark"><div class="band-dark__copy"><p>Nezávislé divadlo · Praha</p><h3>Kolekce Parchant</h3></div></div>
+        <div class="seam seam--flat"></div>
+        <div class="band-wash"><h4>Repertoár</h4><p>Straight edge, straight fade. Reads as two blocks meeting rather than one becoming the other.</p></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">A1</span><p class="variant__note">Convex, 7rem. The ink bulges down at the centre and lifts at the shoulders.</p></div>
+      <div class="variant__demo">
+        <div class="band-dark"><div class="band-dark__copy"><p>Nezávislé divadlo · Praha</p><h3>Kolekce Parchant</h3></div></div>
+        <div class="seam seam--convex"></div>
+        <div class="band-wash"><h4>Repertoár</h4><p>The green arrives at the edges first. Feels like the page is rising to meet the hero.</p></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">A2</span><p class="variant__note">Concave, 7rem. The centre clears first and the corners hang on.</p></div>
+      <div class="variant__demo">
+        <div class="band-dark"><div class="band-dark__copy"><p>Nezávislé divadlo · Praha</p><h3>Kolekce Parchant</h3></div></div>
+        <div class="seam seam--concave"></div>
+        <div class="band-wash"><h4>Repertoár</h4><p>The opposite read: the dark holds the corners like a proscenium and opens in the middle.</p></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">A3</span><p class="variant__note">Convex, 13rem. Same curve, twice the run — this is the "blends more" one.</p></div>
+      <div class="variant__demo">
+        <div class="band-dark"><div class="band-dark__copy"><p>Nezávislé divadlo · Praha</p><h3>Kolekce Parchant</h3></div></div>
+        <div class="seam seam--deep"></div>
+        <div class="band-wash"><h4>Repertoár</h4><p>Long enough that you stop seeing an edge at all. Costs 13rem of page before the first line.</p></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">A4</span><p class="variant__note">Off-centre, 10rem. The ellipse sits left, so the seam falls to one side.</p></div>
+      <div class="variant__demo">
+        <div class="band-dark"><div class="band-dark__copy"><p>Nezávislé divadlo · Praha</p><h3>Kolekce Parchant</h3></div></div>
+        <div class="seam seam--drift"></div>
+        <div class="band-wash"><h4>Repertoár</h4><p>Asymmetric, so it reads as light falling rather than as a shape. Least tidy, most alive.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. footer seam ================= -->
+  <section class="group" id="footer">
+    <h2>2 · Page → footer</h2>
+    <p>
+      The mirror. If the hero seam bows down and this one bows up, the page
+      sits inside a lens; if both bow the same way, it reads as a slope. B1 is
+      the opposite curve you asked for, B2 is the same-direction alternative so
+      you can see why the opposite is the better of the two.
+    </p>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">B1</span><p class="variant__note">Opposite curve. Pair with A1 — the green becomes a lens between them.</p></div>
+      <div class="variant__demo">
+        <div class="band-wash"><h4>Repertoár</h4><p>Content sits here.</p></div>
+        <div class="seam seam--up-concave"></div>
+        <div class="footer-demo"><a href="#footer">Instagram</a><a href="#footer">i-divadlo.cz</a></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">B2</span><p class="variant__note">Same direction as A1. Shown to be rejected: the page reads as tilting, not enclosed.</p></div>
+      <div class="variant__demo">
+        <div class="band-wash"><h4>Repertoár</h4><p>Content sits here.</p></div>
+        <div class="seam seam--up"></div>
+        <div class="footer-demo"><a href="#footer">Instagram</a><a href="#footer">i-divadlo.cz</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. header ================= -->
+  <section class="group" id="header">
+    <h2>3 · Header</h2>
+    <p>
+      Green in all three; what differs is how it ends. The bar is fixed over a
+      scrolling page, so whatever it does at its lower edge is what you see
+      against every section in turn.
+    </p>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">C1</span><p class="variant__note">Wash + the 3px ink rule. What is on main now.</p></div>
+      <div class="variant__demo">
+        <div class="bar bar--rule">
+          <a class="bar__home" href="#header"><span class="bar__mark">KP</span><span class="bar__name">Kolekce<br>Parchant</span></a>
+          <button class="bar__menu" type="button">Menu <span class="bar__bars"></span></button>
+        </div>
+        <div class="band-dark" style="height:8rem"></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">C2</span><p class="variant__note">No rule. The bar and the wash below it become one surface; only the mark separates them.</p></div>
+      <div class="variant__demo">
+        <div class="bar bar--bare">
+          <a class="bar__home" href="#header"><span class="bar__mark">KP</span><span class="bar__name">Kolekce<br>Parchant</span></a>
+          <button class="bar__menu" type="button">Menu <span class="bar__bars"></span></button>
+        </div>
+        <div class="seam seam--convex" style="--seam-h:5rem"></div>
+        <div class="band-dark" style="height:6rem"></div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">C3</span><p class="variant__note">Curved lower edge in the same language as the hero seam. The bar stops being a rectangle.</p></div>
+      <div class="variant__demo">
+        <div class="bar bar--curved" style="-webkit-mask-image: radial-gradient(150% 150% at 50% 0%, #000 62%, rgba(0,0,0,0) 100%); mask-image: radial-gradient(150% 150% at 50% 0%, #000 62%, rgba(0,0,0,0) 100%);">
+          <a class="bar__home" href="#header"><span class="bar__mark">KP</span><span class="bar__name">Kolekce<br>Parchant</span></a>
+          <button class="bar__menu" type="button">Menu <span class="bar__bars"></span></button>
+        </div>
+        <div class="band-dark" style="height:8rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. deck ================= -->
+  <section class="group" id="deck">
+    <h2>4 · Repertoár as a deck</h2>
+    <p>
+      Drag the top card sideways and let go, or use the buttons, or the arrow
+      keys. Past the threshold it is thrown in the direction you pushed it and
+      goes to the back; short of it, it springs back. Four plays, so the deck
+      is a loop rather than a pile that runs out.
+    </p>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">D1</span><p class="variant__note">Fanned — cards behind sit rotated, so the stack reads as a hand of cards.</p></div>
+      <div class="variant__demo">
+        <div class="deck-stage">
+          <div class="deck" data-deck data-style="fan" tabindex="0" role="group" aria-label="Repertoár"></div>
+          <div class="deck-controls">
+            <button type="button" data-prev>Zpět</button>
+            <span class="deck-count" data-count></span>
+            <button type="button" data-next>Další</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">D2</span><p class="variant__note">Squared — a pile of posters, offset straight down. Quieter, more print.</p></div>
+      <div class="variant__demo">
+        <div class="deck-stage">
+          <div class="deck" data-deck data-style="pile" tabindex="0" role="group" aria-label="Repertoár"></div>
+          <div class="deck-controls">
+            <button type="button" data-prev>Zpět</button>
+            <span class="deck-count" data-count></span>
+            <button type="button" data-next>Další</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const PLAYS = [
+  { title: "Rychlé šípy", sub: "a záhada klubovny", img: "/public/assets/panels/sipy-1.png", link: "Více o inscenaci" },
+  { title: "Hra lásky a náhody", sub: "", img: null, link: "Více o inscenaci" },
+  { title: "Toníkova cesta", sub: "", img: null, note: "Hrajeme. Stránka inscenace se připravuje." },
+  { title: "Červánky", sub: "", img: null, note: "Hrajeme. Stránka inscenace se připravuje." },
+];
+
+const calm = matchMedia("(prefers-reduced-motion: reduce)");
+
+for (const deck of document.querySelectorAll("[data-deck]")) {
+  const fan = deck.dataset.style === "fan";
+  const stage = deck.closest(".deck-stage");
+  const count = stage.querySelector("[data-count]");
+  let order = PLAYS.map((_, i) => i);
+  let busy = false;
+
+  const cards = PLAYS.map((play) => {
+    const card = document.createElement("article");
+    card.className = "card";
+    const media = play.img
+      ? `<img src="${play.img}" alt="">`
+      : `<div class="card__blank"></div>`;
+    const tail = play.note
+      ? `<p class="card__note">${play.note}</p>`
+      : `<p class="card__link">${play.link}</p>`;
+    card.innerHTML = `${media}<h5>${play.title}</h5>${play.sub ? `<p class="card__sub">${play.sub}</p>` : ""}${tail}`;
+    deck.append(card);
+    return card;
+  });
+
+  // Depth is a function of position in the order, so one function draws every
+  // resting state and there is no per-card bookkeeping to drift.
+  const settle = (animate = true) => {
+    order.forEach((cardIndex, depth) => {
+      const card = cards[cardIndex];
+      const lift = fan ? depth * 10 : depth * 8;
+      const turn = fan ? (depth === 0 ? 0 : (depth % 2 ? -1 : 1) * (2 + depth)) : 0;
+      card.style.transition = animate && !calm.matches ? "transform 320ms cubic-bezier(0.22,1,0.36,1), opacity 320ms ease" : "none";
+      card.style.transform = `translateY(${lift}px) scale(${1 - depth * 0.04}) rotate(${turn}deg)`;
+      card.style.zIndex = String(PLAYS.length - depth);
+      card.style.opacity = depth > 2 ? "0" : "1";
+      card.style.pointerEvents = depth === 0 ? "auto" : "none";
+      card.setAttribute("aria-hidden", depth === 0 ? "false" : "true");
+    });
+    count.textContent = `${order[0] + 1} / ${PLAYS.length}`;
+  };
+
+  // Throwing the top card off and putting it at the back is the whole
+  // interaction; everything else is a way of asking for it.
+  const advance = (direction) => {
+    if (busy) return;
+    busy = true;
+    const card = cards[order[0]];
+    if (calm.matches) {
+      order = [...order.slice(1), order[0]];
+      settle(false);
+      busy = false;
+      return;
+    }
+    card.style.transition = "transform 300ms ease-in, opacity 300ms ease-in";
+    card.style.transform = `translateX(${direction * 130}%) rotate(${direction * 18}deg)`;
+    card.style.opacity = "0";
+    setTimeout(() => {
+      order = [...order.slice(1), order[0]];
+      settle(false);
+      requestAnimationFrame(() => settle(true));
+      busy = false;
+    }, 300);
+  };
+
+  const retreat = () => {
+    if (busy) return;
+    order = [order[order.length - 1], ...order.slice(0, -1)];
+    settle(true);
+  };
+
+  let startX = null;
+  let startY = null;
+  let moved = false;
+
+  deck.addEventListener("pointerdown", (event) => {
+    if (busy) return;
+    const card = cards[order[0]];
+    if (!card.contains(event.target)) return;
+    startX = event.clientX;
+    startY = event.clientY;
+    moved = false;
+    card.setAttribute("data-dragging", "");
+  });
+
+  deck.addEventListener("pointermove", (event) => {
+    if (startX === null) return;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    // A mostly-vertical drag is the page being scrolled; let it go.
+    if (!moved && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+      startX = null;
+      cards[order[0]].removeAttribute("data-dragging");
+      settle(true);
+      return;
+    }
+    if (!moved && Math.abs(dx) > 4) {
+      moved = true;
+      try { deck.setPointerCapture(event.pointerId); } catch {}
+    }
+    if (!moved) return;
+    const card = cards[order[0]];
+    card.style.transition = "none";
+    card.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+  });
+
+  const drop = (event) => {
+    if (startX === null) return;
+    const dx = event.clientX - startX;
+    startX = null;
+    cards[order[0]].removeAttribute("data-dragging");
+    if (Math.abs(dx) > 70) advance(dx < 0 ? -1 : 1);
+    else settle(true);
+  };
+
+  deck.addEventListener("pointerup", drop);
+  deck.addEventListener("pointercancel", drop);
+
+  deck.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") { event.preventDefault(); advance(-1); }
+    if (event.key === "ArrowRight") { event.preventDefault(); retreat(); }
+  });
+
+  stage.querySelector("[data-next]").addEventListener("click", () => advance(-1));
+  stage.querySelector("[data-prev]").addEventListener("click", retreat);
+
+  settle(false);
+}
+</script>
+</body>
+</html>
