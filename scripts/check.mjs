@@ -599,13 +599,26 @@ onPage('/',
 );
 
 onPage('/',
-  'repertoire strip: the productions with pages link to them, the rest are title-only',
+  'repertoire deck: the productions with pages link to them, the rest are title-only',
   `JSON.stringify({
     cards: [...document.querySelectorAll('.production-card')].map((card) => ({
       href: card.querySelector('a')?.getAttribute('href') ?? null,
       title: card.querySelector('.production-card__title')?.textContent.replace(/\\s+/g, ' ').trim(),
     })),
-    scrolls: /(auto|scroll)/.test(getComputedStyle(document.querySelector('.teaser__strip') || document.body).overflowX),
+    // Exactly one card is dealt: the rest are stacked behind it and must be
+    // out of the tab order and out of the accessibility tree, or three hidden
+    // "Více o inscenaci" links sit under the visible one.
+    exposed: [...document.querySelectorAll('.deck__card')].filter((card) => card.getAttribute('aria-hidden') === 'false').length,
+    inertBehind: [...document.querySelectorAll('.deck__card')].slice(1).every((card) => card.inert),
+    // The drag is the whole interaction and a keyboard has no drag, so these
+    // are not decoration - without them the deck is unusable without a mouse.
+    controls: [...document.querySelectorAll('.deck__step')].map((button) => ({
+      name: button.textContent.trim(),
+      height: Math.round(button.getBoundingClientRect().height),
+    })),
+    live: document.querySelector('[data-deck-live]')?.getAttribute('aria-live'),
+    announced: document.querySelector('[data-deck-live]')?.textContent.trim(),
+    counted: document.querySelector('[data-deck-count]')?.textContent.trim(),
   })`,
   (raw) => {
     const r = JSON.parse(raw);
@@ -624,7 +637,20 @@ onPage('/',
       if (card.href) return `${JSON.stringify(card.title)} has no page but links to ${card.href}`;
       if (!bare.includes(card.title)) return `unexpected title-only card ${JSON.stringify(card.title)}`;
     }
-    if (!r.scrolls) return 'the strip does not scroll sideways, so the cards past the second are unreachable';
+    if (r.exposed !== 1) return `${r.exposed} cards are exposed at rest, expected exactly the one on top`;
+    if (!r.inertBehind) return 'the cards behind the top one are not inert, so their links are still tabbable';
+    if (r.controls.length !== 2) return `${r.controls.length} deck controls, expected back and forward`;
+    if (r.controls.some((c) => !c.name)) return 'a deck control has no accessible name';
+    if (r.controls.some((c) => c.height < 44)) return `smallest deck control is ${Math.min(...r.controls.map((c) => c.height))}px, under the 44px tap target`;
+    if (r.live !== 'polite') return 'the deck does not announce which card it dealt';
+    // "3 / 4" alone does not say what was dealt, so the announcement carries
+    // the title even though the visible count does not.
+    if (!r.announced) return 'the deck announces nothing';
+    if (!r.announced.includes(r.cards[0].title)) {
+      return `the deck announces ${JSON.stringify(r.announced)}, which does not name the card on top`;
+    }
+    // The count is written by script; empty means the deck never initialised.
+    if (!r.counted?.startsWith('1 /')) return `the deck opens on ${JSON.stringify(r.counted)}, expected the first card`;
     return null;
   },
 );

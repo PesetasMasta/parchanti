@@ -113,6 +113,7 @@
   --radius-button: 10px;
 
   --paper: var(--white);
+  --masthead-bg: var(--white);  /* the bar */
   --button-bg: var(--brick);    /* the CTA and the burger */
   --button-text: var(--white);
 
@@ -252,16 +253,17 @@ img { max-width: 100%; height: auto; }
   justify-content: space-between;
   gap: 1rem;
   padding: 0 var(--gutter);
-  /* The bar is the page's own ground, not a white shelf above it (2026-09-06:
-     "header dej taky do zelene ... dej tam ten co mame na main"). The same
-     declaration as body, so there is one wash on the site rather than a bar
-     that has to be kept in step with it by hand.
+  /* White, and ruled in cherry rather than ink (2026-09-06: "vratit bilou a
+     cervena border cara misto cerne"). The green bar was tried and dropped:
+     it merged the bar into the page, and the bar's job is to stay legible
+     over whatever scrolls under it - a white shelf with a red edge does that
+     against the dark hero and the green wash alike.
 
-     Its tile does not line up with the page's - the bar is fixed and the page
-     scrolls under it - and it is not meant to: the 3px rule below states the
-     edge, so a seam nobody can see is not one worth chasing. */
-  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
-  border-bottom: 3px solid var(--ink);
+     The rule is the only ink-weight line that turns cherry. It can: a border
+     is a graphic, not text, so it answers to 3:1 rather than 4.5:1, and the
+     cherry is 7.5:1 on this white. */
+  background: var(--masthead-bg);
+  border-bottom: 3px solid var(--brick);
   transition: height 0.2s ease;
 }
 
@@ -652,24 +654,48 @@ img { max-width: 100%; height: auto; }
    nothing to darken but itself, and the measurement stays true. */
 .footer {
   position: relative;
-  margin-top: 6rem;
+  margin-top: 12rem;
   padding: var(--band-padding) var(--gutter);
   background: var(--ink);
   color: var(--white);
 }
 
+/* The mirror of the hero's seam, curving the other way (2026-09-06: "u
+   footeru opacny curve ... at je to stejny"), so the page sits inside a lens
+   rather than on a slope. Same two-layer mask, same numbers, ellipse moved to
+   the top edge.
+
+   Painted as flat ink behind a mask rather than as a gradient, because a
+   gradient can only run in a straight line. The mask is two layers multiplied
+   together:
+
+     the radial one is the curve. On its own it leaves ~14% ink in the far
+     corners, because those corners are a fixed distance from the ellipse's
+     centre no matter how the stops are set - and the band has to END
+     somewhere, so that residue would meet the wash on a hard line.
+
+     the linear one is the guarantee. Multiplied in, it forces the whole width
+     to zero before the band's edge, corners included.
+
+   Tightening the ellipse is what deepens the bow, and the linear layer is
+   what lets it be tightened at all. */
 .footer::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 100%;
-  height: 6rem;
+  height: 12rem;
   pointer-events: none;
-  /* Toward the ink's own rgba, never `transparent`: transparent is
-     transparent BLACK, and interpolating to it drags the ramp through a grey
-     that reads as dirt on a green ground. */
-  background: linear-gradient(to bottom, rgba(30, 27, 20, 0), var(--ink));
+  background: var(--ink);
+  -webkit-mask-image:
+    radial-gradient(125% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
+    linear-gradient(to top, #000 45%, rgba(0, 0, 0, 0) 100%);
+  mask-image:
+    radial-gradient(125% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
+    linear-gradient(to top, #000 45%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }

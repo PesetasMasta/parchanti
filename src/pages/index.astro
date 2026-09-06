@@ -183,44 +183,56 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
       <!-- Scrolls sideways rather than stacking: there are four titles now,
            not two, and a 2x2 grid of them pushes the rest of the page below
            the fold on a phone. -->
-      <div class="teaser__strip">
-      <ul class="teaser__grid">
-        {productions.map((production) => (
-          <li>
-          <article class="production-card">
-            <!-- No identifiable photo exists for this production; an olive
-                 block is honest, a misattributed photo is not. -->
-            {production.data.photos.length > 0 ? (
-              <img
-                src={production.data.photos[0].src}
-                width={production.data.photos[0].width}
-                height={production.data.photos[0].height}
-                alt={production.data.photos[0].alt}
-                loading="lazy"
-              />
-            ) : (
-              <div class="production-card__blank" aria-hidden="true"></div>
-            )}
-            <h3 class="display production-card__title">
-              <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
-            </h3>
-            <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
-          </article>
-          </li>
-        ))}
+      <div class="deck-stage">
+        <div class="deck" data-deck role="group" aria-roledescription="balíček karet" aria-label="Repertoár" tabindex="0">
+          {productions.map((production) => (
+            <article class="production-card deck__card">
+              <!-- No identifiable photo exists for this production; an olive
+                   block is honest, a misattributed photo is not. -->
+              {production.data.photos.length > 0 ? (
+                <img
+                  src={production.data.photos[0].src}
+                  width={production.data.photos[0].width}
+                  height={production.data.photos[0].height}
+                  alt={production.data.photos[0].alt}
+                  loading="lazy"
+                />
+              ) : (
+                <div class="production-card__blank" aria-hidden="true"></div>
+              )}
+              <h3 class="display production-card__title">
+                <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
+              </h3>
+              <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
+            </article>
+          ))}
 
-        {/* Title and nothing else. No page to link to and no copy to show, so
-            the card says the one thing that is known and stops. */}
-        {otherTitles.map((title) => (
-          <li>
-          <article class="production-card">
-            <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
-            <h3 class="display production-card__title">{title}</h3>
-            <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
-          </article>
-          </li>
-        ))}
-      </ul>
+          {/* Title and nothing else. No page to link to and no copy to show, so
+              the card says the one thing that is known and stops. */}
+          {otherTitles.map((title) => (
+            <article class="production-card deck__card">
+              <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
+              <h3 class="display production-card__title">{title}</h3>
+              <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
+            </article>
+          ))}
+        </div>
+
+        <!-- The deck is a drag, which is not an instruction anyone can see and
+             not a gesture a keyboard has. These are how it is worked without
+             one. -->
+        <div class="deck__controls">
+          <button class="deck__step" type="button" data-deck-prev>Zpět</button>
+          <p class="deck__count" data-deck-count></p>
+          <button class="deck__step" type="button" data-deck-next>Další</button>
+        </div>
+
+        <!-- Announced, not shown. The visible count is a few glyphs wide on
+             purpose - printing the title there wrapped it to three lines
+             between the two buttons and pushed them to the screen edges. The
+             title still has to be said, because "3 / 4" on its own does not
+             tell anyone what was just dealt. -->
+        <p class="deck__live" data-deck-live aria-live="polite" aria-atomic="true"></p>
       </div>
     </div>
   </section>
@@ -403,49 +415,90 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .teaser { background: transparent; }
 
-  /* Bleeds to the gutter on both sides so a card is cut off at the edge of
-     the screen rather than ending neatly inside it - the cut is the only
-     honest signal that there is more to the right. The negative margin
-     cancels .page's padding exactly, and the strip puts the same padding back
-     inside itself so the first card still lines up with the heading. */
-  .teaser__strip {
-    margin-inline: calc(var(--gutter) * -1);
-    padding-block: 0.25rem 1rem;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    /* So a snapped card stops at the gutter rather than flush against the
-       edge of the screen, which would undo the padding below. */
-    scroll-padding-inline: var(--gutter);
+  /* A deck, not a row (2026-09-06). Four plays is a hand of cards, and a hand
+     is a thing you deal through rather than scroll past - the top card gets
+     the whole width instead of a quarter of it.
+
+     The stage is what reserves the room. The deck itself is an aspect box and
+     every card is absolutely positioned inside it, so the cards behind cannot
+     add height; the fan leans them out past that box, which is what the
+     stage's bottom padding is for. */
+  .deck-stage { padding-bottom: 0.5rem; }
+
+  .deck {
+    position: relative;
+    width: min(22rem, 82vw);
+    margin-inline: auto;
+    aspect-ratio: 3 / 4;
+    /* Vertical drags belong to the page. Without this the deck eats the
+       scroll on a phone and the section becomes a trap. */
+    touch-action: pan-y;
   }
 
-  /* The gutter lives on the scrolling content, not on the scroll container:
-     end padding on a scroll container is not scrollable space, so the last
-     card ended hard against the right edge of the screen while the first one
-     sat correctly inside it.
+  .deck:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
 
-     width: max-content is what makes that work. Left to stretch, the grid box
-     is the width of the container and its columns overflow it, so its end
-     padding stays pinned at the container's edge and the last card overruns
-     it - moving the padding here fixed nothing on its own. Sized to its
-     content, the box ends after the last column and the padding lands where
-     it is wanted. */
-  .teaser__grid {
-    width: max-content;
-    padding-inline: var(--gutter);
+  .deck__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    cursor: grab;
+    /* Rotating about a point below the card swings it like a card held at its
+       corner, rather than spinning it about its middle. */
+    transform-origin: 50% 120%;
+    box-shadow: 0 10px 24px rgba(30, 27, 20, 0.22);
+    user-select: none;
   }
 
-  .teaser__grid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(14rem, 18rem);
-    gap: 1.5rem;
-    align-items: start;
-    margin: 0;
-    list-style: none;
+  .deck__card[data-dragging] { cursor: grabbing; }
+
+  .deck__card img,
+  .deck__card .production-card__blank { aspect-ratio: 6 / 5; object-fit: cover; }
+
+  /* Pushed to the bottom of the card so every card's last line sits on the
+     same baseline however long its title ran. */
+  .deck__card > :last-child { margin-top: auto; margin-bottom: 0; }
+
+  .deck__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    /* Clears the fan, which leans the cards behind below the deck's own box. */
+    margin-top: 3.5rem;
   }
 
-  .teaser__grid > li { scroll-snap-align: start; }
+  .deck__step {
+    min-height: 2.75rem;
+    padding: 0.6rem 1.2rem;
+    border: 0;
+    border-radius: var(--radius-button);
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .deck__count { margin: 0; font-family: var(--display); font-size: 0.95rem; white-space: nowrap; }
+
+  /* Present to a screen reader, absent to everything else. Not display:none,
+     which would take it out of the accessibility tree and silence it. */
+  .deck__live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
 
   .production-card__note {
     margin: 0;
@@ -471,28 +524,52 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      it; the gradient carries one into the other (2026-09-06: "mezi hero a
      strankou udelej gradient").
 
-     The extra top padding is not spacing, it is the safety margin that makes
-     the fade legal: check.mjs decides what a line of text is printed on by
-     walking up for a background-COLOR, and a gradient on a pseudo-element is
-     invisible to it. Text sitting in the dark half of this ramp would be
-     unreadable while the harness went on measuring it against the wash and
-     passing. The band is 5rem and the padding clears 5rem, so nothing is ever
-     printed on the part of it that is still dark. */
+     The seam curves, and it is long enough that you stop reading it as an
+     edge (2026-09-06: "klidne trochu vetsi curve, delsi prechod aby nebyl
+     videt"). Concave: the centre clears first and the corners hold on, so the
+     dark reads as a proscenium opening rather than as a block ending.
+
+     Painted as flat ink behind a mask rather than as a gradient, because a
+     gradient can only run in a straight line. The mask is two layers
+     multiplied together:
+
+       the radial one is the curve. On its own it leaves ~14% ink in the far
+       corners, because those corners are a fixed distance from the ellipse's
+       centre no matter how the stops are set - and the band has to END
+       somewhere, so that residue would meet the wash on a hard line.
+
+       the linear one is the guarantee. Multiplied in, it forces the whole
+       width to zero before the band's edge, corners included.
+
+     Tightening the ellipse is what deepens the bow, and the linear layer is
+     what lets it be tightened at all.
+
+     The top padding is not spacing, it is the safety margin that makes the
+     seam legal: check.mjs decides what a line of text is printed on by
+     walking up for a background-COLOR, and a mask on a pseudo-element is
+     invisible to it. Text sitting in the dark half would be unreadable while
+     the harness went on measuring it against the wash and passing. The band
+     is 12rem and the padding clears 12rem. */
   .next {
     position: relative;
-    padding-top: calc(var(--band-padding) + 5rem);
+    padding-top: calc(var(--band-padding) + 12rem);
   }
 
   .next::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
-    height: 5rem;
+    height: 12rem;
     pointer-events: none;
-    /* Toward the ink's own rgba, never `transparent` - transparent is
-       transparent BLACK, and interpolating to it drags the ramp through a
-       grey that reads as dirt on a green ground. */
-    background: linear-gradient(to bottom, var(--ink), rgba(30, 27, 20, 0));
+    background: var(--ink);
+    -webkit-mask-image:
+      radial-gradient(125% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
+      linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, 0) 100%);
+    mask-image:
+      radial-gradient(125% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
+      linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, 0) 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   /* --- the drum ------------------------------------------------------------
@@ -834,5 +911,152 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
     layout();
     start();
+  }
+</script>
+
+<script>
+  // The repertoire deck. Drag the top card sideways and let go: past the
+  // threshold it is thrown the way you pushed it and goes to the back, short
+  // of it it springs back. Four plays, so it loops rather than running out.
+  //
+  // Only the top card is offered to a screen reader or the tab key. Three
+  // stacked cards all announcing themselves under one another is noise, and a
+  // link nobody can see is a trap - so the controls below are the accessible
+  // way through, and /repertoar/ lists every production as plain text anyway.
+  const deck = document.querySelector('[data-deck]');
+
+  if (deck) {
+    const cards = [...deck.querySelectorAll('.deck__card')];
+    const stage = deck.closest('.deck-stage');
+    const count = stage.querySelector('[data-deck-count]');
+    const live = stage.querySelector('[data-deck-live]');
+    const total = cards.length;
+    const calm = matchMedia('(prefers-reduced-motion: reduce)');
+
+    const THROW = 70;
+
+    // Which card is on top, then the one behind it, and so on. Everything the
+    // deck knows is in this one array; every card's resting state is derived
+    // from its position in it, so there is no per-card bookkeeping to drift.
+    let order = cards.map((_, index) => index);
+    let busy = false;
+    let startX = null;
+    let startY = null;
+    let dragging = false;
+
+    const titleOf = (card) => card.querySelector('.production-card__title')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+
+    const settle = (animate = true) => {
+      order.forEach((cardIndex, depth) => {
+        const card = cards[cardIndex];
+        const lift = depth * 10;
+        const turn = depth === 0 ? 0 : (depth % 2 ? -1 : 1) * (2 + depth);
+        card.style.transition = animate && !calm.matches
+          ? 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease'
+          : 'none';
+        card.style.transform = `translateY(${lift}px) scale(${1 - depth * 0.04}) rotate(${turn}deg)`;
+        card.style.zIndex = String(total - depth);
+        // The fourth card down is behind two others and contributes nothing
+        // but paint; hiding it keeps the stack from muddying at the edges.
+        card.style.opacity = depth > 2 ? '0' : '1';
+        card.inert = depth !== 0;
+        card.setAttribute('aria-hidden', depth === 0 ? 'false' : 'true');
+      });
+      count.textContent = `${order[0] + 1} / ${total}`;
+      live.textContent = `${order[0] + 1} z ${total}: ${titleOf(cards[order[0]])}`;
+    };
+
+    const advance = (direction) => {
+      if (busy) return;
+      const card = cards[order[0]];
+      const rotate = () => {
+        order = [...order.slice(1), order[0]];
+        settle(false);
+        // One frame at the back with no transition, then the whole deck eases
+        // up a place - otherwise the card flies back from where it was thrown.
+        requestAnimationFrame(() => settle(true));
+      };
+      if (calm.matches) {
+        rotate();
+        return;
+      }
+      busy = true;
+      card.style.transition = 'transform 300ms ease-in, opacity 300ms ease-in';
+      card.style.transform = `translateX(${direction * 130}%) rotate(${direction * 18}deg)`;
+      card.style.opacity = '0';
+      setTimeout(() => { rotate(); busy = false; }, 300);
+    };
+
+    // Backwards has nothing to throw - the card is arriving, not leaving - so
+    // it simply takes its place at the front and the deck settles around it.
+    const retreat = () => {
+      if (busy) return;
+      order = [order[order.length - 1], ...order.slice(0, -1)];
+      settle(true);
+    };
+
+    deck.addEventListener('pointerdown', (event) => {
+      if (busy) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (!cards[order[0]].contains(event.target)) return;
+      startX = event.clientX;
+      startY = event.clientY;
+      dragging = false;
+      cards[order[0]].setAttribute('data-dragging', '');
+    });
+
+    deck.addEventListener('pointermove', (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      // A mostly-vertical drag is the page being scrolled; let go of it.
+      if (!dragging && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+        startX = null;
+        cards[order[0]].removeAttribute('data-dragging');
+        settle(true);
+        return;
+      }
+      if (!dragging && Math.abs(dx) > 4) {
+        dragging = true;
+        // Captured only once a real drag starts: capturing on pointerdown
+        // retargets the eventual click and swallowed taps on the card's link.
+        try { deck.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ }
+      }
+      if (!dragging) return;
+      const card = cards[order[0]];
+      card.style.transition = 'none';
+      card.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+    });
+
+    const drop = (event) => {
+      if (startX === null) return;
+      const dx = event.clientX - startX;
+      startX = null;
+      cards[order[0]].removeAttribute('data-dragging');
+      if (Math.abs(dx) >= THROW) advance(dx < 0 ? -1 : 1);
+      else settle(true);
+    };
+
+    deck.addEventListener('pointerup', drop);
+    deck.addEventListener('pointercancel', drop);
+
+    // A drag must not count as a click on the card's link.
+    deck.addEventListener('click', (event) => {
+      if (dragging) {
+        event.preventDefault();
+        event.stopPropagation();
+        dragging = false;
+      }
+    }, true);
+
+    deck.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); advance(-1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); retreat(); }
+    });
+
+    stage.querySelector('[data-deck-next]').addEventListener('click', () => advance(-1));
+    stage.querySelector('[data-deck-prev]').addEventListener('click', retreat);
+
+    settle(false);
   }
 </script>
