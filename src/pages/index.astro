@@ -186,35 +186,58 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
       <div class="deck-stage">
         <div class="deck" data-deck role="group" aria-roledescription="balíček karet" aria-label="Repertoár" tabindex="0">
           {productions.map((production) => (
-            <article class="production-card deck__card">
-              <!-- No identifiable photo exists for this production; an olive
-                   block is honest, a misattributed photo is not. -->
-              {production.data.photos.length > 0 ? (
-                <img
-                  src={production.data.photos[0].src}
-                  width={production.data.photos[0].width}
-                  height={production.data.photos[0].height}
-                  alt={production.data.photos[0].alt}
-                  loading="lazy"
-                />
-              ) : (
-                <div class="production-card__blank" aria-hidden="true"></div>
-              )}
-              <h3 class="display production-card__title">
-                <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
-              </h3>
-              <p><a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a></p>
-            </article>
+            <div class="deck__card" data-flippable>
+              <div class="deck__flip">
+                <article class="production-card deck__face">
+                  <!-- No identifiable photo exists for this production; an
+                       olive block is honest, a misattributed photo is not. -->
+                  {production.data.photos.length > 0 ? (
+                    <img
+                      src={production.data.photos[0].src}
+                      width={production.data.photos[0].width}
+                      height={production.data.photos[0].height}
+                      alt={production.data.photos[0].alt}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div class="production-card__blank" aria-hidden="true"></div>
+                  )}
+                  <h3 class="display production-card__title">
+                    <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
+                  </h3>
+                  <div class="deck__foot">
+                    <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>
+                    <button class="deck__turn" type="button" data-flip>Popis</button>
+                  </div>
+                </article>
+
+                <article class="production-card deck__face deck__face--back">
+                  <h3 class="display production-card__title">
+                    <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
+                  </h3>
+                  <p class="deck__blurb">{production.data.blurb}</p>
+                  <div class="deck__foot">
+                    <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>
+                    <button class="deck__turn" type="button" data-flip>Plakát</button>
+                  </div>
+                </article>
+              </div>
+            </div>
           ))}
 
-          {/* Title and nothing else. No page to link to and no copy to show, so
-              the card says the one thing that is known and stops. */}
+          {/* Title and nothing else, and no back to turn to: there is no
+              blurb for either of these, and a blank reverse that says nothing
+              is worse than a card that does not turn. */}
           {otherTitles.map((title) => (
-            <article class="production-card deck__card">
-              <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
-              <h3 class="display production-card__title">{title}</h3>
-              <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
-            </article>
+            <div class="deck__card">
+              <div class="deck__flip">
+                <article class="production-card deck__face">
+                  <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
+                  <h3 class="display production-card__title">{title}</h3>
+                  <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
+                </article>
+              </div>
+            </div>
           ))}
         </div>
 
@@ -241,10 +264,19 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 <style>
   /* The strip is its own dark band rather than a block on the wash, so it
      drops the page padding and paints edge to edge. */
+  /* The band belongs to the reel, not to the slide (2026-09-06: "u hero
+     nemenit tmavy pruh, jen fotku a napis"). It used to be painted by each
+     slide's own copy, so cross-fading two slides cross-faded two identical
+     ink bands and the band dipped in the middle of every turn - a flicker on
+     the one surface that should have been the still thing.
+
+     Painting it here instead means the band is simply always there. It also
+     keeps the contrast harness honest: it walks up for a background-COLOUR,
+     finds this one, and measures the white copy against real ink. */
   .hero {
     position: relative;
     padding: 0;
-    background: transparent;
+    background: var(--ink);
     /* One number for the height of the picture and for the room the slides
        reserve above their copy, so the two cannot drift apart. */
     --hero-photo: min(62vw, 24rem);
@@ -253,6 +285,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   /* Only the first slide is in flow. The other two are laid over it, so the
      identity slide - the one with the most words in it - decides the height
      and the strip never resizes as it turns. */
+  /* The slide no longer fades - it has nothing left to fade, since the band
+     under it is the reel's. It is a frame that holds a picture and some
+     words, and those two turn on their own below. */
   .hero__slide {
     position: absolute;
     inset: 0;
@@ -260,10 +295,11 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     flex-direction: column;
     justify-content: flex-end;
     padding-top: var(--hero-photo);
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 900ms ease, visibility 0s linear 900ms;
+    /* Stacked slides would otherwise sit over the showing slide's button. */
+    pointer-events: none;
   }
+
+  .hero__slide[data-on] { pointer-events: auto; }
 
   /* Padding, not a margin on the copy: the slide has no border or padding of
      its own, so a top margin on its first child collapses straight through it
@@ -271,12 +307,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      photograph with nowhere to be and the wash showing where it should have
      been. */
   .hero__slide:first-child { position: relative; }
-
-  .hero__slide[data-on] {
-    visibility: visible;
-    opacity: 1;
-    transition: opacity 900ms ease, visibility 0s;
-  }
 
   /* Cropped to the band it is actually seen in, not stretched over the whole
      slide. Covering the slide made the picture taller than the window above
@@ -291,31 +321,53 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     height: var(--hero-photo);
     object-fit: cover;
     object-position: center;
+    opacity: 0;
+    transition: opacity 900ms ease;
   }
 
-  /* A solid band, not a wash over the picture: the contrast harness reads a
-     background-colour and looks straight through a gradient to whatever is
-     behind it, and white over an unknown photograph is not a contrast anyone
-     can promise. The photo fades into the band through ::before instead. */
-  /* The band carries the page gutter itself, because .hero drops the padding
+  .hero__slide[data-on] .hero__photo { opacity: 1; }
+
+  /* No background of its own any more - .hero paints the band for the whole
+     reel. Transparent here is safe rather than sloppy: the harness's walk up
+     the tree finds .hero's ink, so the white copy is still measured against
+     the colour it is actually printed on.
+
+     The band carries the page gutter itself, because .hero drops the padding
      .page would have given it in order to paint edge to edge. */
   .hero__copy {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     flex: 1;
     padding: 1.75rem var(--gutter) 2.25rem;
-    background-color: var(--ink);
     color: var(--white);
   }
 
-  .hero__copy::before {
+  /* The photograph's lower edge dissolved into the band. Drawn once for the
+     reel rather than once per slide: three identical gradients stacked
+     compounded their alpha and the fade came out short and hard. */
+  .hero::after {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 100%;
+    top: calc(var(--hero-photo) - 7rem);
     height: 7rem;
-    background: linear-gradient(to top, var(--ink), rgba(30, 27, 20, 0));
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgb(var(--ink-rgb) / 0), var(--ink));
+  }
+
+  /* visibility, not opacity: it is what takes the copy of a slide nobody is
+     looking at out of the tab order, so the hidden slides' buttons cannot be
+     reached with a keyboard. */
+  .hero__copy > .page__inner {
+    visibility: hidden;
+    transition: visibility 0s linear 900ms;
+  }
+
+  .hero__slide[data-on] .hero__copy > .page__inner {
+    visibility: visible;
+    transition: visibility 0s;
   }
 
   /* The copy arrives after the picture has settled, one line at a time, and
@@ -430,6 +482,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     width: min(22rem, 82vw);
     margin-inline: auto;
     aspect-ratio: 3 / 4;
+    /* Depth for the turn. Set on the deck rather than the card so every card
+       is seen from the same eye, which is what keeps the fan coherent. */
+    perspective: 1400px;
     /* Vertical drags belong to the page. Without this the deck eats the
        scroll on a phone and the section becomes a trap. */
     touch-action: pan-y;
@@ -437,28 +492,81 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .deck:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
 
+  /* The card is now only a place in the deck: where it sits, how it leans,
+     what it is dragged by. Everything you can see belongs to the two faces
+     inside it, because the deal and the turn are different transforms and one
+     element cannot carry both. */
   .deck__card {
     position: absolute;
     inset: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
     cursor: grab;
     /* Rotating about a point below the card swings it like a card held at its
        corner, rather than spinning it about its middle. */
     transform-origin: 50% 120%;
-    box-shadow: 0 10px 24px rgba(30, 27, 20, 0.22);
     user-select: none;
   }
 
   .deck__card[data-dragging] { cursor: grabbing; }
 
-  .deck__card img,
-  .deck__card .production-card__blank { aspect-ratio: 6 / 5; object-fit: cover; }
+  .deck__flip {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
 
-  /* Pushed to the bottom of the card so every card's last line sits on the
-     same baseline however long its title ran. */
-  .deck__card > :last-child { margin-top: auto; margin-bottom: 0; }
+  .deck__card[data-flipped] .deck__flip { transform: rotateY(180deg); }
+
+  .deck__face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    backface-visibility: hidden;
+    box-shadow: 0 10px 24px rgb(var(--ink-rgb) / 0.22);
+  }
+
+  .deck__face--back { transform: rotateY(180deg); }
+
+  .deck__face img,
+  .deck__face .production-card__blank { aspect-ratio: 6 / 5; object-fit: cover; }
+
+  /* A long blurb scrolls inside the card rather than pushing the foot off it:
+     the card cannot grow, because its size is the deck's. */
+  .deck__blurb { margin: 0; overflow-y: auto; font-size: 0.95rem; }
+
+  /* Pinned to the bottom of the face, so the link sits on the same line
+     whatever the title above it did. */
+  .deck__foot {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .deck__foot p { margin: 0; }
+
+  /* Quieter than the deal buttons under the deck: turning a card over is a
+     smaller act than dealing the next one, and it should not compete with
+     the link beside it. */
+  .deck__turn {
+    flex: none;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.8rem;
+    border: 3px solid var(--accent);
+    border-radius: var(--radius-button);
+    background: transparent;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
 
   .deck__controls {
     display: flex;
@@ -542,7 +650,10 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        width to zero before the band's edge, corners included.
 
      Tightening the ellipse is what deepens the bow, and the linear layer is
-     what lets it be tightened at all.
+     what lets it be tightened at all. The ellipse is down to 100% wide, which
+     puts ~29% ink in the corners for the linear layer to clear - so its solid
+     stop moved down to 58%, late enough that it is cleaning up after the
+     curve rather than flattening it.
 
      The top padding is not spacing, it is the safety margin that makes the
      seam legal: check.mjs decides what a line of text is printed on by
@@ -563,11 +674,11 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     pointer-events: none;
     background: var(--ink);
     -webkit-mask-image:
-      radial-gradient(125% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
-      linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, 0) 100%);
+      radial-gradient(100% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
+      linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0) 100%);
     mask-image:
-      radial-gradient(125% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
-      linear-gradient(to bottom, #000 45%, rgba(0, 0, 0, 0) 100%);
+      radial-gradient(100% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
+      linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0) 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }
@@ -946,6 +1057,20 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
     const titleOf = (card) => card.querySelector('.production-card__title')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
 
+    // The face turned away is still in the document, so it has to be taken
+    // out of the tab order and out of the accessibility tree by hand -
+    // backface-visibility only hides it from the eye. Without this both
+    // "Popis" and "Plakát" are reachable at once and neither makes sense.
+    const faces = (card) => {
+      const flipped = card.hasAttribute('data-flipped');
+      for (const face of card.querySelectorAll('.deck__face')) {
+        const back = face.classList.contains('deck__face--back');
+        const away = back !== flipped;
+        face.inert = away;
+        face.setAttribute('aria-hidden', away ? 'true' : 'false');
+      }
+    };
+
     const settle = (animate = true) => {
       order.forEach((cardIndex, depth) => {
         const card = cards[cardIndex];
@@ -961,6 +1086,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
         card.style.opacity = depth > 2 ? '0' : '1';
         card.inert = depth !== 0;
         card.setAttribute('aria-hidden', depth === 0 ? 'false' : 'true');
+        faces(card);
       });
       count.textContent = `${order[0] + 1} / ${total}`;
       live.textContent = `${order[0] + 1} z ${total}: ${titleOf(cards[order[0]])}`;
@@ -970,6 +1096,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
       if (busy) return;
       const card = cards[order[0]];
       const rotate = () => {
+        // A card dealt to the back goes face up again: it is a poster in a
+        // deck, not a page someone left open.
+        card.removeAttribute('data-flipped');
         order = [...order.slice(1), order[0]];
         settle(false);
         // One frame at the back with no transition, then the whole deck eases
@@ -991,9 +1120,24 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     // it simply takes its place at the front and the deck settles around it.
     const retreat = () => {
       if (busy) return;
+      cards[order[0]].removeAttribute('data-flipped');
       order = [order[order.length - 1], ...order.slice(0, -1)];
       settle(true);
     };
+
+    // Turning a card over. Its own button rather than a tap anywhere on the
+    // card: the card is already a drag target and a link, and a third meaning
+    // for the same surface is how you get a flip every time someone means to
+    // follow the link.
+    deck.addEventListener('click', (event) => {
+      const turn = event.target.closest('[data-flip]');
+      if (!turn) return;
+      const card = turn.closest('.deck__card');
+      card.toggleAttribute('data-flipped');
+      faces(card);
+      // Focus would otherwise stay on a button that has just turned away.
+      card.querySelector('.deck__face:not([inert]) [data-flip]')?.focus();
+    });
 
     deck.addEventListener('pointerdown', (event) => {
       if (busy) return;

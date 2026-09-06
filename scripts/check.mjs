@@ -601,9 +601,14 @@ onPage('/',
 onPage('/',
   'repertoire deck: the productions with pages link to them, the rest are title-only',
   `JSON.stringify({
-    cards: [...document.querySelectorAll('.production-card')].map((card) => ({
+    // Off .deck__card, not off .production-card: a card that turns over has
+    // two of those inside it, and counting faces is not counting plays.
+    cards: [...document.querySelectorAll('.deck__card')].map((card) => ({
       href: card.querySelector('a')?.getAttribute('href') ?? null,
       title: card.querySelector('.production-card__title')?.textContent.replace(/\\s+/g, ' ').trim(),
+      // A card with a blurb turns over; one without must not pretend to.
+      turns: Boolean(card.querySelector('[data-flip]')),
+      blurb: card.querySelector('.deck__blurb')?.textContent.trim() ?? null,
     })),
     // Exactly one card is dealt: the rest are stacked behind it and must be
     // out of the tab order and out of the accessibility tree, or three hidden
@@ -638,6 +643,15 @@ onPage('/',
       if (!bare.includes(card.title)) return `unexpected title-only card ${JSON.stringify(card.title)}`;
     }
     if (r.exposed !== 1) return `${r.exposed} cards are exposed at rest, expected exactly the one on top`;
+    // The reverse carries the production's own blurb. A card with no blurb to
+    // show has no back and no button offering one.
+    for (const card of r.cards.slice(0, linked.length)) {
+      if (!card.turns) return `${JSON.stringify(card.title)} has a blurb but no way to turn it over`;
+      if (!card.blurb) return `${JSON.stringify(card.title)} turns over onto nothing`;
+    }
+    for (const card of r.cards.slice(linked.length)) {
+      if (card.turns) return `${JSON.stringify(card.title)} offers a description it does not have`;
+    }
     if (!r.inertBehind) return 'the cards behind the top one are not inert, so their links are still tabbable';
     if (r.controls.length !== 2) return `${r.controls.length} deck controls, expected back and forward`;
     if (r.controls.some((c) => !c.name)) return 'a deck control has no accessible name';

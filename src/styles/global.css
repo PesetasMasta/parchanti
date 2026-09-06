@@ -87,7 +87,14 @@
   --olive: #93A05C;       /* the same green, deeper, for the bands that break the wash */
   --brick: #AA0A27;       /* Barbados Cherry, as given - every filled surface */
   --brick-deep: #80071D;  /* the same cherry, dark enough to be read on the wash */
-  --ink:   #1E1B14;
+  /* One dark, and it is not black (2026-09-06: "sjednotil bych tmavou barvu
+     pokud se nerovna cerna"). Held as channels rather than as a hex so that
+     the places needing it at partial alpha - the seams' zero end, the card
+     shadows - derive from the same three numbers instead of restating them.
+     It was already one colour everywhere; it was written three ways, which is
+     how a colour stops being one colour. */
+  --ink-rgb: 30 27 20;
+  --ink:   rgb(var(--ink-rgb));
 
   /* Which accent the ground underneath can carry. The deep brick by default,
      because the green ground is still light: 4.8:1 on lime and 10.7:1 on the
@@ -117,12 +124,14 @@
   --button-bg: var(--brick);    /* the CTA and the burger */
   --button-text: var(--white);
 
-  /* Frame and paper are the same white - two tokens because they are two
-     jobs, not because they differ today. Every printed block is now that same
-     white, so the termíny card no longer differs from the rest; the tokens
-     stay so the frame can be given its own colour without hunting for it. */
+  /* Paper stays white; the frame is cherry (2026-09-06: "karta predstaveni
+     red border"). The two tokens existed for exactly this - the frame could
+     be given its own colour without hunting through the rules for it - and
+     this is the first time they differ. The ticket now matches the repertoire
+     cards, which have been red-framed since the client asked for it on
+     2026-08-31. */
   --ticket-paper: var(--white);
-  --ticket-frame: var(--white);
+  --ticket-frame: var(--brick);
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -678,7 +687,11 @@ img { max-width: 100%; height: auto; }
      to zero before the band's edge, corners included.
 
    Tightening the ellipse is what deepens the bow, and the linear layer is
-   what lets it be tightened at all. */
+   what lets it be tightened at all. The ellipse is down to 100% wide
+   (2026-09-06: "curve na hero gradientu a footer vetsi"), which puts ~29% ink
+   in the corners for the linear layer to clear - so its solid stop moved down
+   to 58%, late enough that it is cleaning up after the curve rather than
+   flattening it. */
 .footer::before {
   content: "";
   position: absolute;
@@ -689,11 +702,11 @@ img { max-width: 100%; height: auto; }
   pointer-events: none;
   background: var(--ink);
   -webkit-mask-image:
-    radial-gradient(125% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
-    linear-gradient(to top, #000 45%, rgba(0, 0, 0, 0) 100%);
+    radial-gradient(100% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
+    linear-gradient(to top, #000 58%, rgba(0, 0, 0, 0) 100%);
   mask-image:
-    radial-gradient(125% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
-    linear-gradient(to top, #000 45%, rgba(0, 0, 0, 0) 100%);
+    radial-gradient(100% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
+    linear-gradient(to top, #000 58%, rgba(0, 0, 0, 0) 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
@@ -748,6 +761,9 @@ img { max-width: 100%; height: auto; }
   background: var(--ticket-paper);
   border: 3px solid var(--ticket-frame);
   border-radius: var(--radius-card);
+  /* Ink at low alpha, not black: a black shadow on a green ground greys it.
+     Same three channels as everything else dark on this site. */
+  box-shadow: 0 10px 24px rgb(var(--ink-rgb) / 0.22);
 }
 
 /* Square, at her ask (2026-09-03: "u terminu hranaty ramecek"). The rounding
