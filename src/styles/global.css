@@ -37,48 +37,35 @@
 /* ---------------------------------------------------------------------------
    One visual system for the whole site, so it lives in one file.
 
-   Palette sampled from the client's own logo (2026-08-31: "změna barev dle
-   loga na instagramu"), off the artwork she sent rather than off the feed.
-   The mark is a red letterpress name on a green watercolour disc:
+   Palette is the Lime Sherbet / Barbados Cherry pair, off the reference the
+   client sent (2026-09-06):
 
-     the wash runs #B9DC86 (light) to #8FC480 (mid)  -> --lime, --olive
-     the letters are #B73D28                         -> --brick
+     Lime Sherbet    #CDD78A  -> --lime
+     Barbados Cherry #AA0A27  -> --brick
 
-   --brick is that red exactly, unaltered (client, 2026-09-01: "a jeste ta
-   cervena aby byla syta jako na tom logu"). It paints every filled surface:
+   This replaces the palette sampled off her logo in August. It is a shift
+   inside the same two families rather than a break with the mark - the green
+   goes yellower and quieter, the red goes deeper and cooler - so the drawn
+   KP still sits on the page as her own artwork. If she wants the mark itself
+   restated in the new red, that is her call, not ours.
+
+   --brick is the cherry exactly, unaltered. It paints every filled surface:
    the mark, the buttons, the burger, the nav overlay, the card and ticket
-   frames. White on it reads 5.7:1, so a filled surface can carry the logo's
-   red at full strength and stay readable.
+   frames. White on it reads 7.5:1, better headroom than the old red gave.
 
-   --brick-deep is the same red darkened for one job: red as *text* sitting on
-   the green wash. At full strength that is 3.8:1 on lime and 2.8:1 on olive,
-   under the 4.5:1 body floor, so every link and eyebrow on the wash would
-   have been unreadable. --brick-deep keeps the hue (9deg) and the saturation
-   (64%) exactly and gives up nine points of lightness, 44% to 35%: 5.2:1 on
-   lime, with headroom for browser rounding, and 7.9:1 on white.
+   --brick-deep is the same cherry darkened for one job: red as *text* sitting
+   on the green wash. The full cherry is 4.9:1 on lime and 4.3:1 on olive -
+   the second is under the 4.5:1 body floor and the first has no room for
+   browser rounding, so links and eyebrows on the wash take the darkened one:
+   7.0:1 on lime, 5.3:1 on olive.
 
-   Still one red, not two: the pair is one ink at two lightnesses, split along
-   the ground it is printed on rather than by taste. On paper - every printed
-   block is white now - --accent is the full --brick, because 5.7:1 on white
-   clears the body floor. Directly on the green wash it drops to --brick-deep,
-   because there the full red is 3.8:1. Text never names either one, so a new
-   link inherits the readable answer without having to know the split
-   exists.
+   Still one ink at two lightnesses, split by the ground it is printed on
+   rather than by taste. On paper - every printed block is white - --accent is
+   the full --brick. Directly on the green wash it drops to --brick-deep. Text
+   never names either one, so a new link inherits the readable answer without
+   having to know the split exists.
 
-   The white paper she chose is what made this possible: while the ticket
-   painted its paper as a background-image (so the frame could carry a
-   gradient) the contrast harness looked straight through it to the lime and
-   scored the small labels at 3.82:1. Her choice deleted the gradient, the
-   ticket went back to a plain background-colour, and the card's own ground
-   became visible to the measurement.
-
-   The cream that used to be the paper is gone (client, 2026-09-02: "chceme to
-   pryč, misto ni zustane bila"). It was not one surface but three jobs - the
-   paper the cards print on, the colour the dark bands read their text in, and
-   half the tint of the cloud wash - so the yellow was in the background of
-   every page, not on any one element. White does all three.
-
-   White never sits on lime or olive (~1.9:1); those grounds take ink.
+   White never sits on lime or olive; those grounds take ink.
    scripts/check.mjs enforces the contrast on every page, at 320px and 390px.
 
    Deliberately single-theme: printed poster, paper, no dark mode.
@@ -87,14 +74,14 @@
   color-scheme: only light;
 
   --white: #FFFFFF;       /* the paper, and the ink the dark bands are read in */
-  --lime:  #BFDF90;
-  --olive: #8FC480;
-  --brick: #B73D28;       /* the logo's red, as sampled - every filled surface */
-  --brick-deep: #943120;  /* the same red, dark enough to be read on the wash */
+  --lime:  #CDD78A;       /* Lime Sherbet - and the darkest tone the wall reaches */
+  --olive: #B3BD6E;       /* the same sherbet, deepened, for the bands that break it */
+  --brick: #AA0A27;       /* Barbados Cherry, as given - every filled surface */
+  --brick-deep: #80071D;  /* the same cherry, dark enough to be read on the wash */
   --ink:   #1E1B14;
 
   /* Which accent the ground underneath can carry. The deep brick by default,
-     because the green ground is light: 5.2:1 on lime and 7.9:1 on the white
+     because the green ground is light: 7.0:1 on lime and 10.7:1 on the white
      of the cards and the bar. The dark bands below flip it to white. One token
      instead of a hand-kept list of selectors per surface - a new card
      inherits the right answer rather than needing one. */
@@ -148,15 +135,16 @@
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
 
-  /* One cloud tile. Also the drift distance, so the two can never fall out of
-     step. Held small on a phone so a 390px screen still gets whole cloud
-     shapes across it, and opened up on a wide screen so the tile does not
-     visibly repeat. */
-  --cloud-tile: 720px;
+  /* One plaster tile. Held small on a phone so a 390px screen gets the grain
+     at a plausible size rather than one magnified patch of it, and opened up
+     on a wide screen so the tile does not visibly repeat. The asset is 1100px
+     square, so the wide value is its native size and the narrow one
+     downsamples it, which only makes the tooth finer. */
+  --wall-tile: 720px;
 }
 
 @media (min-width: 60rem) {
-  :root { --cloud-tile: 1100px; }
+  :root { --wall-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -168,9 +156,20 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
-/* The sage cloud ground the client asked for (2026-08-18). Generated Perlin
-   noise, not a sourced wallpaper: nothing to licence, two kilobytes, and
-   tinted only between lime and white.
+/* The plaster ground. Drawn from the wall photograph the client sent
+   (2026-09-06), recoloured into the sherbet: the shot is a dark green
+   concrete wall, so what survives from it is its tooth, not its colour.
+
+   Built once, offline, and committed as an asset rather than regenerated:
+   the photograph was flat-fielded to drop its lighting gradient (only the
+   grain is wanted, not the vignette), rolled half a tile so its wrap
+   discontinuity moved into the middle, and that centre cross healed - which
+   is what makes it tile. Mirror-tiling was tried first and rejected: on a
+   ground this large the symmetry reads as a plaid.
+
+   Its luminance ramp runs from --lime up to a paler sherbet, so --lime is
+   the darkest tone the wash ever reaches and stays the honest thing for
+   check.mjs to measure contrast against, exactly as the cloud wash was.
 
    On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
    textem?"). A background on body propagates to the canvas, which covers the
@@ -181,12 +180,11 @@ html { scroll-padding-top: 4.5rem; }
    document, so on a 2300px page the wash was magnified until a phone saw one
    flat patch of it. The tile wraps seamlessly, so repeating it is invisible.
 
-   The lime behind it is the fallback, the darkest tone the wash ever reaches,
-   and what check.mjs measures contrast against. Bands that break the wash -
-   .o-nas in olive, white cards - paint over it as before. */
+   Bands that break the wash - .o-nas in olive, white cards - paint over it
+   as before. */
 body {
   margin: 0;
-  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
+  background: url("/assets/wall.webp") 0 0 / var(--wall-tile) var(--wall-tile) repeat var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);

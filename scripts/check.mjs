@@ -1100,7 +1100,7 @@ try {
         return { top, scrolled };
       })()`);
       const { top, scrolled } = measured;
-      const BRICK = [183, 61, 40];  // --brick, the logo's red at full strength
+      const BRICK = [170, 10, 39];  // --brick, Barbados Cherry at full strength
       const WHITE = [255, 255, 255];
       const near = (colour, target) => colour
         && colour[3] > 0.99
@@ -1169,7 +1169,7 @@ try {
     }
   });
 
-  // The cloud ground rides on body, which propagates to the canvas: that is
+  // The plaster ground rides on body, which propagates to the canvas: that is
   // what makes it cover a document of any length and scroll with the text.
   // Checked as computed values, since the tile size and the repeat are the two
   // things that would silently go back to a stretched single image.
@@ -1182,15 +1182,15 @@ try {
           repeat: style.backgroundRepeat,
           attachment: style.backgroundAttachment,
           image: style.backgroundImage,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
         };
       })()`);
       const wrong = [];
-      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
+      if (!measured.image.includes('wall.webp')) wrong.push(`image is ${measured.image}`);
       if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
       if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
       if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      const label = '[/] cloud ground tiles on body and scrolls with the page';
+      const label = '[/] plaster ground tiles on body and scrolls with the page';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });
