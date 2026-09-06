@@ -160,6 +160,45 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
   radial-gradient(100% 100% at 50% 100%, rgba(0,0,0,0) 0 36%, rgba(0,0,0,0.45) 36% 60%, #000 60%),
   linear-gradient(to bottom, #000 0 62%, rgba(0,0,0,0.45) 62% 82%, rgba(0,0,0,0) 82%); }
 
+/* --- D: the seam as a dot matrix -----------------------------------------
+   An ordered dither. The gradient is not carried by opacity at all: every cell
+   is either full ink or nothing, and what changes down the seam is how many of
+   them are lit. That is why it stays sharp - there is no intermediate tone
+   anywhere in it to go soft.
+
+   Two mask layers, multiplied. The PNG is the dither and it repeats sideways;
+   the radial is the curve, and it is the only smooth thing left, clipping the
+   dots to the bow. The tile is 192px tall, which is the seam's 12rem exactly,
+   so the cells stay square and never stretch. It repeats every 8 cells because
+   an o8x8 matrix is periodic at 8, so a 24-, 32-, 48- or 64-cell tile wraps
+   with nothing to see. --------------------------------------------------- */
+.seamd { position: relative; height: 12rem; background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p6.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.seamd::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  -webkit-mask-image: var(--dot), radial-gradient(115% 100% at 50% 100%, rgba(0,0,0,0) 26%, #000 100%);
+  mask-image: var(--dot), radial-gradient(115% 100% at 50% 100%, rgba(0,0,0,0) 26%, #000 100%);
+  -webkit-mask-size: 192px 192px, 100% 100%;
+  mask-size: 192px 192px, 100% 100%;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  mask-repeat: repeat-x, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.seamd--d3 { --dot: url("assets/dither-3.png"); }
+.seamd--d4 { --dot: url("assets/dither-4.png"); }
+.seamd--d6 { --dot: url("assets/dither-6.png"); }
+.seamd--d8 { --dot: url("assets/dither-8.png"); }
+
+/* The footer end, same tile flipped, so the pair matches. */
+.seamd--up::before {
+  -webkit-mask-image: var(--dot), radial-gradient(115% 100% at 50% 0%, rgba(0,0,0,0) 26%, #000 100%);
+  mask-image: var(--dot), radial-gradient(115% 100% at 50% 0%, rgba(0,0,0,0) 26%, #000 100%);
+}
+.seamd--up.seamd--d6 { --dot: url("assets/dither-6-up.png"); }
+
 .zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
 </style>
 </head>
@@ -202,6 +241,12 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       &rsaquo;</a> — X4/X6/X10 print the same wall in four, six or ten flat
       inks instead of a continuous ramp, and <a href="#seams" style="color: var(--sherbet)">Z0/Z1/Z2</a>
       do the same to the seam.
+    </p>
+    <p>
+      <a href="#dither" style="color: var(--sherbet)">Jump to the dot matrix
+      &rsaquo;</a> — this is the one that matches the picture you sent. The
+      gradient is carried by how many cells are lit, not by opacity, so there
+      is no intermediate tone in it anywhere to go soft.
     </p>
   </header>
 
@@ -391,6 +436,53 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       <div class="seamdemo__dark"></div>
       <div class="seam2 seam2--z2"></div>
       <div class="seamdemo__wash"><h3>Repertoár</h3><p>Two visible bands and an edge. Bold, and the curve is doing all the work.</p></div>
+    </div>
+  </div>
+
+  <div class="variant" id="dither">
+    <div class="variant__bar"><span class="variant__id">D — the seam as a dot matrix</span><p class="variant__note">Ordered dither. Every cell is full ink or nothing; the gradient is how many are lit.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamd seamd--d3"></div>
+      <div class="seamdemo__wash"><h3>D3 · 3px</h3><p>Fine cells. Reads as a texture rather than as dots at arm's length.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">D4</span><p class="variant__note">4px cells.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamd seamd--d4"></div>
+      <div class="seamdemo__wash"><h3>D4 · 4px</h3><p>The dots are countable but the transition still reads as a transition.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">D6</span><p class="variant__note">6px cells — closest to the picture you sent.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamd seamd--d6"></div>
+      <div class="seamdemo__wash"><h3>D6 · 6px</h3><p>Unmistakably a screen. This is the one I would ship.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">D8</span><p class="variant__note">8px cells. Chunky.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamd seamd--d8"></div>
+      <div class="seamdemo__wash"><h3>D8 · 8px</h3><p>At this size the grid competes with the type rather than sitting under it.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">D6 pair</span><p class="variant__note">Both ends, as they would sit on the page: hero above, footer below.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamd seamd--d6"></div>
+      <div class="seamdemo__wash"><h3>Repertoár</h3><p>Divadelní soubor, který se nebojí provokovat. The page sits between two screens, the wall behind it printed in six inks.</p></div>
+      <div class="seamd seamd--d6 seamd--up"></div>
+      <div class="seamdemo__dark"></div>
     </div>
   </div>
 </div>
