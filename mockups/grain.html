@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Parchanti — grain na zeleném pozadí</title>
+<style>
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --ink-rgb: 30 27 20;
+  --ink: rgb(var(--ink-rgb));
+  --lime: #A8B56B;
+  --sherbet: #CDD78A;
+  --brick: #AA0A27;
+  --brick-deep: #80071D;
+  --white: #fff;
+  --display: "Cutive Mono", "Courier New", monospace;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --clouds: url("/public/assets/clouds.svg") 0 0 / 1100px 1100px repeat;
+  color-scheme: only light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--ink); }
+
+.sheet { max-width: 78rem; margin-inline: auto; padding: 0 var(--gutter) 6rem; }
+.sheet__head { padding: 3.5rem 0 2rem; color: var(--sherbet); }
+.sheet__head h1 { font-family: var(--display); font-size: clamp(1.8rem, 5vw, 2.8rem); margin: 0 0 0.75rem; }
+.sheet__head p { max-width: 56ch; margin: 0 0 1rem; line-height: 1.6; color: #cfd3bb; }
+.variant { margin-top: 2.5rem; border: 1px solid #4a4a3c; border-radius: 10px; overflow: hidden; background: #232019; }
+.variant__bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid #4a4a3c; }
+.variant__id { font-family: var(--display); font-size: 1rem; color: var(--sherbet); }
+.variant__note { font-size: 0.8rem; color: #9a9c86; margin: 0; }
+
+/* ---- the ground under test ---------------------------------------------
+   Every band is the same wash and the same content. What differs is which
+   layers sit over it and how they blend, declared once per variant so the
+   comparison is honest. ---------------------------------------------------- */
+.band {
+  padding: 2.5rem var(--gutter) 3rem;
+  background: var(--clouds), var(--lime);
+}
+.band h3 { font-family: var(--display); font-weight: 400; color: var(--brick); font-size: clamp(1.9rem, 7vw, 2.6rem); margin: 0 0 0.5rem; }
+.band p { max-width: 36rem; margin: 0 0 1.25rem; line-height: 1.55; }
+.band .card { max-width: 22rem; padding: 1rem; background: var(--white); border: 3px solid var(--brick); border-radius: 14px; box-shadow: 0 10px 24px rgb(var(--ink-rgb) / 0.22); }
+.band .card p { margin: 0; font-size: 0.9rem; }
+.band .card b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; display: block; }
+
+/* G1-G3: paper tooth only, three strengths. Multiply, so the noise darkens
+   the wash and never shifts its hue. */
+.band--g1 { background: url("assets/grain-light.svg") 0 0 / 240px 240px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--g2 { background: url("assets/grain-medium.svg") 0 0 / 240px 240px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--g3 { background: url("assets/grain-strong.svg") 0 0 / 240px 240px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, normal, normal; }
+
+/* G4: tooth plus the low-frequency staining that does most of the ageing in
+   the reference. The speckle is what you feel; the blotches are what you
+   read as old paper. */
+.band--g4 {
+  background:
+    url("assets/grain-medium.svg") 0 0 / 240px 240px repeat,
+    url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat,
+    var(--clouds), var(--lime);
+  background-blend-mode: multiply, multiply, normal, normal;
+}
+
+/* G5: G4 under a vignette. The reference is a poster with edges; a web page
+   has no edges, so this darkens the sides of the viewport instead and is the
+   one variant that may read as a mistake rather than a treatment. */
+.band--g5 {
+  position: relative;
+  background:
+    url("assets/grain-medium.svg") 0 0 / 240px 240px repeat,
+    url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat,
+    var(--clouds), var(--lime);
+  background-blend-mode: multiply, multiply, normal, normal;
+}
+.band--g5::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 50%, rgb(var(--ink-rgb) / 0) 45%, rgb(var(--ink-rgb) / 0.22) 100%);
+}
+.band--g5 > * { position: relative; z-index: 1; }
+
+.zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet__head">
+    <h1>Grain na zeleném pozadí</h1>
+    <p>
+      Same wash, same content, five treatments. The grain is generated the way
+      the wash is — fractal noise in an SVG, a kilobyte, tiling seamlessly —
+      not a photographed paper scan, so it costs nothing and never repeats
+      visibly.
+    </p>
+    <p>
+      It multiplies over the wash, which means it only ever darkens and cannot
+      shift the green. That matters here: <code>--lime</code> is the floor every
+      contrast measurement on the site is taken against, so grain that darkened
+      past it would quietly invalidate the harness. G1–G3 stay inside it; G4
+      and G5 go further and would need the floor re-derived.
+    </p>
+    <p>
+      Judge these at 100%, and on your phone. Grain is a per-pixel effect and a
+      scaled screenshot is not evidence.
+    </p>
+  </header>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G0</span><p class="variant__note">The wash as it ships now. No grain.</p></div>
+    <div class="band">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Smooth Perlin blobs and nothing else — clean, and a little bit digital.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G1</span><p class="variant__note">Paper tooth, light. You feel it rather than see it.</p></div>
+    <div class="band band--g1">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. The safest of the five: enough to kill the flatness, not enough to notice.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G2</span><p class="variant__note">Paper tooth, medium. Closest to a printed ground.</p></div>
+    <div class="band band--g2">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. This is where the wash starts reading as paper rather than as a colour.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G3</span><p class="variant__note">Paper tooth, strong. Near the reference's speckle.</p></div>
+    <div class="band band--g3">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Loud. On a phone this is close to noise, and small text starts to sit in it.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G4</span><p class="variant__note">Medium tooth + stains. The ageing in the reference is mostly this, not the speckle.</p></div>
+    <div class="band band--g4">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. The blotches are what make it read as old paper; the speckle alone reads as a screen effect.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">G5</span><p class="variant__note">G4 under a vignette. Included so you can see why a poster trick fights a scrolling page.</p></div>
+    <div class="band band--g5">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. A poster has edges to darken. A page that scrolls does not, so this darkens the window instead and moves with you.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
