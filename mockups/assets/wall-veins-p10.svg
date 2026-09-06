@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <!-- W1 posterised to ten inks. Sharp edges, but the steps stop being countable.
+
+       The tint is `discrete`, not `table`. A table interpolates between the
+       two ends and hands back a continuous ramp, which is the softness you are
+       looking at; discrete snaps the field into 10 flat steps with a hard edge
+       between each, which is what the posterised panels do to a photograph.
+
+       Fewer steps means harder. The noise underneath is unchanged: this is not
+       a different wall, it is the same wall printed in 10 inks.
+
+       No double hyphens in this comment; one would break the file. -->
+  <filter id="w" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="5" seed="11" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer>
+      <feFuncR type="linear" slope="1.5" intercept="-0.15"/>
+      <feFuncG type="linear" slope="1.5" intercept="-0.15"/>
+      <feFuncB type="linear" slope="1.5" intercept="-0.15"/>
+      <feFuncA type="table" tableValues="1 1"/>
+    </feComponentTransfer>
+    <feComponentTransfer>
+      <feFuncR type="discrete" tableValues="0.659 0.675 0.691 0.707 0.723 0.740 0.756 0.772 0.788 0.804"/>
+      <feFuncG type="discrete" tableValues="0.710 0.725 0.740 0.754 0.769 0.784 0.799 0.813 0.828 0.843"/>
+      <feFuncB type="discrete" tableValues="0.420 0.433 0.447 0.460 0.474 0.487 0.501 0.514 0.528 0.541"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="1200" height="1200" filter="url(#w)"/>
+</svg>

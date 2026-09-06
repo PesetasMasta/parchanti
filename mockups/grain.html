@@ -125,6 +125,41 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
 .band--w3 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-mottle.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
 .band--w4 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-cast.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
 
+/* --- X: how hard the wall is printed ------------------------------------- */
+.band--x { position: relative; }
+.band--x::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 100% at 50% 50%, rgb(var(--ink-rgb) / 0) 45%, rgb(var(--ink-rgb) / 0.22) 100%); }
+.band--x > * { position: relative; z-index: 1; }
+.band--x4  { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p4.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--x6  { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p6.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.band--x10 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p10.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+
+/* --- Z: the seams, printed the same way -----------------------------------
+   The seam is flat ink behind a mask. Smooth stops give the soft fade that is
+   on the site; hard stops give bands with a crisp curved edge, which is the
+   same thing posterising does to a photograph. --------------------------- */
+.seamdemo { position: relative; }
+.seamdemo__dark { height: 8rem; background: var(--ink); }
+.seamdemo__wash { min-height: 7rem; padding: 1.5rem var(--gutter) 2rem; background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p6.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.seamdemo__wash h3 { margin: 0 0 0.4rem; }
+.seamdemo__wash p { margin: 0; }
+.seam2 { height: 11rem; background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p6.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; position: relative; }
+.seam2::before { content: ""; position: absolute; inset: 0; background: var(--ink); -webkit-mask-image: var(--m); mask-image: var(--m); -webkit-mask-composite: source-in; mask-composite: intersect; }
+
+/* Z0: what ships now. Both stops smooth. */
+.seam2--z0 { --m:
+  radial-gradient(100% 100% at 50% 100%, rgba(0,0,0,0) 30%, #000 100%),
+  linear-gradient(to bottom, #000 58%, rgba(0,0,0,0) 100%); }
+
+/* Z1: five inks. The curve survives; the ramp between them does not. */
+.seam2--z1 { --m:
+  radial-gradient(100% 100% at 50% 100%, rgba(0,0,0,0) 0 32%, rgba(0,0,0,0.25) 32% 48%, rgba(0,0,0,0.5) 48% 63%, rgba(0,0,0,0.75) 63% 80%, #000 80%),
+  linear-gradient(to bottom, #000 0 58%, rgba(0,0,0,0.6) 58% 74%, rgba(0,0,0,0.3) 74% 88%, rgba(0,0,0,0) 88%); }
+
+/* Z2: three inks. As hard as it goes before it stops being a transition. */
+.seam2--z2 { --m:
+  radial-gradient(100% 100% at 50% 100%, rgba(0,0,0,0) 0 36%, rgba(0,0,0,0.45) 36% 60%, #000 60%),
+  linear-gradient(to bottom, #000 0 62%, rgba(0,0,0,0.45) 62% 82%, rgba(0,0,0,0) 82%); }
+
 .zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
 </style>
 </head>
@@ -161,6 +196,12 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       &rsaquo;</a> — everything else on this page changes what sits OVER the
       wash. Those four change the wash itself, from cloud to wall, and each
       carries the S1 grain you picked.
+    </p>
+    <p>
+      <a href="#sharp" style="color: var(--sherbet)">Jump to the sharper W1
+      &rsaquo;</a> — X4/X6/X10 print the same wall in four, six or ten flat
+      inks instead of a continuous ramp, and <a href="#seams" style="color: var(--sherbet)">Z0/Z1/Z2</a>
+      do the same to the seam.
     </p>
   </header>
 
@@ -296,6 +337,60 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       <h3>W4 · beton</h3>
       <p>Divadelní soubor, který se nebojí provokovat. A real wall has structure at two scales at once, which is the thing a single noise field cannot say.</p>
       <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant" id="sharp">
+    <div class="variant__bar"><span class="variant__id">X — W1, printed harder</span><p class="variant__note">Same wall, same grain. Only the number of inks changes.</p></div>
+    <div class="band band--x band--x4">
+      <h3>X4 · čtyři barvy</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Four flat steps with a hard edge between each — closest to a screen print, and to what the panels do to a photograph.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">X6</span><p class="variant__note">Six inks. Still plainly stepped, more of the wall left in it.</p></div>
+    <div class="band band--x band--x6">
+      <h3>X6 · šest barev</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. My guess at the one you want: sharp, but the wall is still a wall rather than a pattern.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">X10</span><p class="variant__note">Ten inks. Edges are crisp but you stop being able to count the steps.</p></div>
+    <div class="band band--x band--x10">
+      <h3>X10 · deset barev</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. The safe end: sharper than today, not obviously posterised.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant" id="seams">
+    <div class="variant__bar"><span class="variant__id">Z0</span><p class="variant__note">The seam as it ships: both mask stops smooth. Here as the baseline.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seam2 seam2--z0"></div>
+      <div class="seamdemo__wash"><h3>Repertoár</h3><p>A soft fade. Against a printed wall it is the one soft thing on the page.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">Z1</span><p class="variant__note">Five inks. The curve survives; the ramp between the steps does not.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seam2 seam2--z1"></div>
+      <div class="seamdemo__wash"><h3>Repertoár</h3><p>The transition becomes contour lines instead of a blur — the same thing posterising does to a photograph.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">Z2</span><p class="variant__note">Three inks. As hard as it goes before it stops reading as a transition at all.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seam2 seam2--z2"></div>
+      <div class="seamdemo__wash"><h3>Repertoár</h3><p>Two visible bands and an edge. Bold, and the curve is doing all the work.</p></div>
     </div>
   </div>
 </div>
