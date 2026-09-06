@@ -40,8 +40,16 @@
    Palette is the Lime Sherbet / Barbados Cherry pair, off the reference the
    client sent (2026-09-06):
 
-     Lime Sherbet    #CDD78A  -> --lime
+     Lime Sherbet    #CDD78A  -> the wash's highlight, not a token
      Barbados Cherry #AA0A27  -> --brick
+
+   The sherbet is the top of the wash rather than its base: the plaster
+   darkens away from it instead of blooming toward white (2026-09-06, "z te
+   zelene jit spis do tmava nez do bila"). So the tone that gets a token is
+   the floor the ramp descends to, --lime, because that is the worst ground
+   any ink on the wash ever has to survive - the sherbet itself never needs
+   defending. How dark that floor can go is not a matter of taste: see the
+   page-heading note below, which is what caps it.
 
    This replaces the palette sampled off her logo in August. It is a shift
    inside the same two families rather than a break with the mark - the green
@@ -54,10 +62,11 @@
    frames. White on it reads 7.5:1, better headroom than the old red gave.
 
    --brick-deep is the same cherry darkened for one job: red as *text* sitting
-   on the green wash. The full cherry is 4.9:1 on lime and 4.3:1 on olive -
-   the second is under the 4.5:1 body floor and the first has no room for
-   browser rounding, so links and eyebrows on the wash take the darkened one:
-   7.0:1 on lime, 5.3:1 on olive.
+   on the green wash. The full cherry is 3.4:1 on lime and 2.7:1 on olive,
+   both under the 4.5:1 body floor, so links and eyebrows on the wash take
+   the darkened one: 4.8:1 on lime. On olive it reaches 3.8:1, which carries
+   large type but not body copy - there is no small red on the olive band
+   today, and check.mjs is what would catch one being added.
 
    Still one ink at two lightnesses, split by the ground it is printed on
    rather than by taste. On paper - every printed block is white - --accent is
@@ -74,15 +83,15 @@
   color-scheme: only light;
 
   --white: #FFFFFF;       /* the paper, and the ink the dark bands are read in */
-  --lime:  #CDD78A;       /* Lime Sherbet - and the darkest tone the wall reaches */
-  --olive: #B3BD6E;       /* the same sherbet, deepened, for the bands that break it */
+  --lime:  #A8B56B;       /* the floor the plaster darkens to, under the sherbet */
+  --olive: #93A05C;       /* the same green, deeper, for the bands that break the wash */
   --brick: #AA0A27;       /* Barbados Cherry, as given - every filled surface */
   --brick-deep: #80071D;  /* the same cherry, dark enough to be read on the wash */
   --ink:   #1E1B14;
 
   /* Which accent the ground underneath can carry. The deep brick by default,
-     because the green ground is light: 7.0:1 on lime and 10.7:1 on the white
-     of the cards and the bar. The dark bands below flip it to white. One token
+     because the green ground is still light: 4.8:1 on lime and 10.7:1 on the
+     white of the cards and the bar. The dark bands below flip it to white. One token
      instead of a hand-kept list of selectors per surface - a new card
      inherits the right answer rather than needing one. */
   --accent: var(--brick-deep);
@@ -167,9 +176,10 @@ html { scroll-padding-top: 4.5rem; }
    is what makes it tile. Mirror-tiling was tried first and rejected: on a
    ground this large the symmetry reads as a plaid.
 
-   Its luminance ramp runs from --lime up to a paler sherbet, so --lime is
-   the darkest tone the wash ever reaches and stays the honest thing for
-   check.mjs to measure contrast against, exactly as the cloud wash was.
+   Its luminance ramp runs from --lime up to the Lime Sherbet itself, so
+   --lime is the darkest tone the wash ever reaches and stays the honest
+   thing for check.mjs to measure contrast against, exactly as the cloud
+   wash was.
 
    On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
    textem?"). A background on body propagates to the canvas, which covers the
@@ -571,8 +581,11 @@ img { max-width: 100%; height: auto; }
   overflow-wrap: break-word;
   /* The one red on the wash that takes --brick rather than --accent. It can:
      30px at its floor is WCAG large text, which answers to 3:1 rather than
-     4.5:1, and the full red holds 3.82:1 against the darkest tone the wash
-     reaches. It is also the biggest red on the page, so it is the one that
+     4.5:1, and the full red holds 3.41:1 against the darkest tone the wash
+     reaches. That margin is what caps how dark --lime may go: at #9EAC64 the
+     full red is 3.07:1 and at #9AA85C it is 2.92:1 and fails. Taking the
+     wash deeper than this means this heading gives up matching the mark and
+     falls back to --accent, the way .o-nas already does. It is also the biggest red on the page, so it is the one that
      has to agree with the mark above it. Any smaller red on the wash - .link,
      a subtitle span - keeps --accent and stays darkened, and so does this
      heading on any ground darker than the wash (see .o-nas below). */
@@ -580,8 +593,8 @@ img { max-width: 100%; height: auto; }
 }
 
 /* The one page that paints its own olive band instead of letting the wash
-   through. Olive is dark enough that the full red falls to 2.80:1 there, so
-   the heading gives up the match and takes the darkened red back - 3.82:1,
+   through. Olive is dark enough that the full red falls to 2.67:1 there, so
+   the heading gives up the match and takes the darkened red back - 3.78:1,
    which is what large type owes. */
 .o-nas .page-heading { color: var(--accent); }
 
