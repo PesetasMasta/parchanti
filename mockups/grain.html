@@ -88,6 +88,25 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
 }
 .band--g5 > * { position: relative; z-index: 1; }
 
+/* --- G5 with the grain thinned out ---------------------------------------
+   Same blotches and same vignette as G5; only the tooth layer changes. Two
+   axes, because "řidší" can mean either and they look nothing alike:
+   S1/S2 keep the specks fine and make them rarer, S3/S4 make them bigger and
+   further apart. -------------------------------------------------------- */
+.band--s { position: relative; }
+.band--s::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 50%, rgb(var(--ink-rgb) / 0) 45%, rgb(var(--ink-rgb) / 0.22) 100%);
+}
+.band--s > * { position: relative; z-index: 1; }
+.band--s1 { background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
+.band--s2 { background: url("assets/grain-sparse-2.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
+.band--s3 { background: url("assets/grain-sparse-3.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
+.band--s4 { background: url("assets/grain-sparse-4.svg") 0 0 / 240px 240px repeat, url("assets/grain-blotch.svg") 0 0 / 900px 900px repeat, var(--clouds), var(--lime); background-blend-mode: multiply, multiply, normal, normal; }
+
 .zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
 </style>
 </head>
@@ -111,6 +130,13 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
     <p>
       Judge these at 100%, and on your phone. Grain is a per-pixel effect and a
       scaled screenshot is not evidence.
+    </p>
+    <p>
+      <a href="#sparse" style="color: var(--sherbet)">Jump to the sparser
+      versions of G5 &rsaquo;</a> — S1 and S2 keep the specks fine and make
+      them rarer; S3 and S4 make them bigger and further apart. Those are the
+      two things "řidší" can mean and they look nothing alike, so pick by
+      pointing.
     </p>
   </header>
 
@@ -164,6 +190,51 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
     <div class="band band--g5">
       <h3>Repertoár</h3>
       <p>Divadelní soubor, který se nebojí provokovat. A poster has edges to darken. A page that scrolls does not, so this darkens the window instead and moves with you.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant" id="sparse">
+    <div class="variant__bar"><span class="variant__id">S — G5, řidší</span><p class="variant__note">All four keep G5's stains and vignette. Only the tooth changes.</p></div>
+    <div class="band band--g5">
+      <h3>G5</h3>
+      <p>The one you picked, here again as the thing the four below are thinner than. Scroll them side by side rather than reading the labels.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">S1</span><p class="variant__note">Same fine dust, only the darkest third of it marks. Rarer specks, same size.</p></div>
+    <div class="band band--s band--s1">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Fewer specks, clean wash between them, nothing else changed.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">S2</span><p class="variant__note">Only the darkest sixth marks, and harder. The sparsest of the four.</p></div>
+    <div class="band band--s band--s2">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Mostly clean ground with occasional dark flecks — closest to a dusty print.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">S3</span><p class="variant__note">The other reading: bigger specks, further apart.</p></div>
+    <div class="band band--s band--s3">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. Coarser tooth — this is closer to a screen-printed ground than to film grain.</p>
+      <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">S4</span><p class="variant__note">Coarsest. Specks you can pick out individually.</p></div>
+    <div class="band band--s band--s4">
+      <h3>Repertoár</h3>
+      <p>Divadelní soubor, který se nebojí provokovat. At this size the grain stops being texture and starts being marks on the paper.</p>
       <div class="card"><b>Rychlé šípy</b><p>a záhada klubovny</p></div>
     </div>
   </div>
