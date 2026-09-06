@@ -199,6 +199,46 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
 }
 .seamd--up.seamd--d6 { --dot: url("assets/dither-6-up.png"); }
 
+/* --- R: D3, randomised so the matrix stops repeating ----------------------
+   An ordered dither is periodic by construction: an o8x8 matrix repeats every
+   8 cells, which is the crosshatch you can see in D3. Randomising it means
+   replacing the threshold map, not the method.
+
+   White noise gives every cell its own die roll. No pattern at all, but dice
+   clump, so the field reads blotchy. Blue noise is the same distribution with
+   the low frequencies removed: still aperiodic, but the lit cells spread
+   evenly, so there is nothing for the eye to catch at either scale.
+
+   The tile is 1536px wide - 512 cells - so on a phone it never repeats inside
+   the viewport, and 192px tall, which is the seam's 12rem exactly, so the
+   cells stay square.
+
+   The curve stays, and is now the only smooth thing in the seam. Its ramp is
+   deliberately short: a long one would scale every dot's alpha and put the
+   softness straight back in. -------------------------------------------- */
+.seamr { position: relative; height: 12rem; background: url("assets/grain-sparse-1.svg") 0 0 / 240px 240px repeat, url("assets/wall-veins-p6.svg") 0 0 / 1100px 1100px repeat, var(--lime); background-blend-mode: multiply, normal, normal; }
+.seamr::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  -webkit-mask-image: var(--dot), radial-gradient(118% 100% at 50% 100%, rgba(0,0,0,0) 34%, #000 62%);
+  mask-image: var(--dot), radial-gradient(118% 100% at 50% 100%, rgba(0,0,0,0) 34%, #000 62%);
+  -webkit-mask-size: 1536px 192px, 100% 100%;
+  mask-size: 1536px 192px, 100% 100%;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  mask-repeat: repeat-x, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.seamr--white { --dot: url("assets/dither3-white.png"); }
+.seamr--blue  { --dot: url("assets/dither3-blue.png"); }
+.seamr--up::before {
+  -webkit-mask-image: var(--dot), radial-gradient(118% 100% at 50% 0%, rgba(0,0,0,0) 34%, #000 62%);
+  mask-image: var(--dot), radial-gradient(118% 100% at 50% 0%, rgba(0,0,0,0) 34%, #000 62%);
+}
+.seamr--up.seamr--blue { --dot: url("assets/dither3-blue-up.png"); }
+
 .zoom { display: block; width: 100%; max-width: 34rem; margin-top: 1.25rem; border: 1px solid #4a4a3c; }
 </style>
 </head>
@@ -247,6 +287,8 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       &rsaquo;</a> — this is the one that matches the picture you sent. The
       gradient is carried by how many cells are lit, not by opacity, so there
       is no intermediate tone in it anywhere to go soft.
+      <a href="#random" style="color: var(--sherbet)">R1/R2</a> are D3 with the
+      matrix randomised so it stops repeating.
     </p>
   </header>
 
@@ -482,6 +524,35 @@ body { margin: 0; font-family: var(--body); color: var(--ink); background: var(-
       <div class="seamd seamd--d6"></div>
       <div class="seamdemo__wash"><h3>Repertoár</h3><p>Divadelní soubor, který se nebojí provokovat. The page sits between two screens, the wall behind it printed in six inks.</p></div>
       <div class="seamd seamd--d6 seamd--up"></div>
+      <div class="seamdemo__dark"></div>
+    </div>
+  </div>
+
+  <div class="variant" id="random">
+    <div class="variant__bar"><span class="variant__id">R1</span><p class="variant__note">D3 with a white-noise threshold. No pattern, but dice clump.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamr seamr--white"></div>
+      <div class="seamdemo__wash"><h3>R1 · white noise</h3><p>Every cell rolls its own die. Nothing repeats — but random is lumpy, and you can see the lumps.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">R2</span><p class="variant__note">D3 with a blue-noise threshold. Aperiodic and even. This is the one.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamr seamr--blue"></div>
+      <div class="seamdemo__wash"><h3>R2 · blue noise</h3><p>The same dice with the low frequencies taken out, so the lit cells spread evenly. No grid to find, no clumps either.</p></div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant__bar"><span class="variant__id">R2 pair</span><p class="variant__note">Both ends, as they would sit on the page.</p></div>
+    <div class="seamdemo">
+      <div class="seamdemo__dark"></div>
+      <div class="seamr seamr--blue"></div>
+      <div class="seamdemo__wash"><h3>Repertoár</h3><p>Divadelní soubor, který se nebojí provokovat. 3px cells, blue-noise threshold, the curve still carving both edges.</p></div>
+      <div class="seamr seamr--blue seamr--up"></div>
       <div class="seamdemo__dark"></div>
     </div>
   </div>
