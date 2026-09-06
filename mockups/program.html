@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Parchanti — program s kalendářem</title>
+
+<style>
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Cutive Mono"; src: url("/public/fonts/cutive-mono-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Archivo"; font-weight: 400 700; src: url("/public/fonts/archivo-latin-ext.woff2") format("woff2"); font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --ink-rgb: 30 27 20;
+  --ink: rgb(var(--ink-rgb));
+  --lime: #A8B56B;
+  --sherbet: #CDD78A;
+  --olive: #93A05C;
+  --brick: #AA0A27;
+  --brick-deep: #80071D;
+  --white: #fff;
+  --display: "Cutive Mono", "Courier New", monospace;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --wash: url("/public/assets/clouds.svg") 0 0 / 1100px 1100px repeat var(--lime);
+  color-scheme: only light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--ink); }
+
+.sheet { max-width: 78rem; margin-inline: auto; padding: 0 var(--gutter) 6rem; }
+.sheet__head { padding: 3.5rem 0 2rem; color: var(--sherbet); }
+.sheet__head h1 { font-family: var(--display); font-size: clamp(1.8rem, 5vw, 2.8rem); margin: 0 0 0.75rem; }
+.sheet__head p { max-width: 52ch; margin: 0 0 1rem; line-height: 1.6; color: #cfd3bb; }
+.group { margin-top: 3.5rem; }
+.group > h2 { font-family: var(--display); font-size: 1.5rem; color: var(--sherbet); margin: 0 0 0.35rem; }
+.group > p { max-width: 62ch; margin: 0 0 1.75rem; color: #b9bda6; line-height: 1.6; font-size: 0.95rem; }
+.variant { border: 1px solid #4a4a3c; border-radius: 10px; overflow: hidden; background: #232019; }
+.variant__bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; padding: 0.85rem 1.1rem; border-bottom: 1px solid #4a4a3c; }
+.variant__id { font-family: var(--display); font-size: 1rem; color: var(--sherbet); }
+.variant__note { font-size: 0.8rem; color: #9a9c86; margin: 0; }
+
+/* ---- the page under test ------------------------------------------------ */
+.page { background: var(--wash); padding: 2.5rem var(--gutter) 3rem; }
+.page h3 { font-family: var(--display); font-weight: 400; color: var(--brick); font-size: clamp(1.9rem, 7vw, 2.6rem); margin: 0 0 1.5rem; }
+
+.cal { max-width: 30rem; }
+
+/* The month bar. The season runs September to December, so the arrows stop
+   at its ends rather than wandering into empty months. */
+.cal__bar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+.cal__month { font-family: var(--display); font-size: 1.25rem; margin: 0; }
+.cal__step { width: 2.75rem; height: 2.75rem; display: grid; place-content: center; border: 3px solid var(--brick-deep); border-radius: 10px; background: transparent; color: var(--brick-deep); font-size: 1.1rem; cursor: pointer; }
+.cal__step[disabled] { opacity: 0.3; cursor: default; }
+
+.cal table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.cal th { font-family: var(--body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brick-deep); padding-bottom: 0.4rem; }
+.cal td { padding: 2px; text-align: center; }
+
+/* A day nobody plays is a number, not a control. Quiet enough that the
+   played days are the only thing the eye lands on. */
+.cal__quiet { display: grid; place-content: center; aspect-ratio: 1; font-size: 0.85rem; color: rgb(var(--ink-rgb) / 0.4); }
+
+.cal__day {
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  border: 3px solid var(--brick);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cal__day span { font-family: var(--display); font-size: 0.6rem; font-weight: 400; color: var(--brick-deep); }
+.cal__day[aria-pressed="true"] { background: var(--brick); color: var(--white); }
+.cal__day[aria-pressed="true"] span { color: var(--white); }
+.cal__today { outline: 3px dotted var(--brick-deep); outline-offset: 2px; }
+
+.cal__legend { margin: 0.9rem 0 0; font-size: 0.8rem; color: var(--ink); }
+.cal__clear { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--brick-deep); text-decoration: underline; cursor: pointer; }
+
+/* ---- the list, kept under the calendar ---------------------------------- */
+.list { margin-top: 2.5rem; display: grid; gap: 1rem; max-width: 34rem; }
+.list__month { font-family: var(--display); font-size: 1.1rem; margin: 0.75rem 0 0; color: var(--brick-deep); }
+.date {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--white);
+  border: 3px solid var(--brick);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgb(var(--ink-rgb) / 0.22);
+  scroll-margin-top: 1rem;
+}
+.date[data-hit] { outline: 4px solid var(--ink); outline-offset: 3px; }
+.date__when { font-family: var(--display); text-align: center; }
+.date__day { font-size: 1.6rem; display: block; line-height: 1; }
+.date__dow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.date__title { font-family: var(--display); font-size: 1.15rem; margin: 0 0 0.2rem; }
+.date__meta { margin: 0; font-size: 0.85rem; }
+.date__note { margin: 0.3rem 0 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brick-deep); }
+
+/* ---- P2: the whole season at once --------------------------------------- */
+.season { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(9rem, 1fr); gap: 0.75rem; overflow-x: auto; padding-bottom: 0.75rem; }
+.season__col h4 { font-family: var(--display); font-weight: 400; font-size: 1rem; margin: 0 0 0.5rem; color: var(--brick-deep); }
+.season__day { width: 100%; text-align: left; margin-bottom: 0.4rem; padding: 0.5rem 0.6rem; border: 3px solid var(--brick); border-radius: 10px; background: var(--white); font-family: var(--body); cursor: pointer; }
+.season__day[aria-pressed="true"] { background: var(--brick); color: var(--white); }
+.season__day b { font-family: var(--display); font-weight: 400; display: block; font-size: 0.95rem; }
+.season__day em { font-style: normal; font-size: 0.7rem; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet__head">
+    <h1>Program s kalendářem</h1>
+    <p>
+      Local only, real dates out of <code>data/program.json</code> — fourteen
+      performances, September to December. The list stays under the calendar in
+      both; tapping a day does not take it away.
+    </p>
+    <p>
+      Worth knowing before you pick: a month grid for three or four
+      performances is mostly empty squares. P1 leans into that — the empty days
+      are barely there, so the played ones are the only thing to look at. P2
+      drops the grid and shows the whole season at once, which for fourteen
+      dates may simply be the more useful object.
+    </p>
+  </header>
+
+  <section class="group">
+    <h2>P1 · Month grid</h2>
+    <p>
+      The calendar you asked for. Monday-first, Czech weekday heads. Only days
+      with a performance are buttons; the rest are numbers. Tapping one marks
+      it and jumps to that date in the list below — nothing is filtered away,
+      so the list is still the whole programme.
+    </p>
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">P1</span><p class="variant__note">Tap a red day. Arrows move between months and stop at the ends of the season.</p></div>
+      <div class="page">
+        <h3>Program</h3>
+        <div class="cal" data-cal>
+          <div class="cal__bar">
+            <button class="cal__step" type="button" data-cal-prev aria-label="Předchozí měsíc">‹</button>
+            <p class="cal__month" data-cal-month></p>
+            <button class="cal__step" type="button" data-cal-next aria-label="Další měsíc">›</button>
+          </div>
+          <table>
+            <thead><tr data-cal-head></tr></thead>
+            <tbody data-cal-body></tbody>
+          </table>
+          <p class="cal__legend" data-cal-legend></p>
+        </div>
+        <div class="list" data-list></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="group">
+    <h2>P2 · The season at once</h2>
+    <p>
+      No grid, no paging: four columns, one per month, holding only the days
+      that are played. Fourteen dates fit on one screen, and the question
+      "what is on this autumn" is answered without pressing anything.
+    </p>
+    <div class="variant">
+      <div class="variant__bar"><span class="variant__id">P2</span><p class="variant__note">Same tap behaviour, same list. Scrolls sideways on a phone.</p></div>
+      <div class="page">
+        <h3>Program</h3>
+        <div class="season" data-season></div>
+        <div class="list" data-list2></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATES = [
+  { date: "2026-09-17", time: "20:00", title: "Hra lásky a náhody", meta: "80 min · 12+" },
+  { date: "2026-09-24", time: "20:00", title: "Rychlé šípy a záhada klubovny", meta: "60 min · 0+" },
+  { date: "2026-10-01", time: "20:00", title: "Hra lásky a náhody", meta: "80 min · 12+" },
+  { date: "2026-10-15", time: "20:00", title: "Rychlé šípy a záhada klubovny", meta: "60 min · 0+" },
+  { date: "2026-10-22", time: "17:30", title: "Toníkova cesta", meta: "" },
+  { date: "2026-10-24", time: "20:00", title: "Červánky", meta: "", note: "premiéra" },
+  { date: "2026-11-04", time: "20:00", title: "Červánky", meta: "", note: "první repríza" },
+  { date: "2026-11-10", time: "17:30", title: "Toníkova cesta", meta: "" },
+  { date: "2026-11-14", time: "20:00", title: "Rychlé šípy a záhada klubovny", meta: "60 min · 0+" },
+  { date: "2026-11-19", time: "20:00", title: "Hra lásky a náhody", meta: "80 min · 12+" },
+  { date: "2026-12-01", time: "20:00", title: "Červánky", meta: "", note: "druhá repríza" },
+  { date: "2026-12-03", time: "20:00", title: "Rychlé šípy a záhada klubovny", meta: "60 min · 0+" },
+  { date: "2026-12-08", time: "20:00", title: "Hra lásky a náhody", meta: "80 min · 12+" },
+  { date: "2026-12-09", time: "17:30", title: "Toníkova cesta", meta: "" },
+];
+
+const TODAY = "2026-09-06";
+const DOW = ["po", "út", "st", "čt", "pá", "so", "ne"];
+const MONTHS = ["leden","únor","březen","duben","květen","červen","červenec","srpen","září","říjen","listopad","prosinec"];
+
+const parts = (iso) => iso.split("-").map(Number);
+// Monday-first weekday index, which is how a Czech calendar is read.
+const dowIndex = (iso) => { const [y,m,d] = parts(iso); return (new Date(Date.UTC(y, m-1, d)).getUTCDay() + 6) % 7; };
+const monthKey = (iso) => iso.slice(0, 7);
+const byDate = new Map();
+for (const entry of DATES) (byDate.get(entry.date) ?? byDate.set(entry.date, []).get(entry.date)).push(entry);
+
+const MONTH_KEYS = [...new Set(DATES.map((d) => monthKey(d.date)))];
+
+let selected = null;
+
+/* ---- the list, shared by both variants --------------------------------- */
+function renderList(host) {
+  host.innerHTML = "";
+  let lastMonth = null;
+  for (const entry of DATES) {
+    const key = monthKey(entry.date);
+    if (key !== lastMonth) {
+      lastMonth = key;
+      const head = document.createElement("p");
+      head.className = "list__month";
+      head.textContent = `${MONTHS[parts(entry.date)[1] - 1]} ${parts(entry.date)[0]}`;
+      host.append(head);
+    }
+    const row = document.createElement("article");
+    row.className = "date";
+    row.dataset.date = entry.date;
+    row.innerHTML = `
+      <p class="date__when"><span class="date__day">${parts(entry.date)[2]}.</span><span class="date__dow">${DOW[dowIndex(entry.date)]}</span></p>
+      <div>
+        <p class="date__title">${entry.title}</p>
+        <p class="date__meta">${entry.time}${entry.meta ? " · " + entry.meta : ""}</p>
+        ${entry.note ? `<p class="date__note">${entry.note}</p>` : ""}
+      </div>`;
+    host.append(row);
+  }
+}
+
+function markLists(iso) {
+  for (const row of document.querySelectorAll(".date")) {
+    if (iso && row.dataset.date === iso) row.setAttribute("data-hit", "");
+    else row.removeAttribute("data-hit");
+  }
+  if (!iso) return;
+  // Jump to it rather than filtering: the list is the whole programme and
+  // taking thirteen dates away to show one is a worse answer than pointing.
+  const hit = document.querySelector(`.date[data-date="${iso}"]`);
+  hit?.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+
+function select(iso) {
+  selected = selected === iso ? null : iso;
+  drawMonth();
+  drawSeason();
+  markLists(selected);
+  const legend = document.querySelector("[data-cal-legend]");
+  if (!selected) {
+    legend.textContent = `${DATES.length} termínů. Klepněte na červený den.`;
+  } else {
+    const entry = byDate.get(selected)[0];
+    legend.innerHTML = `${DOW[dowIndex(selected)]} ${parts(selected)[2]}. ${parts(selected)[1]}. — ${entry.title}. <button class="cal__clear" type="button" data-cal-clear>Zrušit výběr</button>`;
+  }
+}
+
+/* ---- P1 ----------------------------------------------------------------- */
+let monthIndex = 0;
+
+function drawMonth() {
+  const [year, month] = MONTH_KEYS[monthIndex].split("-").map(Number);
+  document.querySelector("[data-cal-month]").textContent = `${MONTHS[month - 1]} ${year}`;
+  document.querySelector("[data-cal-prev]").disabled = monthIndex === 0;
+  document.querySelector("[data-cal-next]").disabled = monthIndex === MONTH_KEYS.length - 1;
+
+  const head = document.querySelector("[data-cal-head]");
+  head.innerHTML = DOW.map((d) => `<th scope="col">${d}</th>`).join("");
+
+  const first = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lead = dowIndex(first);
+  const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+  const cells = [];
+  for (let i = 0; i < lead; i += 1) cells.push("<td></td>");
+  for (let day = 1; day <= days; day += 1) {
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const shows = byDate.get(iso);
+    if (!shows) {
+      cells.push(`<td><div class="cal__quiet${iso === TODAY ? " cal__today" : ""}">${day}</div></td>`);
+    } else {
+      cells.push(`<td><button class="cal__day${iso === TODAY ? " cal__today" : ""}" type="button" data-day="${iso}"
+        aria-pressed="${selected === iso}"
+        aria-label="${day}. ${month}. ${shows[0].title}, ${shows[0].time}">${day}<span>${shows[0].time}</span></button></td>`);
+    }
+  }
+  const rows = [];
+  for (let i = 0; i < cells.length; i += 7) rows.push(`<tr>${cells.slice(i, i + 7).join("")}</tr>`);
+  document.querySelector("[data-cal-body]").innerHTML = rows.join("");
+}
+
+/* ---- P2 ----------------------------------------------------------------- */
+function drawSeason() {
+  const host = document.querySelector("[data-season]");
+  host.innerHTML = MONTH_KEYS.map((key) => {
+    const [year, month] = key.split("-").map(Number);
+    const days = DATES.filter((d) => monthKey(d.date) === key);
+    return `<div class="season__col">
+      <h4>${MONTHS[month - 1]}</h4>
+      ${days.map((d) => `<button class="season__day" type="button" data-day="${d.date}" aria-pressed="${selected === d.date}">
+        <b>${DOW[dowIndex(d.date)]} ${parts(d.date)[2]}. ${month}.</b>
+        <em>${d.time} · ${d.title}</em>
+      </button>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+document.addEventListener("click", (event) => {
+  const day = event.target.closest("[data-day]");
+  if (day) { select(day.dataset.day); return; }
+  if (event.target.closest("[data-cal-clear]")) { select(selected); return; }
+  const prev = event.target.closest("[data-cal-prev]");
+  const next = event.target.closest("[data-cal-next]");
+  if (prev) { monthIndex = Math.max(0, monthIndex - 1); drawMonth(); }
+  if (next) { monthIndex = Math.min(MONTH_KEYS.length - 1, monthIndex + 1); drawMonth(); }
+});
+
+renderList(document.querySelector("[data-list]"));
+renderList(document.querySelector("[data-list2]"));
+drawMonth();
+drawSeason();
+select(null);
+</script>
+</body>
+</html>
