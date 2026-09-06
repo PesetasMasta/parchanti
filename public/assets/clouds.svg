@@ -4,7 +4,7 @@
 
        Tinted downward since 2026-09-06: "z te zelene jit spis do tmava nez do
        bila". The wash used to run lime..white, so its modulation was a bloom
-       toward paper; now it runs --lime..Lime Sherbet, so the sherbet is the
+       toward paper; now it runs from the lime floor up to Lime Sherbet, so the sherbet is the
        highlight and the ground darkens away from it. Only the two tint stops
        changed - the noise, the stitching and the linear pass are the same.
 
@@ -18,9 +18,9 @@
        phone. Stretching first spends the whole range: same two colours, three
        times the modulation.
 
-       The low end stays clamped at --lime - the ground never gets darker than
+       The low end stays clamped at the lime token: the ground never gets darker than
        the colour every contrast measurement on this site assumes. That is why
-       --lime is the floor of this ramp rather than the sherbet at the top of
+       lime is the floor of this ramp rather than the sherbet at the top of
        it: check.mjs measures against the worst ground, not the prettiest. -->
   <filter id="clouds" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
     <feTurbulence type="fractalNoise" baseFrequency="0.00333333" numOctaves="5" seed="11" stitchTiles="stitch"/>
@@ -33,7 +33,7 @@
            half-transparent over the body colour and loses half its contrast. -->
       <feFuncA type="table" tableValues="1 1"/>
     </feComponentTransfer>
-    <!-- #A8B56B (--lime, the floor) .. #CDD78A (Lime Sherbet, the highlight) -->
+    <!-- #A8B56B (the lime floor) .. #CDD78A (Lime Sherbet, the highlight) -->
     <feComponentTransfer>
       <feFuncR type="table" tableValues="0.659 0.804"/>
       <feFuncG type="table" tableValues="0.710 0.843"/>

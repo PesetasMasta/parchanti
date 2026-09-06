@@ -540,6 +540,31 @@ onPage('/',
 );
 
 onPage('/',
+  'the ground asset actually decodes in a browser',
+  // The tiling check below asserts that body POINTS at the ground. It cannot
+  // tell whether the browser can read it: a malformed SVG leaves the
+  // background-image declaration intact and simply paints nothing, so the page
+  // silently falls back to the flat --lime underneath and every screenshot
+  // still looks plausible. That shipped once - a "--" inside an XML comment,
+  // which is illegal and which no build step here parses. Decoding it is the
+  // only assertion that would have caught it.
+  `new Promise((done) => {
+    const url = getComputedStyle(document.body).backgroundImage.match(/url\\("?([^")]+)"?\\)/)?.[1];
+    if (!url) return done(JSON.stringify({ url: null }));
+    const probe = new Image();
+    probe.onload = () => done(JSON.stringify({ url, width: probe.naturalWidth, height: probe.naturalHeight }));
+    probe.onerror = () => done(JSON.stringify({ url, width: 0, height: 0 }));
+    probe.src = url;
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.url) return 'body declares no background image';
+    if (!r.width || !r.height) return `${r.url} is referenced but the browser cannot decode it, so the page is painting bare --lime`;
+    return null;
+  },
+);
+
+onPage('/',
   'next-performance strip sits below the hero and shows the next date still to be played',
   `JSON.stringify({
     belowHero: (() => {
