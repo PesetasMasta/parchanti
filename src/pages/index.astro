@@ -632,28 +632,15 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      it; the gradient carries one into the other (2026-09-06: "mezi hero a
      strankou udelej gradient").
 
-     The seam curves, and it is long enough that you stop reading it as an
-     edge (2026-09-06: "klidne trochu vetsi curve, delsi prechod aby nebyl
-     videt"). Concave: the centre clears first and the corners hold on, so the
+     The seam is a dot matrix (2026-09-06). Every cell is full ink or nothing
+     and what changes down it is how many are lit, so there is no intermediate
+     tone in it anywhere to go soft. The tile is a blue-noise dither, which is
+     aperiodic without clumping; the radial is the curve, and the only smooth
+     thing left. Both are described in full beside .footer::before, which is
+     the same seam reflected.
+
+     Concave still: the centre clears first and the corners hold on, so the
      dark reads as a proscenium opening rather than as a block ending.
-
-     Painted as flat ink behind a mask rather than as a gradient, because a
-     gradient can only run in a straight line. The mask is two layers
-     multiplied together:
-
-       the radial one is the curve. On its own it leaves ~14% ink in the far
-       corners, because those corners are a fixed distance from the ellipse's
-       centre no matter how the stops are set - and the band has to END
-       somewhere, so that residue would meet the wash on a hard line.
-
-       the linear one is the guarantee. Multiplied in, it forces the whole
-       width to zero before the band's edge, corners included.
-
-     Tightening the ellipse is what deepens the bow, and the linear layer is
-     what lets it be tightened at all. The ellipse is down to 100% wide, which
-     puts ~29% ink in the corners for the linear layer to clear - so its solid
-     stop moved down to 58%, late enough that it is cleaning up after the
-     curve rather than flattening it.
 
      The top padding is not spacing, it is the safety margin that makes the
      seam legal: check.mjs decides what a line of text is printed on by
@@ -663,22 +650,22 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      is 12rem and the padding clears 12rem. */
   .next {
     position: relative;
-    padding-top: calc(var(--band-padding) + 12rem);
+    padding-top: calc(var(--band-padding) + var(--seam));
   }
 
   .next::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
-    height: 12rem;
+    height: var(--seam);
     pointer-events: none;
     background: var(--ink);
-    -webkit-mask-image:
-      radial-gradient(100% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
-      linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0) 100%);
-    mask-image:
-      radial-gradient(100% 100% at 50% 100%, rgba(0, 0, 0, 0) 30%, #000 100%),
-      linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0) 100%);
+    -webkit-mask-image: url("/assets/seam-dither.png"), var(--seam-curve);
+    mask-image: url("/assets/seam-dither.png"), var(--seam-curve);
+    -webkit-mask-size: 1536px var(--seam), 100% 100%;
+    mask-size: 1536px var(--seam), 100% 100%;
+    -webkit-mask-repeat: repeat-x, no-repeat;
+    mask-repeat: repeat-x, no-repeat;
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }

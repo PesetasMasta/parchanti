@@ -540,7 +540,7 @@ onPage('/',
 );
 
 onPage('/',
-  'the ground asset actually decodes in a browser',
+  'every ground layer actually decodes in a browser',
   // The tiling check below asserts that body POINTS at the ground. It cannot
   // tell whether the browser can read it: a malformed SVG leaves the
   // background-image declaration intact and simply paints nothing, so the page
@@ -548,18 +548,23 @@ onPage('/',
   // still looks plausible. That shipped once - a "--" inside an XML comment,
   // which is illegal and which no build step here parses. Decoding it is the
   // only assertion that would have caught it.
-  `new Promise((done) => {
-    const url = getComputedStyle(document.body).backgroundImage.match(/url\\("?([^")]+)"?\\)/)?.[1];
-    if (!url) return done(JSON.stringify({ url: null }));
-    const probe = new Image();
-    probe.onload = () => done(JSON.stringify({ url, width: probe.naturalWidth, height: probe.naturalHeight }));
-    probe.onerror = () => done(JSON.stringify({ url, width: 0, height: 0 }));
-    probe.src = url;
-  })`,
+  `(() => {
+    const urls = [...getComputedStyle(document.body).backgroundImage.matchAll(/url\\("?([^")]+)"?\\)/g)].map((m) => m[1]);
+    if (!urls.length) return JSON.stringify([]);
+    return Promise.all(urls.map((url) => new Promise((done) => {
+      const probe = new Image();
+      probe.onload = () => done({ url, width: probe.naturalWidth, height: probe.naturalHeight });
+      probe.onerror = () => done({ url, width: 0, height: 0 });
+      probe.src = url;
+    }))).then((r) => JSON.stringify(r));
+  })()`,
   (raw) => {
-    const r = JSON.parse(raw);
-    if (!r.url) return 'body declares no background image';
-    if (!r.width || !r.height) return `${r.url} is referenced but the browser cannot decode it, so the page is painting bare --lime`;
+    const layers = JSON.parse(raw);
+    if (!layers.length) return 'body declares no background image';
+    const dead = layers.filter((layer) => !layer.width || !layer.height);
+    if (dead.length) {
+      return `${dead.map((d) => d.url).join(', ')} referenced but the browser cannot decode it, so that layer paints nothing`;
+    }
     return null;
   },
 );
@@ -1285,10 +1290,13 @@ try {
     }
   });
 
-  // The cloud ground rides on body, which propagates to the canvas: that is
-  // what makes it cover a document of any length and scroll with the text.
-  // Checked as computed values, since the tile size and the repeat are the two
-  // things that would silently go back to a stretched single image.
+  // The ground rides on body, which propagates to the canvas: that is what
+  // makes it cover a document of any length and scroll with the text. It is
+  // two layers now, the wall and the tooth over it, so each is checked for the
+  // thing that would silently go wrong with it - the wall for its tile size,
+  // which is what stops it being stretched into one flat patch, and the grain
+  // for its blend mode, which is the only reason it darkens rather than
+  // covering the wall entirely.
   await withBrowser(async (visit) => {
     await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844 }, async (evaluate) => {
       const measured = await evaluate(`(() => {
@@ -1298,15 +1306,26 @@ try {
           repeat: style.backgroundRepeat,
           attachment: style.backgroundAttachment,
           image: style.backgroundImage,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--cloud-tile').trim(),
+          blend: style.backgroundBlendMode,
+          colour: style.backgroundColor,
+          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
         };
       })()`);
       const wrong = [];
-      if (!measured.image.includes('clouds.svg')) wrong.push(`image is ${measured.image}`);
-      if (measured.size !== `${measured.tile} ${measured.tile}`) wrong.push(`size is ${measured.size}, tile is ${measured.tile}`);
-      if (measured.repeat !== 'repeat') wrong.push(`repeat is ${measured.repeat}`);
-      if (measured.attachment !== 'scroll') wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      const label = '[/] cloud ground tiles on body and scrolls with the page';
+      const layers = measured.image.split(/,\s*(?=url|none|linear|radial)/);
+      if (!measured.image.includes('wall.svg')) wrong.push(`no wall layer: ${measured.image}`);
+      if (!measured.image.includes('grain.svg')) wrong.push('no grain layer');
+      // The grain is FIRST, over the wall. The other way round it would paint
+      // the wall out instead of texturing it.
+      if (!layers[0]?.includes('grain.svg')) wrong.push('the grain is not the top layer, so it covers the wall rather than marking it');
+      if (!measured.blend.startsWith('multiply')) wrong.push(`grain blend is ${measured.blend}, and only multiply can darken without tinting`);
+      if (!measured.size.includes(`${measured.tile} ${measured.tile}`)) wrong.push(`wall is not sized to the tile: size is ${measured.size}, tile is ${measured.tile}`);
+      if (!/^(repeat(, )?)+$/.test(measured.repeat)) wrong.push(`repeat is ${measured.repeat}`);
+      if (!/^(scroll(, )?)+$/.test(measured.attachment)) wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
+      // The colour underneath is the floor every contrast measurement assumes;
+      // if a layer fails to decode this is what the page actually shows.
+      if (measured.colour !== 'rgb(168, 181, 107)') wrong.push(`the ground colour under the layers is ${measured.colour}, not --lime`);
+      const label = '[/] wall and grain tile on body and scroll with the page';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });

@@ -149,19 +149,33 @@
   --masthead-height: calc(max(var(--masthead-logo), 3rem) + 1.4rem + 3px);
   --masthead-height-condensed: calc(var(--masthead-logo-condensed) + 0.9rem + 3px);
 
+  /* The seams are a dot matrix, and its cells are pixels, so this is a pixel
+     value and not an em one. The tile is 192px tall and repeats only
+     sideways, so an element of any other height would either crop the dither
+     or run past the end of it. 192 is also 64 cells of 3px exactly. */
+  --seam: 192px;
+
+  /* The curve, and now the only smooth thing in a seam. Its ramp is
+     deliberately short: a long one scales every dot's alpha on its way and
+     puts back exactly the softness the dither exists to remove. It carves the
+     bow; the dither does the fading. */
+  --seam-curve:    radial-gradient(118% 100% at 50% 100%, rgba(0, 0, 0, 0) 34%, #000 62%);
+  --seam-curve-up: radial-gradient(118% 100% at 50% 0%,   rgba(0, 0, 0, 0) 34%, #000 62%);
+
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
 
-  /* One cloud tile. Held small on a phone so a 390px screen still gets whole
-     cloud shapes across it, and opened up on a wide screen so the tile does
-     not visibly repeat. The asset is an SVG, so neither value resamples
-     anything - the noise is drawn at whatever size it is asked for. */
-  --cloud-tile: 720px;
+  /* One wall tile. Held small on a phone so a 390px screen gets the wall at a
+     plausible scale rather than one magnified patch of it, and opened up on a
+     wide screen so the tile does not visibly repeat. The asset is an SVG, so
+     neither value resamples anything - the wall is drawn at whatever size it
+     is asked for, and the printed steps stay crisp at both. */
+  --wall-tile: 720px;
 }
 
 @media (min-width: 60rem) {
-  :root { --cloud-tile: 1100px; }
+  :root { --wall-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -173,33 +187,47 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
-/* The cloud ground, generated rather than sourced: two kilobytes of Perlin
-   noise in public/assets/clouds.svg, nothing to licence, and resolution-free.
+/* The ground: a wall, printed, with a sparse tooth over it.
 
-   It replaced a recoloured wall photograph (2026-09-06): the photograph cost
-   40KB, had to be flat-fielded and seam-healed by hand to tile at all, and
-   bought grain the SVG can state in two tint stops. The plaster is gone; the
-   direction it established is not - the wash still darkens away from the
-   sherbet rather than blooming toward white.
+   Two generated SVGs, under three kilobytes together, and one blend mode.
 
-   Its ramp runs --lime up to Lime Sherbet, so --lime is the darkest tone the
-   wash ever reaches and stays the honest thing for check.mjs to measure
-   contrast against.
+   wall.svg is the structure. The cloud wash it replaces used
+   type="fractalNoise", which sums SIGNED noise into soft round blobs - that
+   is the whole reason it read as sky rather than as a surface. This uses
+   type="turbulence", which sums the absolute value, so every zero crossing
+   becomes a crease and the field reads as troweled render.
+
+   Its tint is `discrete`, not `table`: a table interpolates between the two
+   ends and hands back a continuous ramp, which is what made it look blurred.
+   Discrete snaps the same noise into six flat inks with a hard edge between
+   each - the wall is not softened, it is printed.
+
+   The ramp still runs from the lime token up to Lime Sherbet, so the darkest
+   tone the wall reaches is still exactly --lime and every contrast
+   measurement on this site is still taken against the right colour.
+
+   grain.svg is the tooth, multiplied over it. Multiply can only darken, never
+   tint. It is deliberately sparse: only the darkest share of its noise marks
+   at all, so it leaves the MEAN of the ground untouched and darkens scattered
+   specks. Measured in a browser rather than assumed - wall alone and wall plus
+   grain both average 183 in luma, while the minimum drops from 172 to 153.
+   That is why the grain costs nothing in contrast: a 3px speck is not a
+   background any text is read against, and the average is what is.
 
    On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
    textem?"). A background on body propagates to the canvas, which covers the
-   whole document however long the page is - no layer to size, no overhang to
-   clip, no way for it to come up short at the bottom.
+   whole document however long the page is.
 
-   Sized in px and repeated, never `cover`: cover measured against the whole
-   document, so on a 2300px page the wash was magnified until a phone saw one
-   flat patch of it. The tile wraps seamlessly, so repeating it is invisible.
-
-   Bands that break the wash - .o-nas in olive, white cards - paint over it
-   as before. */
+   Sized in px and repeated, never `cover`: cover measures against the whole
+   document, so on a long page the wall was magnified until a phone saw one
+   flat patch of it. Both tiles wrap seamlessly. */
 body {
   margin: 0;
-  background: url("/assets/clouds.svg") 0 0 / var(--cloud-tile) var(--cloud-tile) repeat var(--lime);
+  background:
+    url("/assets/grain.svg") 0 0 / 240px 240px repeat,
+    url("/assets/wall.svg") 0 0 / var(--wall-tile) var(--wall-tile) repeat,
+    var(--lime);
+  background-blend-mode: multiply, normal, normal;
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
@@ -663,7 +691,7 @@ img { max-width: 100%; height: auto; }
    nothing to darken but itself, and the measurement stays true. */
 .footer {
   position: relative;
-  margin-top: 12rem;
+  margin-top: var(--seam);
   padding: var(--band-padding) var(--gutter);
   background: var(--ink);
   color: var(--white);
@@ -671,42 +699,38 @@ img { max-width: 100%; height: auto; }
 
 /* The mirror of the hero's seam, curving the other way (2026-09-06: "u
    footeru opacny curve ... at je to stejny"), so the page sits inside a lens
-   rather than on a slope. Same two-layer mask, same numbers, ellipse moved to
-   the top edge.
+   rather than on a slope. Same tile flipped, same curve reflected.
 
-   Painted as flat ink behind a mask rather than as a gradient, because a
-   gradient can only run in a straight line. The mask is two layers multiplied
-   together:
+   The seam does not fade. It is a dot matrix: every cell is full ink or
+   nothing, and what changes across it is how many are lit, which is why it
+   stays sharp - there is no intermediate tone in it anywhere to go soft. Two
+   mask layers multiplied: the PNG is the dither, the radial is the curve.
 
-     the radial one is the curve. On its own it leaves ~14% ink in the far
-     corners, because those corners are a fixed distance from the ellipse's
-     centre no matter how the stops are set - and the band has to END
-     somewhere, so that residue would meet the wash on a hard line.
+   The dither is blue noise, not an ordered matrix. An ordered dither is
+   periodic by construction - an o8x8 matrix repeats every eight cells and you
+   can see the crosshatch - so the threshold map was replaced rather than the
+   method (2026-09-06: "udelat vice random aby se patern matrixu neopakoval").
+   White noise has no pattern but clumps, because dice do; blue noise is the
+   same distribution with the low frequencies removed, so it is aperiodic and
+   evenly spread at once.
 
-     the linear one is the guarantee. Multiplied in, it forces the whole width
-     to zero before the band's edge, corners included.
-
-   Tightening the ellipse is what deepens the bow, and the linear layer is
-   what lets it be tightened at all. The ellipse is down to 100% wide
-   (2026-09-06: "curve na hero gradientu a footer vetsi"), which puts ~29% ink
-   in the corners for the linear layer to clear - so its solid stop moved down
-   to 58%, late enough that it is cleaning up after the curve rather than
-   flattening it. */
+   The tile is 1536px wide, 512 cells, so a phone never sees it repeat inside
+   the viewport. */
 .footer::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 100%;
-  height: 12rem;
+  height: var(--seam);
   pointer-events: none;
   background: var(--ink);
-  -webkit-mask-image:
-    radial-gradient(100% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
-    linear-gradient(to top, #000 58%, rgba(0, 0, 0, 0) 100%);
-  mask-image:
-    radial-gradient(100% 100% at 50% 0%, rgba(0, 0, 0, 0) 30%, #000 100%),
-    linear-gradient(to top, #000 58%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: url("/assets/seam-dither-up.png"), var(--seam-curve-up);
+  mask-image: url("/assets/seam-dither-up.png"), var(--seam-curve-up);
+  -webkit-mask-size: 1536px var(--seam), 100% 100%;
+  mask-size: 1536px var(--seam), 100% 100%;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  mask-repeat: repeat-x, no-repeat;
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }

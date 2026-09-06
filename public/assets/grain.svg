@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- Sparser: same fine dust, only the darkest third marks.
+       baseFrequency x 240 must be a whole number or stitchTiles cannot wrap:
+       0.9 x 240 = 216.
+
+       Sparseness lives in the table, not in the amplitude. Extra 1s on the
+       end leave that share of the noise at white - no darkening at all - so
+       only the darkest tail becomes a speck and the ground between them stays
+       clean. Turning the first value up instead would only make every speck
+       fainter, which is a thinner grain, not a sparser one. -->
+  <filter id="g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="table" tableValues="1 1"/></feComponentTransfer>
+    <feComponentTransfer>
+      <feFuncR type="table" tableValues="0.60 1 1 1"/>
+      <feFuncG type="table" tableValues="0.60 1 1 1"/>
+      <feFuncB type="table" tableValues="0.60 1 1 1"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="240" height="240" filter="url(#g)"/>
+</svg>
