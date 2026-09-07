@@ -1266,7 +1266,7 @@ try {
   });
 
   // Condensed, the button is meant to be bare bars: no border, no fill, and
-  // the brick that was its background carried into the bars themselves
+  // the ink that was its background carried into the bars themselves
   // (2026-08-18: "udelej jen tmave carky bez okraju a pozadi. prenes pozadi
   // velkeho menu do carek na konci cesty"). Its padding has to actually reach
   // the condensed values too - the first cut of the scroll-driven rules sat
@@ -1312,13 +1312,13 @@ try {
         return { top, scrolled };
       })()`);
       const { top, scrolled } = measured;
-      const BRICK = [170, 10, 39];  // --brick, Barbados Cherry at full strength
+      const INK = [30, 27, 20];  // --ink, the one dark
       const WHITE = [255, 255, 255];
       const near = (colour, target) => colour
         && colour[3] > 0.99
         && target.every((channel, index) => Math.abs(colour[index] - channel) <= 2);
       const wrong = [];
-      if (!near(top.background, BRICK)) wrong.push(`at the top the button is not brick (${top.background})`);
+      if (!near(top.background, INK)) wrong.push(`at the top the button is not ink (${top.background})`);
       if (!near(top.bar, WHITE)) wrong.push(`at the top the bars are not white (${top.bar})`);
       if (scrolled.background?.[3] !== 0) wrong.push(`condensed the button still has a fill (alpha ${scrolled.background?.[3]})`);
       // The button has no rule at either end of the journey now, so the
@@ -1327,10 +1327,10 @@ try {
       // drawn, and reading it was how a removed border went on "passing".
       if (top.borderWidth !== 0) wrong.push(`at the top the button has a ${top.borderWidth}px border`);
       if (scrolled.borderWidth !== 0) wrong.push(`condensed the button has a ${scrolled.borderWidth}px border`);
-      if (!near(scrolled.bar, BRICK)) wrong.push(`condensed the bars are not brick (${scrolled.bar})`);
+      if (!near(scrolled.bar, INK)) wrong.push(`condensed the bars are not ink (${scrolled.bar})`);
       if (!(scrolled.padding < top.padding)) wrong.push(`padding did not shrink: ${top.padding} -> ${scrolled.padding}`);
       if (scrolled.gap !== 0) wrong.push(`condensed the gap beside the dropped label is still ${scrolled.gap}px`);
-      const label = '[/] condensed burger reduces to bare brick bars';
+      const label = '[/] condensed burger reduces to bare ink bars';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });
@@ -1388,7 +1388,7 @@ try {
 
   // The ground rides on body, which propagates to the canvas: that is what
   // makes it cover a document of any length. It is flat colour now, and the
-  // thing worth asserting about flat colour is that it is EXACTLY --lime -
+  // thing worth asserting about flat colour is that it is EXACTLY --ground -
   // that value is the ground every contrast ratio in this file is measured
   // against, so if it drifts, every one of those measurements is quietly wrong.
   await withBrowser(async (visit) => {
@@ -1399,8 +1399,8 @@ try {
       })()`);
       const wrong = [];
       if (measured.image !== 'none') wrong.push(`body carries a background image again: ${measured.image}`);
-      if (measured.colour !== 'rgb(168, 181, 107)') wrong.push(`the ground is ${measured.colour}, not --lime`);
-      const label = '[/] the ground is flat --lime on body';
+      if (measured.colour !== 'rgb(255, 255, 255)') wrong.push(`the ground is ${measured.colour}, not --ground`);
+      const label = '[/] the ground is flat --ground on body';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });

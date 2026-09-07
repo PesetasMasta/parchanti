@@ -37,44 +37,35 @@
 /* ---------------------------------------------------------------------------
    One visual system for the whole site, so it lives in one file.
 
-   Palette is the Lime Sherbet / Barbados Cherry pair, off the reference the
-   client sent (2026-09-06):
+   Palette is black and white, decided 2026-09-07 after the round with his
+   friends ("friends call ... make page black and white"). It replaces the
+   Lime Sherbet / Barbados Cherry pair the client sent on 2026-09-06, which
+   replaced a palette sampled off her logo in August.
 
-     Lime Sherbet    #CDD78A  -> the wash's highlight, not a token
-     Barbados Cherry #AA0A27  -> --brick
+   The reason is not taste, it is what is arriving. Every actor is being given
+   a colour of their own and the production photographs are being shot in
+   colour, delivery end of September 2026. A page holding a saturated green
+   ground and a cherry accent would have been competing with fifteen hues it
+   does not control; a page holding none leaves the whole colour budget to the
+   people and the work. Colour on this site now means: a photograph, a poster,
+   or a person.
 
-   The sherbet is the top of the wash rather than its base: the plaster
-   darkens away from it instead of blooming toward white (2026-09-06, "z te
-   zelene jit spis do tmava nez do bila"). So the tone that gets a token is
-   the floor the ramp descends to, --lime, because that is the worst ground
-   any ink on the wash ever has to survive - the sherbet itself never needs
-   defending. How dark that floor can go is not a matter of taste: see the
-   page-heading note below, which is what caps it.
+   So there is one ink and one paper. --ink paints every filled surface - the
+   mark, the buttons, the burger, the nav overlay, the card and ticket frames -
+   and white on it reads 15.9:1. --ground is that same paper.
 
-   This replaces the palette sampled off her logo in August. It is a shift
-   inside the same two families rather than a break with the mark - the green
-   goes yellower and quieter, the red goes deeper and cooler - so the drawn
-   KP still sits on the page as her own artwork. If she wants the mark itself
-   restated in the new red, that is her call, not ours.
+   The two-strength accent is gone with the red. --brick and --brick-deep
+   existed because the full cherry was 3.4:1 on lime and needed darkening to
+   carry text; ink needs no such favour, so --accent is simply --ink and every
+   printed surface takes the same one. The dark bands still flip it to white,
+   which is the only override left.
 
-   --brick is the cherry exactly, unaltered. It paints every filled surface:
-   the mark, the buttons, the burger, the nav overlay, the card and ticket
-   frames. White on it reads 7.5:1, better headroom than the old red gave.
+   The drawn KP mark comes through in ink rather than her red. That is a
+   change to her own artwork's presentation, not to the artwork - the file is
+   unchanged and currentColor is what tints it. If she wants the mark to keep
+   its red on a black-and-white page, that is her call, not ours.
 
-   --brick-deep is the same cherry darkened for one job: red as *text* sitting
-   on the green wash. The full cherry is 3.4:1 on lime and 2.7:1 on olive,
-   both under the 4.5:1 body floor, so links and eyebrows on the wash take
-   the darkened one: 4.8:1 on lime. On olive it reaches 3.8:1, which carries
-   large type but not body copy - there is no small red on the olive band
-   today, and check.mjs is what would catch one being added.
-
-   Still one ink at two lightnesses, split by the ground it is printed on
-   rather than by taste. On paper - every printed block is white - --accent is
-   the full --brick. Directly on the green wash it drops to --brick-deep. Text
-   never names either one, so a new link inherits the readable answer without
-   having to know the split exists.
-
-   White never sits on lime or olive; those grounds take ink.
+   White never sits on the paper; that ground takes ink.
    scripts/check.mjs enforces the contrast on every page, at 320px and 390px.
 
    Deliberately single-theme: printed poster, paper, no dark mode.
@@ -82,11 +73,21 @@
 :root {
   color-scheme: only light;
 
-  --white: #FFFFFF;       /* the paper, and the ink the dark bands are read in */
-  --lime:  #A8B56B;       /* the floor the plaster darkens to, under the sherbet */
-  --olive: #93A05C;       /* the same green, deeper, for the bands that break the wash */
-  --brick: #AA0A27;       /* Barbados Cherry, as given - every filled surface */
-  --brick-deep: #80071D;  /* the same cherry, dark enough to be read on the wash */
+  --white: #FFFFFF;       /* the paper: the ground, the cards, the bar, and the ink the dark bands are read in */
+
+  /* Black and white, decided 2026-09-07 after the friends round. The greens
+     and both cherries are gone, and so is the reason there were two of them:
+     the split existed because red needed one strength on the green wash and a
+     darker one on white. With a single dark at 15.9:1 on the paper there is
+     nothing left to split, which is why --accent, --button-bg and
+     --ticket-frame all resolve to the same --ink below instead of choosing
+     between shades.
+
+     The page carries no colour of its own on purpose. Every actor gets one
+     and the production photographs arrive in colour; a ground with none is
+     what lets those be the loudest thing on the screen. */
+  --ground: var(--white);
+  --ground-deep: #E6E6E4;  /* the same paper a shade down: the bands and blanks that break it */
   /* One dark, and it is not black (2026-09-06: "sjednotil bych tmavou barvu
      pokud se nerovna cerna"). Held as channels rather than as a hex so that
      the places needing it at partial alpha - the seams' zero end, the card
@@ -101,7 +102,7 @@
      white of the cards and the bar. The dark bands below flip it to white. One token
      instead of a hand-kept list of selectors per surface - a new card
      inherits the right answer rather than needing one. */
-  --accent: var(--brick-deep);
+  --accent: var(--ink);
 
   /* What follows is the client's picks off the variant board (2026-09-01),
      written in as the only values the file has: white paper for the termíny
@@ -121,7 +122,7 @@
 
   --paper: var(--white);
   --masthead-bg: var(--white);  /* the bar */
-  --button-bg: var(--brick);    /* the CTA and the burger */
+  --button-bg: var(--ink);    /* the CTA and the burger */
   --button-text: var(--white);
 
   /* Paper stays white; the frame is cherry (2026-09-06: "karta predstaveni
@@ -131,7 +132,7 @@
      cards, which have been red-framed since the client asked for it on
      2026-08-31. */
   --ticket-paper: var(--white);
-  --ticket-frame: var(--brick);
+  --ticket-frame: var(--ink);
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -176,7 +177,7 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
-/* The ground: flat --lime, nothing over it.
+/* The ground: flat --ground, nothing over it.
 
    It carried a generated wall and a tooth of grain until 2026-09-07 ("pro ted
    bych ho zahodil uplne, vratme se k ciste zelene"). Both assets and the
@@ -184,14 +185,14 @@ html { scroll-padding-top: 4.5rem; }
    ever wanted back.
 
    Flat is also the honest case for contrast. Every ratio measured on this site
-   assumes --lime underneath, and now that is literally what is painted rather
-   than the darkest tone a texture happened to reach.
+   assumes --ground underneath, and now that is literally what is painted
+   rather than the darkest tone a texture happened to reach.
 
    Still on body, so it propagates to the canvas and covers a document of any
    length. */
 body {
   margin: 0;
-  background: var(--lime);
+  background: var(--ground);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
@@ -201,18 +202,12 @@ body {
 
 img { max-width: 100%; height: auto; }
 
-/* The printed blocks, which have their own paper under them: the logo's red
-   is readable at full strength there (5.7:1 on their white), so they take
-   --brick rather than the darkened one. Without this a ticket's frame and its title, three pixels apart, would
-   be two different reds - which is the whole thing the split is meant to
-   avoid. Only red printed straight onto the green wash keeps --brick-deep. */
-.ticket,
-.production-card,
-.press {
-  --accent: var(--brick);
-}
+/* The per-surface accent split is gone with the second cherry: one dark reads
+   on every light surface here, so a ticket's frame and its title three pixels
+   apart cannot disagree any more. Only the dark bands still need an override,
+   below. */
 
-/* The dark bands. Brick is 1.6:1 on ink, so anything reading --accent inside
+/* The dark bands. Ink on ink is invisible, so anything reading --accent inside
    them has to get white instead; the generic contrast assertion in
    scripts/check.mjs fails the build if a new dark surface skips this. */
 .footer,
@@ -264,7 +259,7 @@ img { max-width: 100%; height: auto; }
      is a graphic, not text, so it answers to 3:1 rather than 4.5:1, and the
      cherry is 7.5:1 on this white. */
   background: var(--masthead-bg);
-  border-bottom: 3px solid var(--brick);
+  border-bottom: 3px solid var(--ink);
   transition: height 0.2s ease;
 }
 
@@ -274,19 +269,13 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* The red sits on the mark, not on the link. It used to sit on the link and
-   reach the mark through inheritance, which was harmless while the bar was
-   white and became a lie when it went green: the link's colour is what the
-   contrast harness measures the name against, and it was reporting the red -
-   3.4:1 - for a line of text that is painted in ink and always was. The mark
-   is a graphic and answers to 3:1, which the red clears; the name is text and
-   answers to 4.5:1, which the ink clears at 7.8:1. Two jobs, two
-   declarations. Inside the dark bands the same file comes through white. */
+/* The mark and the name are one colour again. They were split while the mark
+   was red and the name ink: the link's colour is what the contrast harness
+   measures the name against, so a red on the link reported 3.4:1 for a line
+   of text that was painted in ink. With one ink there is nothing to split,
+   and the svg takes it through currentColor like everything else. Inside the
+   dark bands the same file comes through white. */
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
-
-/* currentColor inside the file resolves against the svg, so this is what
-   paints the mark. */
-.masthead__home svg { color: var(--brick); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
@@ -448,7 +437,7 @@ img { max-width: 100%; height: auto; }
   }
 
   .burger__bars {
-    --bar: color-mix(in srgb, var(--button-text), var(--brick) calc(100% * var(--burger-chrome)));
+    --bar: color-mix(in srgb, var(--button-text), var(--ink) calc(100% * var(--burger-chrome)));
     background:
       linear-gradient(var(--bar) 0 0) 0 0 / 100% 3px no-repeat,
       linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat,
@@ -496,7 +485,7 @@ img { max-width: 100%; height: auto; }
 
 .nav[data-open] {
   visibility: visible;
-  background-color: var(--brick);
+  background-color: var(--ink);
   transition: background-color 260ms ease, visibility 0s;
 }
 
@@ -581,8 +570,17 @@ img { max-width: 100%; height: auto; }
   text-decoration: none;
 }
 
-.nav__link:hover,
-.nav__link:focus-visible { color: var(--lime); }
+/* This used to turn the link lime. On a black-and-white overlay there is no
+   second colour to turn it, so the affordance becomes an underline - and
+   keyboard focus gets a ring as well, because an underline alone is easy to
+   miss on a link that is already 4.5rem tall. */
+.nav__link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+.nav__link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  outline: 3px solid var(--white);
+  outline-offset: 6px;
+}
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
 
@@ -600,24 +598,14 @@ img { max-width: 100%; height: auto; }
      the arithmetic. */
   font-size: clamp(1.9rem, 9vw, 4rem);
   overflow-wrap: break-word;
-  /* The one red on the wash that takes --brick rather than --accent. It can:
-     30px at its floor is WCAG large text, which answers to 3:1 rather than
-     4.5:1, and the full red holds 3.41:1 against the darkest tone the wash
-     reaches. That margin is what caps how dark --lime may go: at #9EAC64 the
-     full red is 3.07:1 and at #9AA85C it is 2.92:1 and fails. Taking the
-     wash deeper than this means this heading gives up matching the mark and
-     falls back to --accent, the way .o-nas already does. It is also the biggest red on the page, so it is the one that
-     has to agree with the mark above it. Any smaller red on the wash - .link,
-     a subtitle span - keeps --accent and stays darkened, and so does this
-     heading on any ground darker than the wash (see .o-nas below). */
-  color: var(--brick);
+  /* Ink, like every other heading. The note that stood here worked out how
+     dark the green wash could go before the full cherry stopped clearing 3:1
+     under this heading - it was the thing that capped the palette. Black and
+     white removes the cap: ink is 15.9:1 on the paper and 3:1 was never in
+     question. The .o-nas override that took the darkened red back on the
+     olive band went with it, for the same reason. */
+  color: var(--ink);
 }
-
-/* The one page that paints its own olive band instead of letting the wash
-   through. Olive is dark enough that the full red falls to 2.67:1 there, so
-   the heading gives up the match and takes the darkened red back - 3.78:1,
-   which is what large type owes. */
-.o-nas .page-heading { color: var(--accent); }
 
 .prose { max-width: var(--measure); }
 .prose p { margin: 0 0 1em; text-wrap: pretty; }
@@ -763,7 +751,7 @@ img { max-width: 100%; height: auto; }
 .ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: 0; }
 
 /* Poster proportions, so the slot is the shape a poster will be. */
-.ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--olive); }
+.ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--ground-deep); }
 
 /* Long production names have to wrap inside the remaining column. */
 .ticket__body { min-width: 0; }
@@ -824,7 +812,7 @@ img { max-width: 100%; height: auto; }
    brick border, and without it the two reds meet and read as one blob. */
 .ticket__tag {
   padding: 0.22rem 0.6rem;
-  background: var(--brick);
+  background: var(--ink);
   color: var(--white);
   border-radius: 999px;
   font-size: 0.7rem;

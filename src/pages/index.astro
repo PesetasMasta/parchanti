@@ -342,6 +342,17 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     color: var(--white);
   }
 
+  /* The three reel buttons are the only ones on the site printed on the dark,
+     and with one ink an ink button on the ink band is invisible. So here it
+     inverts: white fill, ink lettering, same 15.9:1 either way round. Scoped
+     to .hero rather than to a dark-band token, because .hero is the only dark
+     band that carries a button. */
+  .hero .button {
+    background: var(--white);
+    color: var(--ink);
+    border-color: var(--white);
+  }
+
   /* The photograph's lower edge dissolved into the band. Drawn once for the
      reel rather than once per slide: three identical gradients stacked
      compounded their alpha and the fade came out short and hard. */
@@ -617,12 +628,12 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   /* "Rám inscenaci hra lásky a šípy - červenej rám" (2026-08-31, item 4).
      The inner picture frame stays ink, so the card reads as a red mount
      around a black-framed image rather than as two red rules. */
-  .production-card { padding: 1.25rem; background: var(--paper); background-clip: padding-box; border: 3px solid var(--brick); border-radius: var(--radius-card); }
+  .production-card { padding: 1.25rem; background: var(--paper); background-clip: padding-box; border: 3px solid var(--ink); border-radius: var(--radius-card); }
 
   .production-card img,
   .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 
-  .production-card__blank { aspect-ratio: 900 / 750; background: var(--olive); }
+  .production-card__blank { aspect-ratio: 900 / 750; background: var(--ground-deep); }
 
   .production-card__title { margin: 1rem 0 0.5rem; font-size: clamp(1.5rem, 6vw, 2.2rem); }
 
@@ -709,7 +720,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .drum__countdown {
     margin: 0;
     padding: 0.3rem 0.7rem;
-    background: var(--brick);
+    background: var(--ink);
     color: var(--white);
     border-radius: var(--radius-button);
     font-size: 0.7rem;

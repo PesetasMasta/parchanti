@@ -191,16 +191,16 @@ const dateId = (iso) => `termin-${iso}`;
     aspect-ratio: 1;
     background: var(--paper);
     background-clip: padding-box;
-    border: 3px solid var(--brick);
+    border: 3px solid var(--ink);
     border-radius: var(--radius-inner);
     color: var(--ink);
     font-weight: 700;
     text-decoration: none;
   }
 
-  .calendar__day span { font-family: var(--display); font-size: 0.6rem; font-weight: 400; color: var(--brick); }
+  .calendar__day span { font-family: var(--display); font-size: 0.6rem; font-weight: 400; color: var(--ink); }
 
-  .calendar__day[data-picked] { background: var(--brick); color: var(--white); }
+  .calendar__day[data-picked] { background: var(--ink); color: var(--white); }
   .calendar__day[data-picked] span { color: var(--white); }
 
   /* The date the calendar sent you to. Ink rather than red: the ticket is
