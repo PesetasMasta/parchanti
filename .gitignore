@@ -23,3 +23,8 @@ ig-zprava.md
 
 # Netlify site link (site ID); local state, not shared.
 .netlify/
+
+# Local review sheets: a copy of the built site per variant, rebuilt on
+# demand by mockups-build.sh. Never published - publish-docs.sh copies dist/.
+mockups/
+mockups-build.sh
