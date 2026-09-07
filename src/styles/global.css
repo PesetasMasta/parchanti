@@ -165,17 +165,6 @@
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
-
-  /* One wall tile. Held small on a phone so a 390px screen gets the wall at a
-     plausible scale rather than one magnified patch of it, and opened up on a
-     wide screen so the tile does not visibly repeat. The asset is an SVG, so
-     neither value resamples anything - the wall is drawn at whatever size it
-     is asked for, and the printed steps stay crisp at both. */
-  --wall-tile: 720px;
-}
-
-@media (min-width: 60rem) {
-  :root { --wall-tile: 1100px; }
 }
 
 * { box-sizing: border-box; }
@@ -187,47 +176,22 @@
    anchor has settled. */
 html { scroll-padding-top: 4.5rem; }
 
-/* The ground: a wall, printed, with a sparse tooth over it.
+/* The ground: flat --lime, nothing over it.
 
-   Two generated SVGs, under three kilobytes together, and one blend mode.
+   It carried a generated wall and a tooth of grain until 2026-09-07 ("pro ted
+   bych ho zahodil uplne, vratme se k ciste zelene"). Both assets and the
+   --wall-tile token went with them; git has them at 5689564 if the texture is
+   ever wanted back.
 
-   wall.svg is the structure. The cloud wash it replaces used
-   type="fractalNoise", which sums SIGNED noise into soft round blobs - that
-   is the whole reason it read as sky rather than as a surface. This uses
-   type="turbulence", which sums the absolute value, so every zero crossing
-   becomes a crease and the field reads as troweled render.
+   Flat is also the honest case for contrast. Every ratio measured on this site
+   assumes --lime underneath, and now that is literally what is painted rather
+   than the darkest tone a texture happened to reach.
 
-   Its tint is `discrete`, not `table`: a table interpolates between the two
-   ends and hands back a continuous ramp, which is what made it look blurred.
-   Discrete snaps the same noise into six flat inks with a hard edge between
-   each - the wall is not softened, it is printed.
-
-   The ramp still runs from the lime token up to Lime Sherbet, so the darkest
-   tone the wall reaches is still exactly --lime and every contrast
-   measurement on this site is still taken against the right colour.
-
-   grain.svg is the tooth, multiplied over it. Multiply can only darken, never
-   tint. It is deliberately sparse: only the darkest share of its noise marks
-   at all, so it leaves the MEAN of the ground untouched and darkens scattered
-   specks. Measured in a browser rather than assumed - wall alone and wall plus
-   grain both average 183 in luma, while the minimum drops from 172 to 153.
-   That is why the grain costs nothing in contrast: a 3px speck is not a
-   background any text is read against, and the average is what is.
-
-   On body, so it scrolls with the text (2026-08-18: "mohlo by se posouvat s
-   textem?"). A background on body propagates to the canvas, which covers the
-   whole document however long the page is.
-
-   Sized in px and repeated, never `cover`: cover measures against the whole
-   document, so on a long page the wall was magnified until a phone saw one
-   flat patch of it. Both tiles wrap seamlessly. */
+   Still on body, so it propagates to the canvas and covers a document of any
+   length. */
 body {
   margin: 0;
-  background:
-    url("/assets/grain.svg") 0 0 / 240px 240px repeat,
-    url("/assets/wall.svg") 0 0 / var(--wall-tile) var(--wall-tile) repeat,
-    var(--lime);
-  background-blend-mode: multiply, normal, normal;
+  background: var(--lime);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);

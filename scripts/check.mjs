@@ -540,16 +540,24 @@ onPage('/',
 );
 
 onPage('/',
-  'every ground layer actually decodes in a browser',
-  // The tiling check below asserts that body POINTS at the ground. It cannot
-  // tell whether the browser can read it: a malformed SVG leaves the
-  // background-image declaration intact and simply paints nothing, so the page
-  // silently falls back to the flat --lime underneath and every screenshot
-  // still looks plausible. That shipped once - a "--" inside an XML comment,
-  // which is illegal and which no build step here parses. Decoding it is the
-  // only assertion that would have caught it.
+  'every referenced image asset actually decodes in a browser',
+  // A malformed asset leaves the declaration that points at it intact and
+  // simply paints nothing, so the page silently falls back to whatever is
+  // underneath and every screenshot still looks plausible. That shipped once -
+  // a "--" inside an XML comment, which is illegal and which no build step
+  // here parses. Decoding it is the only assertion that would have caught it.
+  //
+  // The ground is flat colour now, so what is left to guard is the seam
+  // dither: two PNGs used as mask layers on the hero and footer joins. A mask
+  // that fails to decode masks nothing, which paints the seam as a hard block
+  // of ink rather than a fade.
   `(() => {
-    const urls = [...getComputedStyle(document.body).backgroundImage.matchAll(/url\\("?([^")]+)"?\\)/g)].map((m) => m[1]);
+    const seams = [document.querySelector('.next'), document.querySelector('.footer')].filter(Boolean);
+    const urls = seams.flatMap((el) => {
+      const style = getComputedStyle(el, '::before');
+      const declared = style.maskImage || style.webkitMaskImage || '';
+      return [...declared.matchAll(/url\\("?([^")]+)"?\\)/g)].map((m) => m[1]);
+    });
     if (!urls.length) return JSON.stringify([]);
     return Promise.all(urls.map((url) => new Promise((done) => {
       const probe = new Image();
@@ -560,7 +568,7 @@ onPage('/',
   })()`,
   (raw) => {
     const layers = JSON.parse(raw);
-    if (!layers.length) return 'body declares no background image';
+    if (!layers.length) return 'neither seam declares a mask image';
     const dead = layers.filter((layer) => !layer.width || !layer.height);
     if (dead.length) {
       return `${dead.map((d) => d.url).join(', ')} referenced but the browser cannot decode it, so that layer paints nothing`;
@@ -1291,41 +1299,20 @@ try {
   });
 
   // The ground rides on body, which propagates to the canvas: that is what
-  // makes it cover a document of any length and scroll with the text. It is
-  // two layers now, the wall and the tooth over it, so each is checked for the
-  // thing that would silently go wrong with it - the wall for its tile size,
-  // which is what stops it being stretched into one flat patch, and the grain
-  // for its blend mode, which is the only reason it darkens rather than
-  // covering the wall entirely.
+  // makes it cover a document of any length. It is flat colour now, and the
+  // thing worth asserting about flat colour is that it is EXACTLY --lime -
+  // that value is the ground every contrast ratio in this file is measured
+  // against, so if it drifts, every one of those measurements is quietly wrong.
   await withBrowser(async (visit) => {
     await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844 }, async (evaluate) => {
       const measured = await evaluate(`(() => {
         const style = getComputedStyle(document.body);
-        return {
-          size: style.backgroundSize,
-          repeat: style.backgroundRepeat,
-          attachment: style.backgroundAttachment,
-          image: style.backgroundImage,
-          blend: style.backgroundBlendMode,
-          colour: style.backgroundColor,
-          tile: getComputedStyle(document.documentElement).getPropertyValue('--wall-tile').trim(),
-        };
+        return { image: style.backgroundImage, colour: style.backgroundColor };
       })()`);
       const wrong = [];
-      const layers = measured.image.split(/,\s*(?=url|none|linear|radial)/);
-      if (!measured.image.includes('wall.svg')) wrong.push(`no wall layer: ${measured.image}`);
-      if (!measured.image.includes('grain.svg')) wrong.push('no grain layer');
-      // The grain is FIRST, over the wall. The other way round it would paint
-      // the wall out instead of texturing it.
-      if (!layers[0]?.includes('grain.svg')) wrong.push('the grain is not the top layer, so it covers the wall rather than marking it');
-      if (!measured.blend.startsWith('multiply')) wrong.push(`grain blend is ${measured.blend}, and only multiply can darken without tinting`);
-      if (!measured.size.includes(`${measured.tile} ${measured.tile}`)) wrong.push(`wall is not sized to the tile: size is ${measured.size}, tile is ${measured.tile}`);
-      if (!/^(repeat(, )?)+$/.test(measured.repeat)) wrong.push(`repeat is ${measured.repeat}`);
-      if (!/^(scroll(, )?)+$/.test(measured.attachment)) wrong.push(`attachment is ${measured.attachment}, so it will not scroll with the text`);
-      // The colour underneath is the floor every contrast measurement assumes;
-      // if a layer fails to decode this is what the page actually shows.
-      if (measured.colour !== 'rgb(168, 181, 107)') wrong.push(`the ground colour under the layers is ${measured.colour}, not --lime`);
-      const label = '[/] wall and grain tile on body and scroll with the page';
+      if (measured.image !== 'none') wrong.push(`body carries a background image again: ${measured.image}`);
+      if (measured.colour !== 'rgb(168, 181, 107)') wrong.push(`the ground is ${measured.colour}, not --lime`);
+      const label = '[/] the ground is flat --lime on body';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });
