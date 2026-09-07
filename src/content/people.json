@@ -5,7 +5,7 @@
     "role": "umělecký šéf divadla, režisér, scénograf, herec",
     "group": "soubor",
     "order": 1,
-    "bio": "Zakladatel souboru. Studuje hudebně-dramatický obor na Pražské konzervatoři a hraje také v Činoherním klubu a Divadle Bez zábradlí."
+    "bio": "Herec, režisér a profík na trávení času s kamarády – ideálně na jevišti, ve zkušebně, nebo aspoň u piva. Vystudoval herectví na Pražské konzervatoři, ale místo čekání na telefon z Národního radši založil vlastní soubor Kolekce Parchant. Tam si dělá divadlo po svém – s vervou, vtipem a partou, co ví, že život je nejlepší s lidma, co s tebou budou balancovat na hraně všeho, no s těma co tě prostě baví."
   },
   {
     "id": "ondrej-stupka",
@@ -21,7 +21,7 @@
     "role": "provozní šéfka, produkční, herečka",
     "group": "soubor",
     "order": 3,
-    "bio": "Studentka Pražské konzervatoře, hostuje také v Divadle na Vinohradech."
+    "bio": "Malá (možná nejmenší), smějící se v nevhodných situacích a dělající nevhodné věci v nevhodných situacích. Také je jí pořád moc zima nebo moc horko, ale hlavně! Je to herečka tělem i duší, která si plní velké sny a miluje každého diváka. Vystudovala Pražskou konzervatoř a tak si hostuje v různých divadlech, moderuje v rapovým radiu a dabuje. A je samozřejmě hrdou členkou Kolekce Parchant! Zde má možnost tvořit nejen s výjimečnými herci, ale hlavně s úžasnými lidmi, které má ráda, s lidmi, jejichž úsměvy ji vždy zahřejí u srdce."
   },
   {
     "id": "marek-cimbal",
@@ -75,14 +75,16 @@
     "name": "Alisa Gertsovskaya",
     "role": "herečka",
     "group": "host",
-    "order": 10
+    "order": 10,
+    "bio": "Alisa Gertsovskaya, mladá herečka a začínající režisérka, která se do Parchantů přimíchala z upřímné lásky a šťastnou náhodou. Miluje hrát se svými přáteli a tvořit jejich maximálně punkovým stylem. Žádná repríza s nimi se nepodobá předešlé a to je to, co pro ni dělá divadlo jedinečným a živým."
   },
   {
     "id": "mikulas-polak",
     "name": "Mikuláš Polák",
     "role": "herec",
     "group": "host",
-    "order": 11
+    "order": 11,
+    "bio": "Student herectví na pražské konzervatoři, pianista a nejmladší člen Kolekce Parchant. Divadlo pro něj hodně znamená a chce se v něm dál rozvíjet a jak jinak to udělat než s partou lidí které máš rád a podrží tě i mimo jeviště."
   },
   {
     "id": "ondrej-kapusta",

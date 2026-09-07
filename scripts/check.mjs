@@ -1057,6 +1057,33 @@ onPage('/o-nas/',
   },
 );
 
+// The bios are hers, and several of them read as mistakes to anyone who did
+// not write them: obecná čeština throughout Prokop's, a sentence that breaks
+// off at "ale hlavně!" in Zuzana's, a missing comma in Mikuláš's, en dashes
+// that are not hyphens. Correcting any of it without asking is exactly what
+// this prevents - QA.md puts the question to her instead. If the verbatim
+// rule is reversed (see the backlog item that decides it), these strings get
+// swapped for the corrected ones rather than deleted, so a regression back to
+// the slip is what fails.
+for (const [slug, phrases] of [
+  ['prokop-zach', ['s kamarády – ideálně na jevišti', 'je nejlepší s lidma', 'no s těma co tě prostě baví']],
+  ['zuzana-matuskova', ['moc horko, ale hlavně!', 'moderuje v rapovým radiu a dabuje']],
+  ['aliska', ['tvořit jejich maximálně punkovým stylem']],
+  ['mikulas-polak', ['s partou lidí které máš rád']],
+]) {
+  onPage(`/soubor/${slug}/`,
+    'the bio is her wording, character-exact',
+    `document.querySelector('.person__bio')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''`,
+    (text) => {
+      if (!text) return 'the bio she sent is not on the page';
+      for (const phrase of phrases) {
+        if (!text.includes(phrase)) return `her wording is altered or missing: ${JSON.stringify(phrase)}`;
+      }
+      return null;
+    },
+  );
+}
+
 onPage('/o-prostoru/',
   'venue page carries the address and the trams',
   `JSON.stringify({
