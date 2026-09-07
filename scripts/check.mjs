@@ -722,12 +722,25 @@ onPage('/',
     const px = (shadow) => (shadow.match(/-?[\\d.]+px/g) || []).slice(0, 3).map(parseFloat);
     const ticketShadow = getComputedStyle(ticket).boxShadow;
     const [, offsetY, blur] = px(ticketShadow);
+    const style = getComputedStyle(win);
+    // The clip is the padding box. Any slide not showing has to be fully
+    // outside it, or the room made for the shadow shows the next date through.
+    const clip = win.getBoundingClientRect();
+    const strays = [...document.querySelectorAll('.drum__slide')]
+      .filter((slide) => slide.getAttribute('aria-hidden') === 'true')
+      .map((slide) => slide.getBoundingClientRect())
+      .filter((r) => r.right > clip.left + 0.5 && r.left < clip.right - 0.5)
+      .length;
     return JSON.stringify({
       ticketShadow,
       deckShadow: getComputedStyle(face).boxShadow,
       reach: offsetY + blur,
-      padBottom: parseFloat(getComputedStyle(win).paddingBottom),
-      clipX: getComputedStyle(win).overflowX,
+      sideways: blur / 2,
+      padBottom: parseFloat(style.paddingBottom),
+      padTop: parseFloat(style.paddingTop),
+      padSide: parseFloat(style.paddingLeft),
+      clipX: style.overflowX,
+      strays,
     });
   })()`,
   (raw) => {
@@ -740,6 +753,17 @@ onPage('/',
     if (r.padBottom < r.reach) {
       return `the shadow reaches ${r.reach}px below the card but the window only leaves ${r.padBottom}px, so it is clipped into a hard line`;
     }
+    // Sideways the shadow only reaches half the blur, since it has no
+    // horizontal offset - but nothing of it may be cut, or the fade ends on a
+    // straight vertical edge.
+    if (r.padSide < r.sideways) {
+      return `the shadow spreads ${r.sideways}px sideways but the window only leaves ${r.padSide}px, so it ends on a hard edge`;
+    }
+    if (r.padTop < r.sideways) {
+      return `the shadow spreads ${r.sideways}px above the card but the window only leaves ${r.padTop}px`;
+    }
+    // The room above is only worth having if it stays empty.
+    if (r.strays) return `${r.strays} off-window date(s) show through the room left for the shadow`;
     return null;
   },
 );

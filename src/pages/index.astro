@@ -681,7 +681,17 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      predstaveni roztahni na sirku kontentu"): the ticket is a poster beside a
      few short lines, not a paragraph, so the measure was constraining
      something that is not prose. */
-  .drum { max-width: none; }
+  .drum {
+    max-width: none;
+    /* How far the clip stands off the ticket on every side, so the shadow can
+       fade out instead of being cut. 1rem clears the 24px blur's 12px lateral
+       reach and stays inside the page gutter at its 1.25rem narrowest, so
+       pulling the window out by it cannot make the page scroll sideways.
+
+       Read by the script as well: the slides either side have to travel this
+       much further, or they show through the room the shadow was given. */
+    --drum-bleed: 1rem;
+  }
 
   .next__head {
     display: flex;
@@ -730,9 +740,14 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        hard dark line hugging the bottom edge, which is exactly what a
        reflection looks like and nothing like a cast shadow.
 
-       Vertical only. The sides have to keep clipping or the dates either side
-       of this one show through. */
-    padding-block: 1rem 2.5rem;
+       The sides still clip - the dates either side of this one must not show -
+       but the clip now stands off the ticket by --drum-bleed rather than
+       cutting flush against it (2026-09-07: "i still dont like this hard edge.
+       i would prefer soft shadow around all the strip"). Pulled out by the
+       same amount it pads, so the room comes out of the page gutter and the
+       ticket keeps the full content width she asked for. */
+    padding: 1rem var(--drum-bleed) 2.5rem;
+    margin-inline: calc(var(--drum-bleed) * -1);
   }
 
   .drum__window[data-dragging] { cursor: grabbing; }
@@ -903,7 +918,10 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
         // must jump, not fly across the window in front of the reader.
         const wrapped = Math.abs(position - positionFor(index, previous)) > 1;
         slide.style.transition = dragging || wrapped ? 'none' : '';
-        slide.style.transform = `translateX(calc(${position * 100}% + ${dragX}px))`;
+        // Own width plus the bleed on both sides: a slide moved by exactly
+        // its width would stop inside the room left for the shadow and show
+        // through it.
+        slide.style.transform = `translateX(calc(${position * 100}% + ${position} * var(--drum-bleed) * 2 + ${dragX}px))`;
         // Only the slide in the window is offered to a screen reader or to
         // the tab key; the rest are off-screen and would otherwise scroll the
         // page sideways when focused.
