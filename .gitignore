@@ -28,3 +28,4 @@ ig-zprava.md
 # demand by mockups-build.sh. Never published - publish-docs.sh copies dist/.
 mockups/
 mockups-build.sh
+mockups-variants.py
