@@ -707,6 +707,43 @@ onPage('/',
   },
 );
 
+onPage('/',
+  "the ticket's shadow is the repertoire cards' shadow, and the drum does not clip it",
+  // The drum window has to clip horizontally, or the dates either side of the
+  // one showing bleed into view. Vertically it must not: a 0 10px 24px shadow
+  // reaches 34px below the card, and clipping that to a few pixels leaves a
+  // hard line under the edge that reads as a reflection rather than as depth.
+  // Both numbers are read off the live page, so changing the shadow without
+  // changing the room made for it fails here.
+  `(() => {
+    const ticket = document.querySelector('.next .ticket');
+    const win = document.querySelector('.drum__window');
+    const face = document.querySelector('.deck__face');
+    const px = (shadow) => (shadow.match(/-?[\\d.]+px/g) || []).slice(0, 3).map(parseFloat);
+    const ticketShadow = getComputedStyle(ticket).boxShadow;
+    const [, offsetY, blur] = px(ticketShadow);
+    return JSON.stringify({
+      ticketShadow,
+      deckShadow: getComputedStyle(face).boxShadow,
+      reach: offsetY + blur,
+      padBottom: parseFloat(getComputedStyle(win).paddingBottom),
+      clipX: getComputedStyle(win).overflowX,
+    });
+  })()`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (r.ticketShadow === 'none') return 'the ticket carries no shadow';
+    if (r.ticketShadow !== r.deckShadow) {
+      return `the ticket's shadow (${r.ticketShadow}) is not the repertoire card's (${r.deckShadow})`;
+    }
+    if (!/(hidden|clip)/.test(r.clipX)) return `the drum window stopped clipping sideways (overflow-x: ${r.clipX})`;
+    if (r.padBottom < r.reach) {
+      return `the shadow reaches ${r.reach}px below the card but the window only leaves ${r.padBottom}px, so it is clipped into a hard line`;
+    }
+    return null;
+  },
+);
+
 onPage('/program/',
   'program lists every date still to be played, as title over time over date',
   `JSON.stringify({
@@ -717,7 +754,7 @@ onPage('/program/',
       title: card.querySelector('.ticket__title')?.textContent.replace(/\\s+/g, ' ').trim(),
       time: card.querySelector('.ticket__time')?.textContent.trim(),
       day: card.querySelector('.ticket__day')?.textContent.trim(),
-      meta: card.querySelector('.ticket__meta')?.textContent.trim() ?? null,
+      meta: card.querySelector('.ticket__tags')?.textContent.replace(/\\s+/g, ' ').trim() || null,
       poster: Boolean(card.querySelector('.ticket__poster img, .ticket__poster-blank')),
       links: [...card.querySelectorAll('a')].map((a) => a.getAttribute('href')),
     })),

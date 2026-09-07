@@ -31,7 +31,10 @@ interface Props {
 const { entry, production, id } = Astro.props;
 const data = production?.data;
 
-const meta = [
+// Running time and recommended age, as two tags rather than one run of text
+// (2026-09-07: "dal bych ke kazde hre pridal tagy. obsahovat budou dobu
+// trvani, a doporuceny vek"). Order is fixed: how long, then who for.
+const tags = [
   data?.durationMinutes && czechDuration(data.durationMinutes),
   data?.ageRating,
 ].filter(Boolean);
@@ -69,9 +72,17 @@ const meta = [
 
     {entry.note && <p class="ticket__note">{entry.note}</p>}
 
-    {meta.length > 0 && <p class="ticket__meta">{meta.join(' · ')}</p>}
-
     {/* No ticketing yet, so no link is rendered rather than an empty one. */}
     {entry.url && <p><a class="link" href={entry.url}>Vstupenky</a></p>}
   </div>
+
+  {/* Outside .ticket__body on purpose: these are pinned to the card's corner,
+      so they are positioned against the card rather than flowing after the
+      text. Labelled, because "80 min" and "12+" alone say nothing when read
+      out in sequence away from the card they are stuck to. */}
+  {tags.length > 0 && (
+    <ul class="ticket__tags" aria-label="Délka a doporučený věk">
+      {tags.map((tag) => <li class="ticket__tag">{tag}</li>)}
+    </ul>
+  )}
 </article>

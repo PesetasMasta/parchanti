@@ -749,6 +749,8 @@ img { max-width: 100%; height: auto; }
   background: var(--ticket-paper);
   border: 3px solid var(--ticket-frame);
   border-radius: var(--radius-card);
+  /* The tags are pinned to this box's corner. */
+  position: relative;
   /* Ink at low alpha, not black: a black shadow on a green ground greys it.
      Same three channels as everything else dark on this site. */
   box-shadow: 0 10px 24px rgb(var(--ink-rgb) / 0.22);
@@ -796,8 +798,43 @@ img { max-width: 100%; height: auto; }
   color: var(--accent);
 }
 
-/* Running time and age, which she asked to see beside every date. */
-.ticket__meta { margin: 0.5rem 0 0; font-size: 0.85rem; }
+/* Running time and recommended age, pinned to the card's bottom-right corner
+   (2026-09-07: "srovnat doprava dolu a pripnout na kartu neco jako
+   notification bubble v ios"). They straddle the bottom border rather than
+   sitting inside it - hanging half off the edge is the whole reason a badge
+   reads as stuck ON the card instead of printed in it.
+
+   Right-aligned to just inside the card and never past it. The drum window
+   clips horizontally so the dates either side stay hidden, and a badge that
+   overhung the right edge would be sliced in half by that clip. */
+.ticket__tags {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0;
+  transform: translateY(50%);
+  display: flex;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* White on the full cherry is 7.5:1, the same fill the countdown badge uses.
+   The white ring is not decoration: the badge crosses the card's own 3px
+   brick border, and without it the two reds meet and read as one blob. */
+.ticket__tag {
+  padding: 0.22rem 0.6rem;
+  background: var(--brick);
+  color: var(--white);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  box-shadow:
+    0 0 0 3px var(--ticket-paper),
+    0 4px 10px rgb(var(--ink-rgb) / 0.28);
+}
 
 .ticket p:last-child { margin-bottom: 0; }
 .ticket[data-state="sold_out"] { opacity: 0.55; }

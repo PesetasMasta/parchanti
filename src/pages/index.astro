@@ -721,6 +721,18 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     overflow: hidden;
     touch-action: pan-y;
     cursor: grab;
+    /* Room for the ticket's drop shadow inside the clip (2026-09-07: "stin
+       more like repertoar cards. ted je to spis reflection").
+
+       It always WAS the same shadow the repertoire cards carry - the deck is
+       not clipped, this window is, and overflow:hidden was cutting the falloff
+       off about 5px under the card. What is left of a 24px blur after 5px is a
+       hard dark line hugging the bottom edge, which is exactly what a
+       reflection looks like and nothing like a cast shadow.
+
+       Vertical only. The sides have to keep clipping or the dates either side
+       of this one show through. */
+    padding-block: 1rem 2.5rem;
   }
 
   .drum__window[data-dragging] { cursor: grabbing; }
@@ -738,7 +750,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     display: flex;
     justify-content: center;
     gap: 0.15rem;
-    margin-top: 0.25rem;
   }
 
   /* 44px of button around a 10px dot - what a thumb needs, and what the dot
