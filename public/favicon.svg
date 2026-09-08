@@ -14,18 +14,18 @@
 
        The viewBox is square and centred on the letters, so the mark fills the
        icon instead of floating in the corner of a 200-unit box. -->
-  <g fill="#B73D28">
+  <g fill="#AA0A27">
     <path d="M33 52 H70 V61 H33 Z"/>
     <path d="M45 52 H58 V142 H45 Z"/>
     <path d="M31 133 H72 V142 H31 Z"/>
   </g>
-  <g fill="none" stroke="#B73D28" stroke-linecap="butt">
+  <g fill="none" stroke="#AA0A27" stroke-linecap="butt">
     <path d="M57 99 L97 56" stroke-width="11"/>
     <path d="M57 101 L100 142" stroke-width="12"/>
   </g>
 
   <!-- P laid over the K, translated to match KPMark.astro -->
-  <g fill="#B73D28" transform="translate(-10,0)">
+  <g fill="#AA0A27" transform="translate(-10,0)">
     <path d="M91 44 H125 V54 H91 Z"/>
     <path d="M101 44 H115 V162 H101 Z"/>
     <path d="M89 153 H127 V162 H89 Z"/>

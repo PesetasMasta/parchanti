@@ -1139,6 +1139,7 @@ for (const [slug, phrases] of [
   ['zuzana-matuskova', ['moc horko, ale hlavně!', 'moderuje v rapovým radiu a dabuje']],
   ['aliska', ['tvořit jejich maximálně punkovým stylem']],
   ['mikulas-polak', ['s partou lidí které máš rád']],
+  ['ondrej-kapusta', ['exBilly Elliot a milovník filmu a hudby']],
 ]) {
   onPage(`/soubor/${slug}/`,
     'the bio is her wording, character-exact',
@@ -1152,6 +1153,35 @@ for (const [slug, phrases] of [
     },
   );
 }
+
+onPage('/',
+  "the mark keeps her red and nothing else does",
+  // The red is 7.5:1 on the paper, which a graphic clears twice over, but the
+  // point of the assertion is the second half: it is the one colour left, and
+  // the split that keeps it off the link is what stops the contrast harness
+  // measuring the company name against it (3.4:1) instead of against the ink
+  // it is actually painted in.
+  `JSON.stringify({
+    mark: getComputedStyle(document.querySelector('.masthead__home svg')).color,
+    name: getComputedStyle(document.querySelector('.masthead__home')).color,
+    footerMark: getComputedStyle(document.querySelector('.footer svg')).color,
+    others: [...document.querySelectorAll('.button, .burger, .ticket, .page-heading')]
+      .flatMap((el) => {
+        const style = getComputedStyle(el);
+        return [style.color, style.backgroundColor, style.borderTopColor];
+      }),
+  })`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    const RED = 'rgb(170, 10, 39)';
+    if (r.mark !== RED) return `the mark is ${r.mark}, not her red`;
+    if (r.name === RED) return 'the red is on the link, so the harness measures the company name against it rather than against the ink';
+    if (r.footerMark === RED) return 'the footer mark is red, which is 1.6:1 on the band and cannot be seen';
+    const strays = r.others.filter((value) => value === RED);
+    if (strays.length) return `${strays.length} surface(s) besides the mark took the red — it paints the mark and nothing else`;
+    return null;
+  },
+);
 
 onPage('/o-prostoru/',
   'venue page carries the address and the trams',

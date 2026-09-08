@@ -60,10 +60,11 @@
    printed surface takes the same one. The dark bands still flip it to white,
    which is the only override left.
 
-   The drawn KP mark comes through in ink rather than her red. That is a
-   change to her own artwork's presentation, not to the artwork - the file is
-   unchanged and currentColor is what tints it. If she wants the mark to keep
-   its red on a black-and-white page, that is her call, not ours.
+   The one exception is the drawn KP mark, which keeps her red - --mark, and
+   nothing else on the site takes it. A page that argues colour belongs to the
+   work and the people has no reason to strip it from her own drawing. On the
+   dark bands the same file comes through white, because the red is 1.6:1
+   there and simply cannot be seen.
 
    White never sits on the paper; that ground takes ink.
    scripts/check.mjs enforces the contrast on every page, at 320px and 390px.
@@ -86,6 +87,17 @@
      The page carries no colour of its own on purpose. Every actor gets one
      and the production photographs arrive in colour; a ground with none is
      what lets those be the loudest thing on the screen. */
+  /* The one colour left on the page, and it is hers: the drawn KP keeps its
+     red (2026-09-08: "meybey give back the red to the logo"). Barbados
+     Cherry exactly as she sent it, 7.5:1 on the paper, and it paints nothing
+     else - not a button, not a frame, not a heading. The mark is her artwork
+     and the rest of the site is the black-and-white ground it hangs on.
+
+     Inside the dark bands it is 1.6:1 on ink and cannot be seen at all, so
+     the footer's mark stays white; the file is all currentColor, which is
+     what makes one component do both. */
+  --mark: #AA0A27;
+
   --ground: var(--white);
   --ground-deep: #E6E6E4;  /* the same paper a shade down: the bands and blanks that break it */
   /* One dark, and it is not black (2026-09-06: "sjednotil bych tmavou barvu
@@ -275,13 +287,17 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* The mark and the name are one colour again. They were split while the mark
-   was red and the name ink: the link's colour is what the contrast harness
-   measures the name against, so a red on the link reported 3.4:1 for a line
-   of text that was painted in ink. With one ink there is nothing to split,
-   and the svg takes it through currentColor like everything else. Inside the
-   dark bands the same file comes through white. */
+/* Two jobs, two declarations, and the split has to stay. The red belongs to
+   the mark and not to the link: the link's colour is what the contrast
+   harness measures the NAME against, and with the red on the link it reported
+   3.4:1 for a line of text that is painted in ink and always was. The mark is
+   a graphic and answers to 3:1, which the red clears at 7.5:1; the name is
+   text and answers to 4.5:1, which the ink clears at 15.9:1.
+
+   Inside the dark bands the same file comes through white, inherited from the
+   band rather than declared here. */
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
+.masthead__home svg { color: var(--mark); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
