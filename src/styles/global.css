@@ -424,8 +424,15 @@ img { max-width: 100%; height: auto; }
     white-space: nowrap;
   }
 
+  /* No gap at all. It was tied to the condense, so it was widest at rest -
+     exactly when there is nothing on the other side of it to separate, since
+     the bars are zero wide there. The button then centred the word plus an
+     empty 0.6rem and the word came out left of centre (2026-09-08: "menu dej
+     do prostred, je ted ujety"). Following the bars instead just moved the
+     dead space to the condensed end, which check.mjs catches. Neither end
+     shows both, so there is nothing for a gap to do at either. */
   .burger {
-    gap: calc(0.6rem * (1 - var(--condense)));
+    gap: 0;
     padding:
       calc(0.5rem - 0.05rem * var(--condense))
       calc(0.9rem - 0.35rem * var(--condense));
@@ -860,7 +867,13 @@ img { max-width: 100%; height: auto; }
      looking printed on rather than pinned to it. */
   box-shadow:
     0 0 0 3px var(--ticket-paper),
-    0 3px 8px rgb(var(--ink-rgb) / 0.38);
+    /* A hairline outside the ring, so the ring reads as an outline rather
+       than as nothing - it is white on a white card and invisible except
+       where it crosses the frame. */
+    0 0 0 4px rgb(var(--ink-rgb) / 0.16),
+    /* Clear of the ring, or the ring stands in front of the shadow and the
+       badge looks printed on the card instead of pinned to it. */
+    0 5px 12px rgb(var(--ink-rgb) / 0.42);
 }
 
 .ticket p:last-child { margin-bottom: 0; }
