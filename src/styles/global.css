@@ -290,8 +290,9 @@ img { max-width: 100%; height: auto; }
 /* Condensed, the button drops the word and keeps the bars, which read as a
    menu on their own. The button carries aria-label="Menu" so hiding the text
    costs nothing to a screen reader. */
-.masthead[data-condensed] .burger { padding: 0.45rem 0.55rem; }
+.masthead[data-condensed] .burger { padding: 0.55rem; justify-content: center; }
 .masthead[data-condensed] .burger__label { display: none; }
+.masthead[data-condensed] .burger__bars { display: block; }
 
 /* Sized off .button rather than off the body (2026-09-06: "menu tlacitko
    mensi, ve stylu ostatnich tlacitek"). `font: inherit` handed it the body
@@ -302,6 +303,11 @@ img { max-width: 100%; height: auto; }
 .burger {
   display: flex;
   align-items: center;
+  justify-content: center;
+  /* A thumb needs 44px whichever state it meets, and the condensed button has
+     nothing but the bars in it. */
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   gap: 0.5rem;
   padding: 0.6rem 1.2rem;
   font: inherit;
@@ -322,10 +328,20 @@ img { max-width: 100%; height: auto; }
   cursor: pointer;
 }
 
-/* Bars drawn as gradients: fewer nodes, and the open state swaps one value. */
+/* Bars drawn as gradients: fewer nodes, and the open state swaps one value.
+
+   They belong to the condensed state and nothing else (2026-09-08: "remove
+   three lines next from a menu button. make it visible only after
+   colapsing"). At the top the button is the word; once the word goes, the
+   bars are what is left to aim at, so they arrive as it leaves rather than
+   sitting beside it the whole way down.
+
+   Half again as big as they were. At 80% browser zoom the old 1.05rem box
+   was the size of a favicon and read as damage rather than as a control. */
 .burger__bars {
-  width: 1.05rem;
-  height: 0.62rem;
+  display: none;
+  width: 1.6rem;
+  height: 1.05rem;
   background:
     linear-gradient(var(--button-text) 0 0) 0 0 / 100% 3px no-repeat,
     linear-gradient(var(--button-text) 0 0) 0 50% / 100% 3px no-repeat,
@@ -436,7 +452,14 @@ img { max-width: 100%; height: auto; }
     background: color-mix(in srgb, var(--button-bg), transparent calc(100% * var(--burger-chrome)));
   }
 
+  /* Same last quarter the fill fades over, run the other way: the bars widen
+     from nothing as the button sheds its chrome, so the two swap places
+     instead of overlapping. Width rather than opacity, because a
+     zero-width box takes no room in the flex row and the button does not
+     carry a gap for something invisible. */
   .burger__bars {
+    display: block;
+    width: calc(1.6rem * var(--burger-chrome));
     --bar: color-mix(in srgb, var(--button-text), var(--ink) calc(100% * var(--burger-chrome)));
     background:
       linear-gradient(var(--bar) 0 0) 0 0 / 100% 3px no-repeat,
@@ -762,7 +785,19 @@ img { max-width: 100%; height: auto; }
    here. Given back a little of the difference rather than made equal - it is
    still a subtitle. */
 .ticket__title .production-title__rest { font-size: 0.62em; }
+/* The title's link covers the card, so the whole thing is the tap target
+   (2026-09-08: "make whole card clickable / tapable"). A stretched
+   pseudo-element rather than a wrapping <a>, because the card can also carry
+   a ticketing link and anchors do not nest. .ticket is already positioned,
+   which is what this resolves against.
+
+   A date with no production page has no link here, so its card stays inert -
+   which is right: there is nowhere for it to go. */
 .ticket__title a { color: var(--accent); text-decoration: none; }
+.ticket__title a::after { content: ""; position: absolute; inset: 0; }
+.ticket:hover .ticket__title a { text-decoration: underline; text-underline-offset: 0.15em; }
+/* Anything else clickable has to come back out from under it. */
+.ticket__body .link { position: relative; z-index: 1; }
 .ticket__title a:hover,
 .ticket__title a:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
 
@@ -819,9 +854,13 @@ img { max-width: 100%; height: auto; }
   font-weight: 700;
   letter-spacing: 0.06em;
   white-space: nowrap;
+  /* The ring detaches the badge from the frame it crosses; the drop shadow
+     lifts it off the card (2026-09-08: "add a little shadow bellow info
+     bubbles"). On a white card over a white ground the ring alone left them
+     looking printed on rather than pinned to it. */
   box-shadow:
     0 0 0 3px var(--ticket-paper),
-    0 4px 10px rgb(var(--ink-rgb) / 0.28);
+    0 3px 8px rgb(var(--ink-rgb) / 0.38);
 }
 
 .ticket p:last-child { margin-bottom: 0; }

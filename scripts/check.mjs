@@ -406,6 +406,10 @@ onPage('/',
     await frame(); await frame();
     const fullHeight = masthead.getBoundingClientRect().height;
     const nameVisibleAtTop = !hidden(name);
+    // At rest the button is the word and nothing else. Measured as width
+    // rather than display, because the scroll-driven path grows the bars from
+    // zero instead of switching them on.
+    const barsWidthAtTop = document.querySelector('.burger__bars').getBoundingClientRect().width;
     window.scrollTo(0, 600);
     await frame(); await frame(); await new Promise((resolve) => setTimeout(resolve, 350));
     const condensedHeight = masthead.getBoundingClientRect().height;
@@ -417,12 +421,13 @@ onPage('/',
       width: burgerBox.width,
       height: burgerBox.height,
       labelHidden: hidden(document.querySelector('.burger__label')),
+      barsWidth: document.querySelector('.burger__bars').getBoundingClientRect().width,
       barsVisible: getComputedStyle(document.querySelector('.burger__bars')).display !== 'none',
       name: burger.getAttribute('aria-label') ?? burger.textContent.trim(),
     };
     window.scrollTo(0, 0);
     document.body.style.minHeight = '';
-    return JSON.stringify({ fullHeight, nameVisibleAtTop, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop, burgerCondensed });
+    return JSON.stringify({ fullHeight, nameVisibleAtTop, barsWidthAtTop, condensedHeight, nameHiddenAfterScroll, scrollPaddingTop, burgerCondensed });
   })()`,
   (raw) => {
     const s = JSON.parse(raw);
@@ -435,6 +440,10 @@ onPage('/',
     const b = s.burgerCondensed;
     if (!b.labelHidden) return 'the burger still shows its label when condensed';
     if (!b.barsVisible) return 'the burger bars vanished — the button is now unlabelled and unreadable';
+    // The bars are the condensed state's own mark. Beside the word they were
+    // clutter, which is what this pair is here to keep out.
+    if (s.barsWidthAtTop > 0.5) return `the burger shows its bars at rest (${s.barsWidthAtTop}px wide) — at the top it is the word alone`;
+    if (b.barsWidth < 20) return `condensed bars are ${b.barsWidth}px wide, too small to read as a control`;
     if (!b.name) return 'the burger has no accessible name once its visible label is hidden';
     if (b.width < 24 || b.height < 24) return `condensed burger is ${b.width}x${b.height}px, under the 24px minimum tap target`;
     // The offset that matters is the condensed height - that is the state in
@@ -764,6 +773,62 @@ onPage('/',
     }
     // The room above is only worth having if it stays empty.
     if (r.strays) return `${r.strays} off-window date(s) show through the room left for the shadow`;
+    return null;
+  },
+);
+
+onPage('/',
+  'the drum can be turned without a drag, and the whole ticket is the target',
+  // The drag is invisible and a keyboard has no gesture for it, so the arrows
+  // are the only way the strip is worked on a desktop. The ticket's link is
+  // stretched over the card rather than left on the title, so what is asserted
+  // is the covered area, not the anchor's own box.
+  `(async () => {
+    const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const current = () => [...document.querySelectorAll('.drum__dot')].findIndex((d) => d.hasAttribute('aria-current'));
+    const next = document.querySelector('[data-drum-next]');
+    const prev = document.querySelector('[data-drum-prev]');
+    if (!next || !prev) return JSON.stringify({ arrows: false });
+    const start = current();
+    next.click(); await frame();
+    const afterNext = current();
+    prev.click(); await frame();
+    const afterPrev = current();
+    const ticket = document.querySelector('.next .drum__slide[data-index="0"] .ticket');
+    const link = ticket.querySelector('.ticket__title a');
+    // elementFromPoint only sees the viewport, and the strip sits below the
+    // first screen. Without this the hit test reads null and the assertion
+    // fails on where the card is rather than on what covers it.
+    ticket.scrollIntoView({ block: 'center' });
+    await frame();
+    const box = ticket.getBoundingClientRect();
+    const hit = link
+      ? document.elementFromPoint(box.left + box.width - 6, box.top + 8)
+      : null;
+    return JSON.stringify({
+      arrows: true,
+      start, afterNext, afterPrev,
+      shown: getComputedStyle(next).display !== 'none',
+      sizes: [next.getBoundingClientRect().width, next.getBoundingClientRect().height],
+      names: [prev.getAttribute('aria-label'), next.getAttribute('aria-label')],
+      cornerIsLink: hit ? Boolean(hit.closest('a')) : null,
+      hasLink: Boolean(link),
+    });
+  })()`,
+  (raw) => {
+    const r = JSON.parse(raw);
+    if (!r.arrows) return 'the drum has no arrows, so it can only be worked by dragging it';
+    if (r.afterNext === r.start) return 'the next arrow did not turn the drum';
+    if (r.afterPrev !== r.start) return `the back arrow did not return to ${r.start} (landed on ${r.afterPrev})`;
+    if (r.names.some((name) => !name)) return `an arrow has no accessible name: ${JSON.stringify(r.names)}`;
+    // Below 40rem they are hidden on purpose: six dots at 44px already fill a
+    // phone. Hidden and squeezed look the same on a tape measure and are not
+    // the same bug, so the two cases are told apart rather than merged.
+    if (r.shown && Math.min(...r.sizes) < 44) return `an arrow is ${r.sizes.join('x')}px, under the 44px tap target`;
+    if (!r.shown && Math.max(...r.sizes) > 0) return `an arrow is hidden but still occupies ${r.sizes.join('x')}px`;
+    if (r.hasLink && !r.cornerIsLink) {
+      return 'the ticket has a production page but its far corner is not part of the link — the card is not the tap target';
+    }
     return null;
   },
 );

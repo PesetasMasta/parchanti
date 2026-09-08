@@ -162,15 +162,23 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
             ))}
           </div>
 
-          <div class="drum__dots" role="group" aria-label="Termíny">
-            {drumDates.map((date, index) => (
-              <button
-                class="drum__dot"
-                type="button"
-                aria-label={date.when}
-                aria-current={index === 0 ? 'true' : undefined}
-              ></button>
-            ))}
+          <!-- The drum is a drag, which is not a gesture a mouse offers and
+               not one a keyboard has. The arrows are how it is worked without
+               one (2026-09-08: "add arrows to it? to by more desktop
+               friendly"). -->
+          <div class="drum__nav">
+            <button class="drum__step" type="button" data-drum-prev aria-label="Předchozí termín">&lsaquo;</button>
+            <div class="drum__dots" role="group" aria-label="Termíny">
+              {drumDates.map((date, index) => (
+                <button
+                  class="drum__dot"
+                  type="button"
+                  aria-label={date.when}
+                  aria-current={index === 0 ? 'true' : undefined}
+                ></button>
+              ))}
+            </div>
+            <button class="drum__step" type="button" data-drum-next aria-label="Další termín">&rsaquo;</button>
           </div>
         </div>
       )}
@@ -205,9 +213,13 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
                   <h3 class="display production-card__title">
                     <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
                   </h3>
+                  <!-- The poster side carries one control and no link
+                       (2026-09-08: "change Popis btn to i button and remove
+                       link vice o inscenaci from poster side"). The way to
+                       the production page is on the back, next to the text
+                       that would make someone want it. -->
                   <div class="deck__foot">
-                    <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>
-                    <button class="deck__turn" type="button" data-flip>Popis</button>
+                    <button class="deck__turn deck__turn--info" type="button" data-flip aria-label="Popis inscenace">i</button>
                   </div>
                 </article>
 
@@ -579,6 +591,21 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     cursor: pointer;
   }
 
+  /* A letter, not a word. Round, so it reads as a marker rather than as the
+     card's second button, and labelled for anyone who cannot see that it is
+     an i. */
+  .deck__turn--info {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+    margin-left: auto;
+    border-radius: 50%;
+    font-family: var(--display);
+    font-size: 1.15rem;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
   .deck__controls {
     display: flex;
     align-items: center;
@@ -772,6 +799,46 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   /* A drag must not leave a half-selected paragraph behind it. */
   .drum__window[data-dragging] .drum__slide { user-select: none; }
 
+  /* Pulled up into the room the window leaves for the ticket's shadow
+     (2026-09-08: "move dots closer to the cards"). That padding cannot be
+     taken back - it is what stops the shadow being clipped into a hard line -
+     but the controls can sit inside it, where the shadow is already almost
+     nothing. */
+  .drum__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: -1.4rem;
+  }
+
+  /* 44px of button around a glyph, same as the dots beside them - and never
+     squeezed below it, which is what flex does to them by default.
+
+     Shown from 40rem up only. Six dots at their own 44px already fill a
+     phone, so the arrows there would either overflow the row or shrink both
+     out of reach; on touch the strip is dragged anyway, and the arrows are
+     for the pointer that cannot drag it (2026-09-08: "to by more desktop
+     friendly"). */
+  .drum__step {
+    display: none;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    place-content: center;
+  }
+
+  @media (min-width: 40rem) {
+    .drum__step { display: grid; }
+  }
+
   .drum__dots {
     display: flex;
     justify-content: center;
@@ -960,6 +1027,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
     // Someone who has just chosen a date should get a full turn to read it,
     // not the remainder of a tick that was already running.
+    drum.querySelector('[data-drum-prev]')?.addEventListener('click', () => { go(slot - 1); restart(); });
+    drum.querySelector('[data-drum-next]')?.addEventListener('click', () => { go(slot + 1); restart(); });
+
     const stop = () => { clearInterval(timer); timer = null; };
     const start = () => {
       stop();
