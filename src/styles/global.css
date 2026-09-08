@@ -155,6 +155,12 @@
      sideways, so an element of any other height would either crop the dither
      or run past the end of it. 192 is also 64 cells of 3px exactly. */
   --seam: 192px;
+  /* The hero's own seam is shorter than the two below it, and has to be: it
+     dissolves the photograph into the band, and the photograph is only
+     min(62vw, 24rem) tall. A 192px matrix would have eaten four fifths of it
+     on a phone. Its own tile, so the cells stay square 3px like the others
+     rather than being squashed by a shorter box. */
+  --hero-seam: 96px;
 
   /* The curve, and now the only smooth thing in a seam. Its ramp is
      deliberately short: a long one scales every dot's alpha on its way and

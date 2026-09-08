@@ -367,17 +367,39 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   /* The photograph's lower edge dissolved into the band. Drawn once for the
      reel rather than once per slide: three identical gradients stacked
-     compounded their alpha and the fade came out short and hard. */
+     compounded their alpha and the fade came out short and hard.
+
+     A dot matrix now, not a gradient (2026-09-08: "add pixelized gradient to
+     the top of the hero black strip"). It was the last smooth transition
+     left on the page - both seams below it are dithered - and one page that
+     dissolves three different edges should dissolve them the same way.
+
+     Same tile construction as .next::before and .footer::before, and the same
+     orientation as the footer's, since the ink is below this edge rather than
+     above it: dense at the bottom, thinning upward.
+
+     One deliberate difference. The other two intersect the matrix with a
+     radial so the seam curves, and this one does not. That radial holds ink
+     in the far corners, which over a plain ground reads as a proscenium and
+     over a photograph reads as damage - it put dark columns down both sides
+     of the picture and left the matrix visible only in the middle. Compared
+     side by side before choosing. The curve stays where the ground is plain. */
   .hero::after {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(var(--hero-photo) - 7rem);
-    height: 7rem;
+    top: calc(var(--hero-photo) - var(--hero-seam));
+    height: var(--hero-seam);
     z-index: 1;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgb(var(--ink-rgb) / 0), var(--ink));
+    background: var(--ink);
+    -webkit-mask-image: url("/assets/hero-dither.png");
+    mask-image: url("/assets/hero-dither.png");
+    -webkit-mask-size: 1536px var(--hero-seam);
+    mask-size: 1536px var(--hero-seam);
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
   }
 
   /* visibility, not opacity: it is what takes the copy of a slide nobody is

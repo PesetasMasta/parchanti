@@ -557,13 +557,17 @@ onPage('/',
   // here parses. Decoding it is the only assertion that would have caught it.
   //
   // The ground is flat colour now, so what is left to guard is the seam
-  // dither: two PNGs used as mask layers on the hero and footer joins. A mask
-  // that fails to decode masks nothing, which paints the seam as a hard block
-  // of ink rather than a fade.
+  // dither: three PNGs used as mask layers, on the photograph's lower edge and
+  // on the two band joins. A mask that fails to decode masks nothing, which
+  // paints the seam as a hard block of ink rather than a fade.
   `(() => {
-    const seams = [document.querySelector('.next'), document.querySelector('.footer')].filter(Boolean);
-    const urls = seams.flatMap((el) => {
-      const style = getComputedStyle(el, '::before');
+    const seams = [
+      [document.querySelector('.next'), '::before'],
+      [document.querySelector('.footer'), '::before'],
+      [document.querySelector('.hero'), '::after'],
+    ].filter(([el]) => el);
+    const urls = seams.flatMap(([el, pseudo]) => {
+      const style = getComputedStyle(el, pseudo);
       const declared = style.maskImage || style.webkitMaskImage || '';
       return [...declared.matchAll(/url\\("?([^")]+)"?\\)/g)].map((m) => m[1]);
     });
@@ -577,7 +581,7 @@ onPage('/',
   })()`,
   (raw) => {
     const layers = JSON.parse(raw);
-    if (!layers.length) return 'neither seam declares a mask image';
+    if (layers.length < 3) return `only ${layers.length} of the three seams declares a mask image`;
     const dead = layers.filter((layer) => !layer.width || !layer.height);
     if (dead.length) {
       return `${dead.map((d) => d.url).join(', ')} referenced but the browser cannot decode it, so that layer paints nothing`;
