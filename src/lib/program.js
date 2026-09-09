@@ -120,7 +120,7 @@ function loose(title) {
     .trim();
 }
 
-function titlesAgree(ours, theirs) {
+export function titlesAgree(ours, theirs) {
   const a = loose(ours);
   const b = loose(theirs);
   return a === b || a.includes(b) || b.includes(a);

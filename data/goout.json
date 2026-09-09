@@ -1,12 +1,15 @@
 {
-  "fetchedAt": "2026-09-09T16:46:14.729Z",
+  "fetchedAt": "2026-09-09T17:36:10.648Z",
   "performerId": 2590315,
   "performerUrl": "https://goout.net/en/kolekce-parchant/pzpmtpg/",
+  "venueId": 4025,
+  "venueUrl": "https://goout.net/en/studio-citadela/vzalg/",
   "productions": [
     {
       "gooutEventId": 3242569,
       "title": "Hra lásky a náhody",
       "url": "https://goout.net/en/hra-lasky-a-nahody/eztcnhi/",
+      "attributed": true,
       "images": [
         "https://goout.net/i/134/1345645-%%%.jpg",
         "https://goout.net/i/134/1345646-%%%.jpg",
@@ -20,13 +23,31 @@
       "gooutEventId": 3304956,
       "title": "Audience (Pivařská Odyssea)",
       "url": "https://goout.net/en/audience-pivarska-odyssea/ezgxmli/",
+      "attributed": true,
       "images": [
         "https://goout.net/i/132/1325650-%%%.jpg"
+      ]
+    },
+    {
+      "gooutEventId": 3345388,
+      "title": "Rychlé šípy",
+      "url": "https://goout.net/en/rychle-sipy/eznpcoi/",
+      "attributed": false,
+      "images": [
+        "https://goout.net/i/140/1403919-%%%.jpg",
+        "https://goout.net/i/140/1403918-%%%.jpg",
+        "https://goout.net/i/140/1403916-%%%.jpg",
+        "https://goout.net/i/140/1403912-%%%.jpg",
+        "https://goout.net/i/140/1403913-%%%.jpg",
+        "https://goout.net/i/140/1403914-%%%.jpg",
+        "https://goout.net/i/140/1403915-%%%.jpg",
+        "https://goout.net/i/140/1403917-%%%.jpg"
       ]
     }
   ],
   "dates": [
     {
+      "scheduleId": 9291944,
       "gooutEventId": 3242569,
       "start": "2025-05-02T20:00:00+02:00",
       "cancelled": false,
@@ -39,6 +60,7 @@
       }
     },
     {
+      "scheduleId": 9291943,
       "gooutEventId": 3242569,
       "start": "2025-05-09T20:00:00+02:00",
       "cancelled": false,
@@ -51,6 +73,7 @@
       }
     },
     {
+      "scheduleId": 9312139,
       "gooutEventId": 3242569,
       "start": "2025-06-13T20:00:00+02:00",
       "cancelled": false,
@@ -63,6 +86,7 @@
       }
     },
     {
+      "scheduleId": 9312138,
       "gooutEventId": 3242569,
       "start": "2025-06-15T20:00:00+02:00",
       "cancelled": false,
@@ -75,6 +99,7 @@
       }
     },
     {
+      "scheduleId": 9342600,
       "gooutEventId": 3242569,
       "start": "2025-09-06T20:00:00+02:00",
       "cancelled": false,
@@ -87,6 +112,7 @@
       }
     },
     {
+      "scheduleId": 9342599,
       "gooutEventId": 3242569,
       "start": "2025-09-09T20:00:00+02:00",
       "cancelled": false,
@@ -99,6 +125,7 @@
       }
     },
     {
+      "scheduleId": 9405900,
       "gooutEventId": 3304956,
       "start": "2025-10-25T20:00:00+02:00",
       "cancelled": true,
@@ -111,6 +138,7 @@
       }
     },
     {
+      "scheduleId": 9405901,
       "gooutEventId": 3242569,
       "start": "2025-10-28T15:00:00+01:00",
       "cancelled": true,
@@ -123,6 +151,7 @@
       }
     },
     {
+      "scheduleId": 9405904,
       "gooutEventId": 3242569,
       "start": "2025-11-01T20:00:00+01:00",
       "cancelled": false,
@@ -135,6 +164,7 @@
       }
     },
     {
+      "scheduleId": 9405905,
       "gooutEventId": 3242569,
       "start": "2025-11-25T20:00:00+01:00",
       "cancelled": false,
@@ -147,6 +177,7 @@
       }
     },
     {
+      "scheduleId": 9405906,
       "gooutEventId": 3242569,
       "start": "2025-12-02T20:00:00+01:00",
       "cancelled": false,
@@ -159,6 +190,7 @@
       }
     },
     {
+      "scheduleId": 9405907,
       "gooutEventId": 3242569,
       "start": "2025-12-11T20:00:00+01:00",
       "cancelled": false,
@@ -171,6 +203,7 @@
       }
     },
     {
+      "scheduleId": 9405920,
       "gooutEventId": 3304956,
       "start": "2025-12-13T20:00:00+01:00",
       "cancelled": false,
@@ -183,6 +216,7 @@
       }
     },
     {
+      "scheduleId": 9453316,
       "gooutEventId": 3304956,
       "start": "2026-01-15T20:00:00+01:00",
       "cancelled": false,
@@ -195,6 +229,7 @@
       }
     },
     {
+      "scheduleId": 9453318,
       "gooutEventId": 3242569,
       "start": "2026-01-16T20:00:00+01:00",
       "cancelled": false,
@@ -207,6 +242,7 @@
       }
     },
     {
+      "scheduleId": 9453317,
       "gooutEventId": 3242569,
       "start": "2026-01-22T20:00:00+01:00",
       "cancelled": false,
@@ -219,6 +255,33 @@
       }
     },
     {
+      "scheduleId": 9456269,
+      "gooutEventId": 3345388,
+      "start": "2026-01-30T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "SOLD_OUT",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/sztaffy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9468580,
+      "gooutEventId": 3345388,
+      "start": "2026-02-07T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szfsyfy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9468583,
       "gooutEventId": 3242569,
       "start": "2026-02-10T20:00:00+01:00",
       "cancelled": false,
@@ -231,6 +294,20 @@
       }
     },
     {
+      "scheduleId": 9468579,
+      "gooutEventId": 3345388,
+      "start": "2026-02-14T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szesyfy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9468581,
       "gooutEventId": 3304956,
       "start": "2026-02-17T20:00:00+01:00",
       "cancelled": false,
@@ -243,6 +320,7 @@
       }
     },
     {
+      "scheduleId": 9468582,
       "gooutEventId": 3242569,
       "start": "2026-02-24T20:00:00+01:00",
       "cancelled": false,
@@ -255,6 +333,46 @@
       }
     },
     {
+      "scheduleId": 9471911,
+      "gooutEventId": 3345388,
+      "start": "2026-03-03T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szlbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9471910,
+      "gooutEventId": 3345388,
+      "start": "2026-03-13T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szkbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9471909,
+      "gooutEventId": 3345388,
+      "start": "2026-04-03T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szjbfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9471913,
       "gooutEventId": 3242569,
       "start": "2026-04-10T20:00:00+02:00",
       "cancelled": false,
@@ -267,6 +385,7 @@
       }
     },
     {
+      "scheduleId": 9471915,
       "gooutEventId": 3304956,
       "start": "2026-04-11T20:00:00+02:00",
       "cancelled": false,
@@ -279,6 +398,20 @@
       }
     },
     {
+      "scheduleId": 9471908,
+      "gooutEventId": 3345388,
+      "start": "2026-04-23T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szibfgy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9471912,
       "gooutEventId": 3242569,
       "start": "2026-05-02T20:00:00+02:00",
       "cancelled": false,
@@ -291,6 +424,7 @@
       }
     },
     {
+      "scheduleId": 9509004,
       "gooutEventId": 3304956,
       "start": "2026-05-23T20:00:00+02:00",
       "cancelled": true,
@@ -303,6 +437,7 @@
       }
     },
     {
+      "scheduleId": 9565850,
       "gooutEventId": 3242569,
       "start": "2026-09-17T20:00:00+02:00",
       "cancelled": false,
@@ -315,11 +450,38 @@
       }
     },
     {
+      "scheduleId": 9565848,
+      "gooutEventId": 3345388,
+      "start": "2026-09-24T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szxifmy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9565849,
       "gooutEventId": 3242569,
       "start": "2026-10-01T20:00:00+02:00",
       "cancelled": false,
       "ticketingState": "ACTIVE",
       "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szyifmy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9569689,
+      "gooutEventId": 3345388,
+      "start": "2026-10-03T16:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szomlmy/",
       "venue": {
         "name": "Studio Citadela",
         "address": "Klimentská 16",
