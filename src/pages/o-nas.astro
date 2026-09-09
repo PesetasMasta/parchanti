@@ -10,19 +10,24 @@ import Base from '../layouts/Base.astro';
            information architecture. -->
       <h1 class="display page-heading">O Kolekci Parchant</h1>
 
-      <!-- Her text, published as she wrote it (2026-08-31). Three slips are
-           deliberately left in - "v dob jeho studií", "To se pomohlo s pomocí
-           herce", and the missing comma after "Max Dolanský" - and go to her
-           in the next QA round. Same rule as "v nové size": we do not correct
-           her words without asking. -->
+      <!-- Her text (2026-08-31), proofread under the rule decided 2026-09-02
+           that reverses the old verbatim one: spelling, agreement and
+           punctuation get corrected, her voice does not. Corrected here on
+           2026-09-09 - "v dob" to "v době", and four missing commas. The
+           check.mjs assertions were inverted rather than deleted, so a
+           regression back to a slip is what fails the build now.
+           Still hers to answer, so still uncorrected: "To se pomohlo" almost
+           certainly means "To se povedlo", and "Jiří Dlouhý, další herci"
+           reads like "Jiří Dlouhý a další herci". Both change a word, not a
+           form. QA.md asks her. -->
       <div class="prose">
         <p>
-          Soubor Kolekce Parchant byl založen mladým hercem Prokopem Zachem v dob
+          Soubor Kolekce Parchant byl založen mladým hercem Prokopem Zachem v době
           jeho studií na Pražské konzervatoři. Jeho vize byla založit nezávislý
           mladý soubor, který bude mít možnost dělat si divadlo podle sebe a jít
-          vlastním směrem. To se pomohlo s pomocí herce Ondřeje Stupky se kterým
+          vlastním směrem. To se pomohlo s pomocí herce Ondřeje Stupky, se kterým
           nazkoušeli první inscenaci souboru. V další sezoně se k nim přidal Max
-          Dolanský Zuzana Matušková, Šimon Fikar, Jiří Dlouhý další herci kteří
+          Dolanský, Zuzana Matušková, Šimon Fikar, Jiří Dlouhý, další herci, kteří
           stáli u zrodu druhé inscenace Hra lásky a náhody.
         </p>
         <p>

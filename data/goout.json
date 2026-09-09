@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-08-08T13:13:34.726Z",
+  "fetchedAt": "2026-09-09T16:46:14.729Z",
   "performerId": 2590315,
   "performerUrl": "https://goout.net/en/kolekce-parchant/pzpmtpg/",
   "productions": [
@@ -296,6 +296,30 @@
       "cancelled": true,
       "ticketingState": "CANCELLED",
       "ticketUrl": "https://goout.net/en/audience-pivarska-odyssea/szekoiy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-09-17T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szajfmy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "gooutEventId": 3242569,
+      "start": "2026-10-01T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szyifmy/",
       "venue": {
         "name": "Studio Citadela",
         "address": "Klimentská 16",

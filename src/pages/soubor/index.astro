@@ -23,6 +23,16 @@ const groups = [
     <div class="page__inner">
       <h1 class="display page-heading">Soubor</h1>
 
+      {/* Said once, here, rather than on each of the thirteen blank portraits:
+          thirteen captions reading "připravujeme" would be louder than the
+          gap they explain. The blanks themselves stay silent and
+          aria-hidden. Drop this line when the portraits arrive - the count is
+          derived, so it does not have to be maintained by hand, but the
+          sentence stops being true the moment everyone has a photograph. */}
+      {people.filter((person) => !person.data.portrait).length > 0 && (
+        <p class="ensemble__note">Portréty souboru připravujeme. Zatím je u většiny lidí jen jméno a medailonek.</p>
+      )}
+
       {groups.map((group) => (
         <>
           <h2 class="ensemble__heading">{group.heading}</h2>
@@ -109,6 +119,13 @@ const groups = [
   .ensemble__portrait { display: block; width: 100%; border-radius: var(--radius-inner); }
 
   .ensemble__portrait--blank { aspect-ratio: 3 / 4; background: var(--ground-deep); }
+
+  .ensemble__note {
+    max-width: var(--measure);
+    margin: 0 0 1.5rem;
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
 
   .ensemble__name { font-size: clamp(1.05rem, 4vw, 1.35rem); line-height: 1.15; overflow-wrap: break-word; }
 

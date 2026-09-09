@@ -52,7 +52,8 @@
     "name": "Matouš Vyšata",
     "role": "herec",
     "group": "soubor",
-    "order": 7
+    "order": 7,
+    "bio": "Matouš Vyšata vstoupil do Kolekce jako Jarka s účesem na prdelku a se srdcem na dlani. Na Pražské konzervatoři studuje a zkouší v divadle se svými kamarády a touží poznávat moudrost a živost na divadelních prknech všude, kde se dá. Má rád psy, všechna místa, kde je krásně, pohoda a legrace u vychlazeného piva."
   },
   {
     "id": "maximilian-dolansky",
@@ -100,6 +101,7 @@
     "role": "herec",
     "group": "host",
     "order": 13,
+    "bio": "Herec a hudební skladatel. Studoval na pražské DAMU, v letech 1995–2004 hrál v Činoherním klubu a hostoval v Národním divadle, Dejvickém divadle i v Divadle Komedie. Diváci ho znají ze seriálů Ordinace v růžové zahradě a Modrý kód a z filmů Anthropoid, Metanol a Svět pod hlavou.",
     "portrait": {
       "src": "/assets/portraits/roman-zach.jpg",
       "alt": "Roman Zach se založenýma rukama, ve světlém saku a tmavě modré mikině s kapucí, před oprýskanou růžovou zdí.",
@@ -113,6 +115,7 @@
     "role": "herec",
     "group": "host",
     "order": 14,
+    "bio": "Herec a pedagog. V roce 1985 absolvoval herectví na pražské DAMU a od roku 1996 je členem souboru Divadla v Dlouhé.",
     "portrait": {
       "src": "/assets/portraits/tomas-turek.jpg",
       "alt": "Tomáš Turek se založenýma rukama, v černém roláku, před sytě modrým pozadím.",

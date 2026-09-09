@@ -89,3 +89,69 @@ export function monthGrids(dates) {
     return { key, label: czechMonth(`${key}-01`), weeks };
   });
 }
+
+// --- tickets from GoOut ------------------------------------------------------
+//
+// Her decision 2026-09-02 reversed the 2026-08-11 one: the existing GoOut page
+// stays and becomes where tickets are sold. It does NOT become where the
+// program comes from, and that is a measurement rather than a preference - on
+// 2026-09-09 the account carried two productions and two upcoming dates
+// against the fourteen in data/program.json, and it still lists Audience
+// (Pivařská odyssea), which she asked to have taken off the site. So the dates
+// stay hand-kept and GoOut supplies what only GoOut can: a link per date, and
+// whether that date is still on sale.
+//
+// Nothing here fails when GoOut is missing a date, which is the normal case
+// today: an entry with no match keeps the state it was written with and
+// renders no link, exactly as before. As the rest of the autumn is entered
+// into the account, those dates pick up links on the next build with no code
+// change.
+
+// GoOut sells under the full title, she writes the short one: "Červánky"
+// against "Ale ty červánky jsou stejně nejkrásnější". Comparing loosely is
+// what lets her short forms survive, and the date has to agree as well, so a
+// loose title on its own can never mint a link.
+function loose(title) {
+  return title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function titlesAgree(ours, theirs) {
+  const a = loose(ours);
+  const b = loose(theirs);
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+const STATES = { ACTIVE: 'on_sale', SOLD_OUT: 'sold_out' };
+
+// The site is Czech; the feeder answers in English URLs.
+function czechUrl(url) {
+  return url.replace('://goout.net/en/', '://goout.net/cs/');
+}
+
+export function withTickets(dates, goout) {
+  const titleOf = new Map((goout?.productions ?? []).map((p) => [p.gooutEventId, p.title]));
+
+  return dates.map((entry) => {
+    // A ticket link written by hand wins. She has sent two schedules by hand
+    // already, the second correcting the first, and an endpoint whose own
+    // responses carry @DEPRECATED markers is not something to make the only
+    // way a link can reach the page.
+    if (entry.url) return entry;
+
+    const match = (goout?.dates ?? []).find((row) => {
+      if (row.cancelled) return false;
+      if (!STATES[row.ticketingState]) return false;
+      if (row.start.slice(0, 10) !== entry.date) return false;
+      const theirs = titleOf.get(row.gooutEventId);
+      return Boolean(theirs) && titlesAgree(entry.title, theirs);
+    });
+
+    if (!match) return entry;
+    return { ...entry, url: czechUrl(match.ticketUrl), state: STATES[match.ticketingState] };
+  });
+}

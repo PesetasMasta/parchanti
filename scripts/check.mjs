@@ -13,7 +13,7 @@ import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { staticServer } from './serve.mjs';
 import { withBrowser } from './lib/browser.mjs';
-import { displayWhen, czechDate, upcoming, todayISO } from '../src/lib/program.js';
+import { displayWhen, czechDate, upcoming, todayISO, withTickets } from '../src/lib/program.js';
 
 const DIST = new URL('../dist', import.meta.url).pathname;
 const PORT = 4517;
@@ -21,6 +21,12 @@ const PORT = 4517;
 // The program assertions compare the rendered page against the same file the
 // pages render from, so adding a date cannot silently go unchecked.
 const program = JSON.parse(readFileSync(new URL('../data/program.json', import.meta.url), 'utf8'));
+
+// The GoOut cache the pages merge ticket links from. Read here so the
+// assertions below compare the page against the same two files it was built
+// from, rather than against a hand-written expectation that goes stale the
+// next time the feed is refreshed.
+const goout = JSON.parse(readFileSync(new URL('../data/goout.json', import.meta.url), 'utf8'));
 
 // --- 0. Program data, before anything is built. `when` is the client's own
 // display string and `date`/`time` are the machine-readable fields the pages
@@ -895,11 +901,58 @@ onPage('/program/',
   },
 );
 
+onPage('/program/',
+  'ticket links come from GoOut, and only for the dates GoOut actually has',
+  `JSON.stringify([...document.querySelectorAll('.ticket')].map((card) => {
+    const link = [...card.querySelectorAll('a')].find((a) => /goout\\.net/.test(a.getAttribute('href') ?? ''));
+    return {
+      day: card.querySelector('.ticket__day')?.textContent.trim(),
+      href: link?.getAttribute('href') ?? null,
+      label: link?.textContent.trim() ?? null,
+      state: card.getAttribute('data-state'),
+    };
+  }))`,
+  (raw) => {
+    const cards = JSON.parse(raw);
+    // Merged the same way the page merges it. Twelve of the fourteen autumn
+    // dates are not in the GoOut account (measured 2026-09-09), and the thing
+    // worth pinning is that those render NO link: a "Vstupenky" that goes
+    // nowhere is the failure this whole arrangement exists to avoid.
+    const merged = upcoming(withTickets(program.dates, goout));
+    if (cards.length !== merged.length) return `${cards.length} cards for ${merged.length} dates`;
+
+    for (const [index, entry] of merged.entries()) {
+      const card = cards[index];
+      if (entry.url) {
+        if (card.href !== entry.url) return `${entry.date}: ticket link is ${JSON.stringify(card.href)}, expected ${JSON.stringify(entry.url)}`;
+        if (card.label !== 'Vstupenky') return `${entry.date}: ticket link reads ${JSON.stringify(card.label)}`;
+      } else if (card.href) {
+        return `${entry.date} has no ticket on GoOut, but the page links to ${JSON.stringify(card.href)}`;
+      }
+      if (card.state !== entry.state) return `${entry.date}: card is marked ${JSON.stringify(card.state)}, expected ${JSON.stringify(entry.state)}`;
+    }
+
+    // The site is Czech and the feeder answers in English URLs, so the locale
+    // swap is load-bearing rather than cosmetic.
+    const english = cards.filter((card) => card.href?.includes('/en/'));
+    if (english.length) return `${english.length} ticket link(s) still point at the English GoOut page`;
+
+    // Not a coverage requirement - it is fine and expected for GoOut to be
+    // missing dates - but a total of zero means the merge has silently stopped
+    // matching, which looks identical to "GoOut has nothing" from the page.
+    if (!merged.some((entry) => entry.url)) {
+      return 'no date resolved a ticket link at all — either GoOut is empty or withTickets has stopped matching';
+    }
+    return null;
+  },
+);
+
 onPage('/repertoar/',
   'both productions listed in order, blurbs verbatim',
   `JSON.stringify({
     slugs: [...document.querySelectorAll('[data-slug]')].map((el) => el.dataset.slug),
-    hasClientWording: document.body.textContent.includes('v nové size'),
+    hasCorrectedWording: document.body.textContent.includes('v nové verzi'),
+    hasOldSlip: document.body.textContent.includes('v nové size'),
     detailLinks: [...document.querySelectorAll('[data-slug] a')].map((a) => a.getAttribute('href')),
     hraSplit: Boolean(document.querySelector('[data-slug="hra-lasky-a-nahody"] .production-title__rest')),
     sipySplit: Boolean(document.querySelector('[data-slug="rychle-sipy-a-zahada-klubovny"] .production-title__rest')),
@@ -908,8 +961,13 @@ onPage('/repertoar/',
     const r = JSON.parse(raw);
     const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
     if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
-    if (!r.hasClientWording) {
-      return "the exact string 'v nové size' is missing — the client's own wording, never silently corrected";
+    // Inverted 2026-09-09 under the rule that reverses the old verbatim one:
+    // her text is proofread, so a regression back to the slip is what fails.
+    if (!r.hasCorrectedWording) {
+      return "the corrected string 'v nové verzi' is missing from the blurb";
+    }
+    if (r.hasOldSlip) {
+      return "'v nové size' is back — it was corrected to 'v nové verzi' on 2026-09-09";
     }
     const missing = expected.map((slug) => `/repertoar/${slug}/`)
       .filter((href) => !r.detailLinks.includes(href));
@@ -935,7 +993,8 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     premiere: document.body.textContent.includes('30. 1. 2026'),
     credits: [...document.querySelectorAll('.credits dt')].map((dt) => dt.textContent.trim()),
     creditsText: document.querySelector('.credits')?.textContent.replace(/\\s+/g, ' ').trim(),
-    blurb: document.body.textContent.includes('v nové size'),
+    blurb: document.body.textContent.includes('v nové verzi'),
+    blurbOldSlip: document.body.textContent.includes('v nové size'),
     photos: document.querySelectorAll('.gallery img').length,
   })`,
   (raw) => {
@@ -962,7 +1021,8 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     if (!r.creditsText.includes('0+')) return 'age must read 0+ — her correction, 2026-08-31';
     if (!r.foglar) return 'Foglar credit line missing';
     if (!r.premiere) return 'premiere date missing';
-    if (!r.blurb) return 'blurb (with "v nové size") missing from the production page';
+    if (!r.blurb) return 'blurb (with the corrected "v nové verzi") missing from the production page';
+    if (r.blurbOldSlip) return "'v nové size' is back on the production page — corrected 2026-09-09";
     if (r.photos !== 3) return `expected 3 gallery photos, got ${r.photos}`;
     return null;
   },
@@ -1112,15 +1172,33 @@ onPage('/o-nas/',
     const r = JSON.parse(raw);
     if (r.heading !== 'O Kolekci Parchant') return `heading was ${JSON.stringify(r.heading)}`;
     if (r.placeholder) return 'her text has arrived, so nothing here may still be marked as placeholder';
-    // Her three slips are load-bearing in this check: correcting her words
-    // without asking is exactly what it is here to prevent. QA.md asks her.
+    // Inverted 2026-09-09. These used to pin her slips in place, because the
+    // rule was that we never corrected her words. That rule was reversed on
+    // 2026-09-02: spelling, agreement and punctuation are corrected, her voice
+    // is not. So the corrected strings are asserted and the slips are asserted
+    // absent - a regression back to a slip is now what fails the build.
     for (const phrase of [
-      'byl založen mladým hercem Prokopem Zachem v dob jeho studií',
-      'To se pomohlo s pomocí herce Ondřeje Stupky',
-      'přidal Max Dolanský Zuzana Matušková',
+      'byl založen mladým hercem Prokopem Zachem v době jeho studií',
+      'herce Ondřeje Stupky, se kterým',
+      'přidal Max Dolanský, Zuzana Matušková',
+      'Jiří Dlouhý, další herci, kteří stáli',
       'na půdě punkového prostoru Studia Citadela',
     ]) {
       if (!r.text?.includes(phrase)) return `her wording is altered or missing: ${JSON.stringify(phrase)}`;
+    }
+    for (const slip of [
+      'v dob jeho studií',
+      'Stupky se kterým',
+      'Max Dolanský Zuzana',
+      'Jiří Dlouhý další herci kteří',
+    ]) {
+      if (r.text?.includes(slip)) return `a slip corrected on 2026-09-09 is back: ${JSON.stringify(slip)}`;
+    }
+    // Still hers to answer, so still on the page: "To se pomohlo" almost
+    // certainly means "To se povedlo". Pinned so it is corrected deliberately,
+    // when she says so, and not by accident.
+    if (!r.text?.includes('To se pomohlo s pomocí')) {
+      return '"To se pomohlo" changed without her answer — it is a word, not a form (QA 22)';
     }
     return null;
   },
@@ -1140,6 +1218,22 @@ for (const [slug, phrases] of [
   ['aliska', ['tvořit jejich maximálně punkovým stylem']],
   ['mikulas-polak', ['s partou lidí které máš rád']],
   ['ondrej-kapusta', ['exBilly Elliot a milovník filmu a hudby']],
+  // Arrived 2026-09-08, shipped 2026-09-09. Her colour is asserted; the two
+  // commas and "všechna místa" are the proofreading, and the slips they
+  // replaced must not come back.
+  ['matous-vysata', ['s účesem na prdelku a se srdcem na dlani', 'všude, kde se dá', 'psy, všechna místa, kde je krásně']],
+  // These last two are OURS, not hers, and that is the one thing to remember
+  // about them. Roman Zach and Tomáš Turek never sent a text, so on 2026-09-09
+  // theirs were written from public sources - ČSFD, cross-checked against
+  // Wikipedia, Kinobox, divadlovdlouhe.cz and Czech Radio, because ČSFD itself
+  // refuses automated fetches. They are the two best-known names on the site,
+  // so a wrong fact here is the one most likely to be spotted; every claim
+  // asserted below was confirmed twice. QA 29 tells them so and offers the
+  // swap. When a text arrives from either of them it REPLACES this outright,
+  // and these phrases go with it - they are pinned so the facts cannot drift,
+  // not because the wording is precious.
+  ['roman-zach', ['v letech 1995–2004 hrál v Činoherním klubu', 'Anthropoid, Metanol a Svět pod hlavou']],
+  ['tomas-turek', ['absolvoval herectví na pražské DAMU', 'od roku 1996 je členem souboru Divadla v Dlouhé']],
 ]) {
   onPage(`/soubor/${slug}/`,
     'the bio is her wording, character-exact',

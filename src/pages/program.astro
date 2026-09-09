@@ -3,7 +3,8 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PerformanceDate from '../components/PerformanceDate.astro';
 import program from '../../data/program.json';
-import { upcoming, monthGrids, WEEKDAYS_SHORT } from '../lib/program.js';
+import goout from '../../data/goout.json';
+import { upcoming, monthGrids, withTickets, WEEKDAYS_SHORT } from '../lib/program.js';
 
 // Running time, age and poster live on the production, so each date is joined
 // to its production by slug. Toníkova cesta and Červánky have no page and so
@@ -13,7 +14,7 @@ const productionOf = new Map(productions.map((production) => [production.id, pro
 
 // Past dates drop off by themselves on the next build, rather than sitting on
 // the page until someone edits the file by hand.
-const dates = upcoming(program.dates);
+const dates = upcoming(withTickets(program.dates, goout));
 
 // One grid per month the season touches, built at build time. The calendar is
 // therefore real HTML before any script runs: every played day is a link to

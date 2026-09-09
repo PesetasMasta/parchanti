@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-31",
-  "source": "Client's autumn/winter plan, sent 2026-08-17. Her wording: all performances at 20:00 except Toníkova cesta at 17:30. Weekdays below were verified against the 2026 calendar and all fourteen match what she wrote.",
-  "note": "Locally controlled. GoOut is not the company's account (FEEDBACK.md 2026-08-11: \"goout není pod vlastní správou, zařídí si vlastní\"), so nothing here is fetched. Entry shape: {\"date\": \"2026-09-17\" — ISO, the machine-readable one, \"time\": \"20:00\", \"when\": \"čt 17. 9. 20:00\" — her own display string, kept verbatim, \"title\": \"Hra lásky a náhody\", \"slug\": optional production slug — present only for productions that have a page, \"note\": optional label such as \"premiéra\", \"url\": optional ticket link — omit entirely when tickets are not on sale, \"state\": \"announced\" | \"on_sale\" | \"sold_out\"}. `when` duplicates `date` + `time` on purpose: she wrote it, so it stays, and check.mjs derives the same string from the ISO fields and fails the build if the two ever disagree. That is what catches a weekday drifting off its date. This is NOT the shape fetch-goout.mjs emits; translate by hand.",
-  "unconfirmed": "Confirmed by the client 2026-08-18: every Toníkova cesta is at 17:30, and the title is \"Červánky\" - her short form, first letter only, not the i-divadlo \"Ale ty červánky jsou stejně nejkrásnější\". Still open: no performance has a ticket URL, because GoOut is still being sorted out on her side.",
+  "updated": "2026-09-09",
+  "source": "Client's revised Hrací plán, sent 2026-09-02, superseding the 2026-08-17 plan this file was first built from. Her rule is unchanged and holds for the whole file: everything is 20:00 unless the line says otherwise. Three entries moved on 2026-09-09 — Rychlé šípy from čt 15. 10. 20:00 to so 3. 10. 16:00 (she wrote that early start with four exclamation marks, so it is deliberate), and both surviving Toníkova cesta dates from 17:30 to 18:00, with 10. 11. gaining \"premiéra\". Weekdays for all three were verified against the 2026 calendar.",
+  "note": "Dates are hand-kept here and are NOT fetched. Her 2026-09-02 decision put ticket sales back on the existing GoOut page, but that page is not the programme: measured 2026-09-09, the account carried two productions and two upcoming dates against the fourteen below, and still listed Audience (Pivařská odyssea), which she asked to have taken off the site. So GoOut supplies only what GoOut knows - a ticket URL and whether a date is on sale - and src/lib/program.js withTickets() matches its rows onto these entries by date and title. A `url` written here by hand always wins. Refresh the feed with scripts/fetch-goout.mjs, which caches to data/goout.json and never overwrites a good cache with a bad fetch. Entry shape: {\"date\": \"2026-09-17\" — ISO, the machine-readable one, \"time\": \"20:00\", \"when\": \"čt 17. 9. 20:00\" — her own display string, kept verbatim, \"title\": \"Hra lásky a náhody\", \"slug\": optional production slug — present only for productions that have a page, \"note\": optional label such as \"premiéra\", \"url\": optional ticket link — omit entirely when tickets are not on sale, and GoOut fills it in when it has the date, \"state\": \"announced\" | \"on_sale\" | \"sold_out\"}. `when` duplicates `date` + `time` on purpose: she wrote it, so it stays, and check.mjs derives the same string from the ISO fields and fails the build if the two ever disagree. That is what catches a weekday drifting off its date.",
+  "unconfirmed": "Open with the client as of 2026-09-09. (1) Toníkova cesta on čt 22. 10. 17:30 is in the 2026-08-17 plan but absent from the 2026-09-02 one. A cancelled date and a line forgotten while retyping look identical on paper, so it is kept here rather than deleted on a guess — but it must be answered before the site goes public, because advertising a performance that is not happening is the one error that sends people to a locked door. Removing it is a one-entry deletion. (2) Its 17:30 also now disagrees with the two surviving Toníkova cesta dates, which the new plan puts at 18:00; her 2026-08-18 confirmation that \"every Toníkova cesta is at 17:30\" is superseded for those two and untested for this one. (3) The title \"Červánky\" is her short form and stays, confirmed 2026-08-18, not the i-divadlo \"Ale ty červánky jsou stejně nejkrásnější\".",
   "dates": [
     {
       "date": "2026-09-17",
@@ -29,9 +29,9 @@
       "state": "announced"
     },
     {
-      "date": "2026-10-15",
-      "time": "20:00",
-      "when": "čt 15. 10. 20:00",
+      "date": "2026-10-03",
+      "time": "16:00",
+      "when": "so 3. 10. 16:00",
       "title": "Rychlé šípy a záhada klubovny",
       "slug": "rychle-sipy-a-zahada-klubovny",
       "state": "announced"
@@ -61,9 +61,10 @@
     },
     {
       "date": "2026-11-10",
-      "time": "17:30",
-      "when": "út 10. 11. 17:30",
+      "time": "18:00",
+      "when": "út 10. 11. 18:00",
       "title": "Toníkova cesta",
+      "note": "premiéra",
       "state": "announced"
     },
     {
@@ -108,8 +109,8 @@
     },
     {
       "date": "2026-12-09",
-      "time": "17:30",
-      "when": "st 9. 12. 17:30",
+      "time": "18:00",
+      "when": "st 9. 12. 18:00",
       "title": "Toníkova cesta",
       "state": "announced"
     }

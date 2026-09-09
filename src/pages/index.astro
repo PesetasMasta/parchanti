@@ -4,7 +4,8 @@ import Base from '../layouts/Base.astro';
 import PerformanceDate from '../components/PerformanceDate.astro';
 import ProductionTitle from '../components/ProductionTitle.astro';
 import program from '../../data/program.json';
-import { upcoming } from '../lib/program.js';
+import goout from '../../data/goout.json';
+import { upcoming, withTickets } from '../lib/program.js';
 
 const productions = (await getCollection('productions'))
   .sort((a, b) => a.data.order - b.data.order);
@@ -19,7 +20,7 @@ const productionOf = new Map(productions.map((production) => [production.id, pro
 // Six, not one: the strip turns through them like the festival drum on
 // radiobloodstream.com. More than six and the dots stop being countable at a
 // glance, which is the only thing they are for.
-const drumDates = upcoming(program.dates).slice(0, 6);
+const drumDates = upcoming(withTickets(program.dates, goout)).slice(0, 6);
 
 // Titles she performs that have no page in the repo yet - Toníkova cesta and
 // Červánky. Taken from her own programme rather than typed here, so the strip
