@@ -5,6 +5,7 @@
 // the program page. She described one block, so this is one component used in
 // both places rather than two that drift apart.
 import { czechDate, czechDuration } from '../lib/program.js';
+import { standIn } from '../lib/stand-in.js';
 import ProductionTitle from './ProductionTitle.astro';
 
 interface Props {
@@ -38,23 +39,24 @@ const tags = [
   data?.durationMinutes && czechDuration(data.durationMinutes),
   data?.ageRating,
 ].filter(Boolean);
+
+// A photograph rather than a grey blank where no poster exists (2026-09-09).
+// It is always labelled: see src/lib/stand-in.js for why the bubble is the
+// half that matters, and why the pool excludes anything showing the Rychlé
+// šípy set.
+const picture = data?.poster ?? standIn(entry.title);
+const awaitingPoster = !data?.poster;
 ---
 <article class="ticket" id={id} data-state={entry.state}>
   <div class="ticket__poster">
-    {data?.poster ? (
-      <img
-        src={data.poster.src}
-        width={data.poster.width}
-        height={data.poster.height}
-        alt={data.poster.alt}
-        loading="lazy"
-      />
-    ) : (
-      /* No poster artwork exists in the repo for any production yet. A
-         marked blank holds the slot she asked for so the layout can be
-         judged; a photo panel is not a poster and must not stand in. */
-      <div class="ticket__poster-blank" data-placeholder aria-hidden="true"></div>
-    )}
+    <img
+      src={picture.src}
+      width={picture.width}
+      height={picture.height}
+      alt={picture.alt}
+      data-placeholder={awaitingPoster ? '' : undefined}
+      loading="lazy"
+    />
   </div>
 
   <div class="ticket__body">
@@ -72,17 +74,29 @@ const tags = [
 
     {entry.note && <p class="ticket__note">{entry.note}</p>}
 
-    {/* No ticketing yet, so no link is rendered rather than an empty one. */}
-    {entry.url && <p><a class="link" href={entry.url}>Vstupenky</a></p>}
   </div>
 
   {/* Outside .ticket__body on purpose: these are pinned to the card's corner,
       so they are positioned against the card rather than flowing after the
       text. Labelled, because "80 min" and "12+" alone say nothing when read
       out in sequence away from the card they are stuck to. */}
-  {tags.length > 0 && (
-    <ul class="ticket__tags" aria-label="Délka a doporučený věk">
-      {tags.map((tag) => <li class="ticket__tag">{tag}</li>)}
-    </ul>
-  )}
+  <div class="ticket__bubbles">
+    {tags.length > 0 && (
+      <ul class="ticket__tags" aria-label="Délka a doporučený věk">
+        {tags.map((tag) => <li class="ticket__tag">{tag}</li>)}
+      </ul>
+    )}
+
+    {/* Says what the blank used to say by being blank, and stops the
+        photograph above it from claiming to be this production's poster. */}
+    {awaitingPoster && <span class="ticket__bubble">Připravujeme</span>}
+
+    {/* Rightmost, and the only red on the card: it is the one thing here
+        anybody came to do. Still absent rather than empty when GoOut has no
+        ticket for this date - a "Vstupenky" going nowhere is worse than none.
+        Moved out of the card's body 2026-09-09, because a link that flows
+        after the text made cards with tickets taller than cards without and
+        the row stopped lining up. */}
+    {entry.url && <a class="ticket__bubble ticket__bubble--tickets" href={entry.url}>Vstupenky</a>}
+  </div>
 </article>

@@ -52,9 +52,12 @@ const productions = defineCollection({
     // Optional because Hra lásky has no confirmed running time yet.
     durationMinutes: z.number().int().positive().optional(),
     ageRating: z.string().optional(),
-    // The mini poster she asks for beside every date. No artwork exists in
-    // the repo for any production yet, so every date currently renders the
-    // placeholder; a photo panel is not a substitute for a poster.
+    // The mini poster she asks for beside every date. Two of four productions
+    // have one. Until 2026-09-09 the rest rendered a grey blank, on the rule
+    // that a photo panel is not a substitute for a poster; they now render a
+    // photograph under a "Připravujeme" badge instead. The rule it replaced
+    // was right about the risk and wrong about the remedy - see
+    // src/lib/stand-in.js, where the badge is the part doing the work.
     poster: z.object({
       src: z.string(),
       alt: z.string(),

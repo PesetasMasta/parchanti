@@ -675,7 +675,11 @@ onPage('/',
     // The drag is the whole interaction and a keyboard has no drag, so these
     // are not decoration - without them the deck is unusable without a mouse.
     controls: [...document.querySelectorAll('.deck__step')].map((button) => ({
-      name: button.textContent.trim(),
+      // The label, not the glyph. They became arrows on 2026-09-09, so the
+      // text content is now "‹" and says nothing to a screen reader; the
+      // accessible name has to come from aria-label and the assertion has to
+      // read the same thing a screen reader would.
+      name: button.getAttribute('aria-label') || button.textContent.trim(),
       height: Math.round(button.getBoundingClientRect().height),
     })),
     live: document.querySelector('[data-deck-live]')?.getAttribute('aria-live'),
@@ -1249,7 +1253,7 @@ for (const [slug, phrases] of [
 }
 
 onPage('/',
-  "the mark keeps her red and nothing else does",
+  "the mark and the ticket bubble take her red, and nothing else does",
   // The red is 7.5:1 on the paper, which a graphic clears twice over, but the
   // point of the assertion is the second half: it is the one colour left, and
   // the split that keeps it off the link is what stops the contrast harness
@@ -1259,6 +1263,16 @@ onPage('/',
     mark: getComputedStyle(document.querySelector('.masthead__home svg')).color,
     name: getComputedStyle(document.querySelector('.masthead__home')).color,
     footerMark: getComputedStyle(document.querySelector('.footer svg')).color,
+    ticket: (() => {
+      const bubble = document.querySelector('.ticket__bubble--tickets');
+      if (!bubble) return null;
+      const style = getComputedStyle(bubble);
+      return {
+        background: style.backgroundColor,
+        colour: style.color,
+        card: getComputedStyle(bubble.closest('.ticket')).backgroundColor,
+      };
+    })(),
     others: [...document.querySelectorAll('.button, .burger, .ticket, .page-heading')]
       .flatMap((el) => {
         const style = getComputedStyle(el);
@@ -1271,6 +1285,15 @@ onPage('/',
     if (r.mark !== RED) return `the mark is ${r.mark}, not her red`;
     if (r.name === RED) return 'the red is on the link, so the harness measures the company name against it rather than against the ink';
     if (r.footerMark === RED) return 'the footer mark is red, which is 1.6:1 on the band and cannot be seen';
+    // The one deliberate exception, added 2026-09-09. White on this red is
+    // 7.5:1, which is what makes the badge legible whatever the card behind it
+    // does - so the pair asserted here is the fill and its own text, not the
+    // card. The chip's edge against a dark card is carried by its white ring
+    // instead, which is a graphic boundary and not this assertion's business.
+    if (r.ticket) {
+      if (r.ticket.background !== RED) return `the ticket bubble is ${r.ticket.background}, not her red`;
+      if (r.ticket.colour !== 'rgb(255, 255, 255)') return `the ticket bubble reads in ${r.ticket.colour}, not white`;
+    }
     const strays = r.others.filter((value) => value === RED);
     if (strays.length) return `${strays.length} surface(s) besides the mark took the red — it paints the mark and nothing else`;
     return null;

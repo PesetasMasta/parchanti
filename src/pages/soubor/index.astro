@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { placeholderPortrait } from '../../lib/portrait.js';
 
 // The company's own roster, sent by the client 2026-08-31 - the first
 // authoritative list we have had, replacing the one we compiled from
@@ -60,7 +61,7 @@ const groups = [
                       loading="lazy"
                     />
                   ) : (
-                    <span class="ensemble__portrait ensemble__portrait--blank" data-placeholder aria-hidden="true"></span>
+                    <Fragment set:html={placeholderPortrait(person.id, people.indexOf(person))} />
                   )}
                   <span class="ensemble__name display">{person.data.name}</span>
                   <span class="ensemble__role">{person.data.role}</span>
@@ -118,7 +119,10 @@ const groups = [
   /* Portrait above the name above the function, in that order. */
   .ensemble__portrait { display: block; width: 100%; border-radius: var(--radius-inner); }
 
-  .ensemble__portrait--blank { aspect-ratio: 3 / 4; background: var(--ground-deep); }
+  /* Same box as a photograph, so a row of thirteen drawings and two
+     photographs is still one grid. currentColor inherits the link's ink, so
+     the dots are the same ink as the name under them. */
+  .ensemble__portrait--drawn { aspect-ratio: 3 / 4; }
 
   .ensemble__note {
     max-width: var(--measure);

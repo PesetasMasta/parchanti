@@ -4,6 +4,10 @@ import Base from '../layouts/Base.astro';
 // Only the Rychlé šípy photographs are identifiable. Nothing else may be
 // captioned with a production name; misattributing someone else's production
 // is worse than an uncaptioned photo. hero.png is the company itself.
+//
+// The same rule is what picks the stand-in pool in src/lib/stand-in.js: the
+// panels that read as the company can stand in for a missing poster, and the
+// ones showing the Rychlé šípy set cannot.
 const photos = [
   { src: '/assets/panels/sipy-1.png', width: 900, height: 863, caption: 'Rychlé šípy a záhada klubovny', animate: true,
     alt: 'Dívka v kapuci se s leknutím dívá vzhůru, za ní se v klubovně tísní další čtyři postavy pod visícími petrolejkami.' },

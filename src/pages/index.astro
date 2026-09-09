@@ -6,6 +6,7 @@ import ProductionTitle from '../components/ProductionTitle.astro';
 import program from '../../data/program.json';
 import goout from '../../data/goout.json';
 import { upcoming, withTickets } from '../lib/program.js';
+import { standIn } from '../lib/stand-in.js';
 
 const productions = (await getCollection('productions'))
   .sort((a, b) => a.data.order - b.data.order);
@@ -29,6 +30,18 @@ const drumDates = upcoming(withTickets(program.dates, goout)).slice(0, 6);
 // title-only cards: there is no blurb, no photograph and no cast for either,
 // and inventing one is the failure mode this repo guards hardest against.
 const otherTitles = [...new Set(program.dates.filter((date) => !date.slug).map((date) => date.title))];
+
+// The card she asked for is the poster (its own back turns to it with a
+// button reading "Plakát"), so the front carries the poster and not, as it
+// did until 2026-09-09, the first photograph in the gallery. Where no poster
+// exists it carries a labelled photograph instead - see src/lib/stand-in.js.
+const deckCards = productions.map((production) => ({
+  production,
+  picture: production.data.poster ?? standIn(production.data.titleLead),
+  awaitingPoster: !production.data.poster,
+}));
+
+const otherCards = otherTitles.map((title) => ({ title, picture: standIn(title) }));
 
 const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia Citadela v Praze. Rychlé šípy a záhada klubovny, Hra lásky a náhody.';
 ---
@@ -126,10 +139,21 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     <!-- Somewhere to press, and a place that says how many there are and
          which one this is. Outside the slides so it does not fade with
          them. -->
-    <div class="hero__dots" role="group" aria-label="Sekce">
-      <button class="hero__dot" type="button" aria-label="Program" aria-current="true"></button>
-      <button class="hero__dot" type="button" aria-label="Repertoár"></button>
-      <button class="hero__dot" type="button" aria-label="Soubor"></button>
+    <!-- One row of controls, arrows either side of the dots (2026-09-09:
+         "presun z boku k teckam"). Off the sides of the picture and gathered
+         with the dots, they read as one set of controls for one reel rather
+         than as two things that happen to move it.
+         The arrows are for the pointer and revealed on hover; the dots stay
+         the control a keyboard and a thumb use, so hiding the arrows until
+         hover costs nobody anything. -->
+    <div class="hero__controls">
+      <button class="hero__step" type="button" data-reel-prev aria-label="Předchozí sekce">&lsaquo;</button>
+      <div class="hero__dots" role="group" aria-label="Sekce">
+        <button class="hero__dot" type="button" aria-label="Program" aria-current="true"></button>
+        <button class="hero__dot" type="button" aria-label="Repertoár"></button>
+        <button class="hero__dot" type="button" aria-label="Soubor"></button>
+      </div>
+      <button class="hero__step" type="button" data-reel-next aria-label="Další sekce">&rsaquo;</button>
     </div>
   </section>
 
@@ -188,29 +212,28 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   <section class="teaser page">
     <div class="page__inner">
-      <h2 class="display page-heading">Repertoár</h2>
+      <h2 class="display page-heading teaser__heading">Repertoár</h2>
       <!-- Scrolls sideways rather than stacking: there are four titles now,
            not two, and a 2x2 grid of them pushes the rest of the page below
            the fold on a phone. -->
       <div class="deck-stage">
+        <div class="deck__frame">
         <div class="deck" data-deck role="group" aria-roledescription="balíček karet" aria-label="Repertoár" tabindex="0">
-          {productions.map((production) => (
+          {deckCards.map(({ production, picture, awaitingPoster }) => (
             <div class="deck__card" data-flippable>
               <div class="deck__flip">
                 <article class="production-card deck__face">
-                  <!-- No identifiable photo exists for this production; an
-                       olive block is honest, a misattributed photo is not. -->
-                  {production.data.photos.length > 0 ? (
+                  <div class="production-card__picture">
                     <img
-                      src={production.data.photos[0].src}
-                      width={production.data.photos[0].width}
-                      height={production.data.photos[0].height}
-                      alt={production.data.photos[0].alt}
+                      src={picture.src}
+                      width={picture.width}
+                      height={picture.height}
+                      alt={picture.alt}
+                      data-placeholder={awaitingPoster ? '' : undefined}
                       loading="lazy"
                     />
-                  ) : (
-                    <div class="production-card__blank" aria-hidden="true"></div>
-                  )}
+                    {awaitingPoster && <span class="production-card__bubble">Připravujeme</span>}
+                  </div>
                   <h3 class="display production-card__title">
                     <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
                   </h3>
@@ -241,11 +264,21 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
           {/* Title and nothing else, and no back to turn to: there is no
               blurb for either of these, and a blank reverse that says nothing
               is worse than a card that does not turn. */}
-          {otherTitles.map((title) => (
+          {otherCards.map(({ title, picture }) => (
             <div class="deck__card">
               <div class="deck__flip">
                 <article class="production-card deck__face">
-                  <div class="production-card__blank" data-placeholder aria-hidden="true"></div>
+                  <div class="production-card__picture">
+                    <img
+                      src={picture.src}
+                      width={picture.width}
+                      height={picture.height}
+                      alt={picture.alt}
+                      data-placeholder
+                      loading="lazy"
+                    />
+                    <span class="production-card__bubble">Připravujeme</span>
+                  </div>
                   <h3 class="display production-card__title">{title}</h3>
                   <p class="production-card__note">Hrajeme. Stránka inscenace se připravuje.</p>
                 </article>
@@ -256,12 +289,16 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
         <!-- The deck is a drag, which is not an instruction anyone can see and
              not a gesture a keyboard has. These are how it is worked without
-             one. -->
-        <div class="deck__controls">
-          <button class="deck__step" type="button" data-deck-prev>Zpět</button>
-          <p class="deck__count" data-deck-count></p>
-          <button class="deck__step" type="button" data-deck-next>Další</button>
+             one, which is why they are arrows over the deck's edges rather
+             than the "Zpět"/"Další" pair they replaced (2026-09-09) - the
+             labelled buttons sat in a bar below and read as the page's
+             furniture rather than as the deck's own controls.
+             Named for a screen reader, since a glyph is not a name. -->
+          <button class="deck__step deck__step--prev" type="button" data-deck-prev aria-label="Předchozí inscenace">&lsaquo;</button>
+          <button class="deck__step deck__step--next" type="button" data-deck-next aria-label="Další inscenace">&rsaquo;</button>
         </div>
+
+        <p class="deck__count" data-deck-count></p>
 
         <!-- Announced, not shown. The visible count is a few glyphs wide on
              purpose - printing the title there wrapped it to three lines
@@ -290,17 +327,27 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     position: relative;
     padding: 0;
     background: var(--ink);
+    /* The slides now stand beside each other and travel through this box, so
+       it has to clip them - without this the two off-screen slides widen the
+       document and the page scrolls sideways, which check.mjs fails on. */
+    overflow: hidden;
     /* One number for the height of the picture and for the room the slides
        reserve above their copy, so the two cannot drift apart. */
     --hero-photo: min(62vw, 24rem);
+    /* Vertical drags belong to the page. Without this the reel eats the
+       scroll on a phone and the top of the site becomes a trap. */
+    touch-action: pan-y;
   }
 
   /* Only the first slide is in flow. The other two are laid over it, so the
      identity slide - the one with the most words in it - decides the height
      and the strip never resizes as it turns. */
-  /* The slide no longer fades - it has nothing left to fade, since the band
-     under it is the reel's. It is a frame that holds a picture and some
-     words, and those two turn on their own below. */
+  /* The slides travel sideways rather than cross-fading (2026-09-09: "ted je
+     to neprirozene tim ze mame tecky horizontalne"). The dots below are a row,
+     so they promise a row: three things side by side that you move along.
+     A fade promised a stack and the two cues disagreed.
+     The transform is written by script, which is what knows where each slide
+     stands relative to the one showing. */
   .hero__slide {
     position: absolute;
     inset: 0;
@@ -310,6 +357,11 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     padding-top: var(--hero-photo);
     /* Stacked slides would otherwise sit over the showing slide's button. */
     pointer-events: none;
+    transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__slide { transition: none; }
   }
 
   .hero__slide[data-on] { pointer-events: auto; }
@@ -334,11 +386,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     height: var(--hero-photo);
     object-fit: cover;
     object-position: center;
-    opacity: 0;
-    transition: opacity 900ms ease;
   }
-
-  .hero__slide[data-on] .hero__photo { opacity: 1; }
 
   /* No background of its own any more - .hero paints the band for the whole
      reel. Transparent here is safe rather than sloppy: the harness's walk up
@@ -432,13 +480,40 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(4) { transition-delay: 500ms; }
   .hero__slide[data-on] .hero__copy > .page__inner > :nth-child(5) { transition-delay: 580ms; }
 
-  .hero__dots {
+  .hero__controls {
     position: absolute;
     z-index: 2;
     right: var(--gutter);
     bottom: 1rem;
     display: flex;
-    gap: 0.15rem;
+    align-items: center;
+  }
+
+  .hero__dots { display: flex; gap: 0.15rem; }
+
+  /* Plain glyphs, the same as the deck's, in the white the dots are drawn in
+     because this row sits on the ink band. */
+  .hero__step {
+    display: none;
+    place-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--white);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  /* Only where a pointer can hover. On touch the reel is dragged and the dots
+     are already there, so the arrows would be two more things covering the
+     photograph for no gain. :focus-visible brings them back for a keyboard. */
+  @media (hover: hover) {
+    .hero__step { display: grid; opacity: 0; transition: opacity 160ms ease; }
+    .hero:hover .hero__step,
+    .hero__step:focus-visible { opacity: 1; }
   }
 
   /* The mark is small but the target is not: 44px of button around a 10px
@@ -521,13 +596,22 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      every card is absolutely positioned inside it, so the cards behind cannot
      add height; the fan leans them out past that box, which is what the
      stage's bottom padding is for. */
+  /* Over the deck, which is centred in the page: a left-aligned heading above
+     a centred stack of cards read as two different columns. */
+  .teaser__heading { text-align: center; }
+
   .deck-stage { padding-bottom: 0.5rem; }
 
   .deck {
     position: relative;
     width: min(22rem, 82vw);
     margin-inline: auto;
-    aspect-ratio: 3 / 4;
+    /* Sized from the picture inside it, measured rather than guessed: the
+       title, the foot and the padding come to 221px at this width, so the
+       card is the square picture plus that. A 3/4 picture made this 629px
+       tall and read as too big (2026-09-09); square brings it back to 527,
+       within reach of the 469 it was before any of this. */
+    aspect-ratio: 0.67;
     /* Depth for the turn. Set on the deck rather than the card so every card
        is seen from the same eye, which is what keeps the fan coherent. */
     perspective: 1400px;
@@ -576,8 +660,27 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .deck__face--back { transform: rotateY(180deg); }
 
-  .deck__face img,
-  .deck__face .production-card__blank { aspect-ratio: 6 / 5; object-fit: cover; }
+  /* Portrait, because a poster is (2026-09-09: "plakaty 4:3 ale opacne takze
+     3:4"). The ratio is on the wrapper rather than the image so it can SHRINK
+     rather than overflow: `flex: 0 1 auto` takes the full 3/4 when the card
+     has room for it and gives height back to the title if a long one wraps to
+     a third line. That is what stops the Rychlé šípy card pushing its own
+     button out from under it, which is how the fixed ratio failed before.
+     Cropped, so all four cards read as one set whatever shape the artwork
+     arrives in; the whole poster is a tap away on the production page. */
+  .deck__face .production-card__picture {
+    flex: 0 1 auto;
+    min-height: 0;
+    /* Square. 4:5 was the other candidate and was measured first: it saved
+       26px of the 160 that needed to go, which is not an answer to a card
+       that is too tall. Square saves 102px and still gives a portrait poster
+       far more room than the 4:3 landscape band it replaced. */
+    aspect-ratio: 1 / 1;
+  }
+
+  .deck__face img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+
+  .deck__face .production-card__blank { aspect-ratio: 1 / 1; object-fit: cover; }
 
   /* A long blurb scrolls inside the card rather than pushing the foot off it:
      the card cannot grow, because its size is the deck's. */
@@ -629,31 +732,58 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     letter-spacing: 0;
   }
 
-  .deck__controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    /* Clears the fan, which leans the cards behind below the deck's own box. */
-    margin-top: 3.5rem;
-  }
+  .deck__frame { position: relative; }
 
+  /* Over the deck's own edges, because there is no room beside it: the deck
+     is 82vw on a phone, which leaves about 29px a side - under the 44px a
+     control has to be. Vertically centred on the card rather than on the
+     stage, so the arrows sit against the artwork and not against the fan
+     leaning out below it. */
   .deck__step {
-    min-height: 2.75rem;
-    padding: 0.6rem 1.2rem;
+    position: absolute;
+    top: 38%;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: grid;
+    place-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
     border: 0;
-    border-radius: var(--radius-button);
-    background: var(--button-bg);
-    color: var(--button-text);
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    background: none;
+    color: var(--ink);
+    font-size: 2rem;
+    line-height: 1;
     cursor: pointer;
+    /* No disc behind them (2026-09-09: "jednoduchý < > bez kolecka"), so the
+       glyph has to survive whatever the poster puts under it. A white halo
+       rather than a filled chip: it is invisible over the page's own white
+       and only does anything where the arrow crosses artwork. */
+    text-shadow: 0 0 4px var(--paper), 0 0 8px var(--paper);
   }
 
-  .deck__count { margin: 0; font-family: var(--display); font-size: 0.95rem; white-space: nowrap; }
+  .deck__step--prev { left: -1rem; }
+  .deck__step--next { right: -1rem; }
+
+  /* Revealed on hover where there is a pointer that can hover (2026-09-09:
+     "reveal on hover"). Everywhere else - touch, above all - they stay
+     visible, because a control that only appears on hover does not exist on
+     a phone, and these are the deck's only alternative to dragging it.
+     :focus-visible brings them back for a keyboard, which has no hover
+     either. */
+  @media (hover: hover) {
+    .deck__step { opacity: 0; transition: opacity 160ms ease; }
+    .deck__frame:hover .deck__step,
+    .deck__step:focus-visible { opacity: 1; }
+  }
+
+  .deck__count {
+    margin: 3.5rem 0 0;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    text-align: center;
+  }
 
   /* Present to a screen reader, absent to everything else. Not display:none,
      which would take it out of the accessibility tree and silence it. */
@@ -679,6 +809,30 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      The inner picture frame stays ink, so the card reads as a red mount
      around a black-framed image rather than as two red rules. */
   .production-card { padding: 1.25rem; background: var(--paper); background-clip: padding-box; border: 3px solid var(--ink); border-radius: var(--radius-card); }
+
+  /* The same pinned badge the date cards use, and here for the same reason:
+     it is what stops a photograph in a poster's place from being read as the
+     poster. Pinned to the picture's lower right, straddling its frame. */
+  .production-card__picture { position: relative; }
+
+  .production-card__bubble {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0;
+    transform: translateY(50%);
+    padding: 0.22rem 0.6rem;
+    background: var(--ink);
+    color: var(--white);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    box-shadow:
+      0 0 0 3px var(--paper),
+      0 0 0 4px rgb(var(--ink-rgb) / 0.16),
+      0 5px 12px rgb(var(--ink-rgb) / 0.42);
+  }
 
   .production-card img,
   .production-card__blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
@@ -862,6 +1016,16 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     .drum__step { display: grid; }
   }
 
+  /* Revealed on hover, like the hero's and the deck's (2026-09-09). The dots
+     beside them are always there and are what a keyboard and a thumb use, so
+     the arrows can stay out of the way until a pointer comes near the strip.
+     :focus-visible brings them back for a keyboard that tabs into them. */
+  @media (min-width: 40rem) and (hover: hover) {
+    .drum__step { opacity: 0; transition: opacity 160ms ease; }
+    .drum:hover .drum__step,
+    .drum__step:focus-visible { opacity: 1; }
+  }
+
   .drum__dots {
     display: flex;
     justify-content: center;
@@ -902,48 +1066,131 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   const reel = document.querySelector('[data-reel]');
   const slides = [...reel.querySelectorAll('.hero__slide')];
   const dots = [...reel.querySelectorAll('.hero__dot')];
-  let index = 0;
-  let timer;
+  const count = slides.length;
 
-  const show = (next) => {
-    slides[index].removeAttribute('data-on');
-    dots[index].removeAttribute('aria-current');
-    index = (next + slides.length) % slides.length;
-    slides[index].setAttribute('data-on', '');
-    dots[index].setAttribute('aria-current', 'true');
+  const SWIPE_THRESHOLD = 40;
+  const ROTATE_MS = 6000;
+
+  let index = 0;
+  let previous = 0;
+  let dragX = 0;
+  let dragging = false;
+  let startX = null;
+  let startY = null;
+  let dragged = false;
+  let timer = null;
+  let hovered = false;
+
+  // Shortest way round the ring, so the third slide reaches the first by
+  // carrying on forwards rather than winding back across the other two.
+  const positionFor = (i, at) => {
+    let position = i - at;
+    if (position > count / 2) position -= count;
+    if (position <= -count / 2) position += count;
+    return position;
   };
 
-  const start = () => { timer = setInterval(() => show(index + 1), 6000); };
-  const stop = () => { clearInterval(timer); };
+  const layout = () => {
+    slides.forEach((slide, i) => {
+      const position = positionFor(i, index);
+      // A slide that has just wrapped from one end of the ring to the other
+      // must jump, not fly back across the picture in front of the reader.
+      const wrapped = Math.abs(position - positionFor(i, previous)) > 1;
+      slide.style.transition = dragging || wrapped ? 'none' : '';
+      slide.style.transform = `translateX(calc(${position * 100}% + ${dragX}px))`;
+      if (position === 0) slide.setAttribute('data-on', '');
+      else slide.removeAttribute('data-on');
+    });
+
+    dots.forEach((dot, i) => {
+      if (i === index) dot.setAttribute('aria-current', 'true');
+      else dot.removeAttribute('aria-current');
+    });
+  };
+
+  const go = (next) => {
+    previous = index;
+    index = (next + count) % count;
+    layout();
+  };
+
+  const stop = () => { clearInterval(timer); timer = null; };
+  const start = () => {
+    stop();
+    if (count < 2) return;
+    // A reel that turns on its own is motion; anyone who has asked for less
+    // of it gets the dots, the arrows and the drag instead.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    timer = setInterval(() => {
+      if (!dragging && !hovered) go(index + 1);
+    }, ROTATE_MS);
+  };
   // Someone who has just chosen a slide should get a full turn to read it,
   // not the remainder of a tick that was already running.
   const restart = () => { stop(); start(); };
 
   dots.forEach((dot, i) => {
-    dot.addEventListener('click', () => { show(i); restart(); });
+    dot.addEventListener('click', () => { go(i); restart(); });
   });
 
-  // Swipe. A drag that is mostly vertical is the page being scrolled, so the
-  // strip stays out of it; both listeners are passive for the same reason.
-  let startX = null;
-  let startY = null;
+  reel.querySelector('[data-reel-prev]')?.addEventListener('click', () => { go(index - 1); restart(); });
+  reel.querySelector('[data-reel-next]')?.addEventListener('click', () => { go(index + 1); restart(); });
 
-  reel.addEventListener('touchstart', (event) => {
-    const touch = event.changedTouches[0];
-    startX = touch.clientX;
-    startY = touch.clientY;
-  }, { passive: true });
+  reel.addEventListener('pointerenter', () => { hovered = true; });
+  reel.addEventListener('pointerleave', () => { hovered = false; });
 
-  reel.addEventListener('touchend', (event) => {
+  // Dragged 1:1 by finger or mouse and snapping on release, the same gesture
+  // the strip below uses. The slide follows the hand rather than waiting for
+  // it to finish, which is the whole difference between a swipe and a button
+  // that happens to be a gesture.
+  reel.addEventListener('pointerdown', (event) => {
+    if (count < 2) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dragging = true;
+    dragged = false;
+    startX = event.clientX;
+    startY = event.clientY;
+  });
+
+  reel.addEventListener('pointermove', (event) => {
     if (startX === null) return;
-    const touch = event.changedTouches[0];
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    // A drag that is mostly vertical is the page being scrolled. Let go of it
+    // entirely rather than fighting the scroll for the gesture.
+    if (!dragged && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+      startX = null;
+      dragging = false;
+      dragX = 0;
+      layout();
+      return;
+    }
+    // Captured only once a real drag starts: capturing on pointerdown would
+    // swallow the click on the slide's own button.
+    if (!dragged && Math.abs(dx) > 5) {
+      dragged = true;
+      reel.setPointerCapture(event.pointerId);
+    }
+    if (!dragged) return;
+    dragX = dx;
+    layout();
+  });
+
+  const release = () => {
+    if (!dragging) return;
+    const moved = dragX;
     startX = null;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-    show(index + (dx < 0 ? 1 : -1));
+    dragging = false;
+    dragX = 0;
+    if (Math.abs(moved) > SWIPE_THRESHOLD) go(index + (moved < 0 ? 1 : -1));
+    else layout();
     restart();
-  }, { passive: true });
+  };
+
+  reel.addEventListener('pointerup', release);
+  reel.addEventListener('pointercancel', release);
+
+  layout();
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();
@@ -992,7 +1239,7 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     };
 
     // Czech counts three ways, and getting it wrong is the kind of thing that
-    // makes a site read as machine-written: 1 den, 2-4 dny, 5+ dnů. One and
+    // makes a site read as machine-written: 1 den, 2-4 dny, 5+ dní. One and
     // zero have words of their own instead.
     const countdownLabel = (iso) => {
       const days = daysUntil(iso);
@@ -1000,7 +1247,10 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
       if (days === 0) return 'Dnes hrajeme';
       if (days === 1) return 'Zítra';
       if (days < 5) return `Za ${days} dny`;
-      return `Za ${days} dnů`;
+      // "dní" rather than "dnů" (2026-09-09, developer's ear). Both are
+      // standard genitive plurals of "den"; this is the one that reads
+      // naturally after a number here.
+      return `Za ${days} dní`;
     };
 
     // Shortest way round the ring, so slide 0 approaches slide 5 from the

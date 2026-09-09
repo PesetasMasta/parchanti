@@ -97,6 +97,7 @@
      the footer's mark stays white; the file is all currentColor, which is
      what makes one component do both. */
   --mark: #AA0A27;
+  --mark-rgb: 170 10 39;
 
   --ground: var(--white);
   --ground-deep: #E6E6E4;  /* the same paper a shade down: the bands and blanks that break it */
@@ -133,7 +134,13 @@
   --radius-button: 10px;
 
   --paper: var(--white);
-  --masthead-bg: var(--white);  /* the bar */
+  /* Not quite the paper: the bar and the menu let what is under them show
+     through a little (2026-09-09: "menu a header dostane lehky opacity"), so
+     the page reads as passing behind them rather than stopping at them. Kept
+     high on purpose - the bar carries the mark and the burger over whatever
+     the page happens to scroll under it, and the contrast harness measures
+     both against this. */
+  --masthead-bg: rgb(255 255 255 / 0.90);  /* the bar */
   --button-bg: var(--ink);    /* the CTA and the burger */
   --button-text: var(--white);
 
@@ -143,8 +150,17 @@
      this is the first time they differ. The ticket now matches the repertoire
      cards, which have been red-framed since the client asked for it on
      2026-08-31. */
+  /* Inverted on 2026-09-09 and reverted the same evening ("s tim stripem jsem
+     se unahlil ... vrat bily podklad tmave pismo"). White paper it is.
+     The three tokens are what the experiment left behind and they are worth
+     keeping: everything inside the card, badges included, is painted from
+     them, so the card's whole scheme is these three lines rather than a dozen
+     rules to hunt down. Swapping them is what inverting the strip costs, if
+     it is ever tried again - and the one thing that did NOT survive the
+     inversion cleanly is recorded on .production-title__rest below. */
   --ticket-paper: var(--white);
   --ticket-frame: var(--ink);
+  --ticket-text: var(--ink);
 
   /* The typewriter face the client picked 2026-08-19. Fallbacks are
      metric-neighbours, not lookalikes: a monospace stack keeps the
@@ -277,6 +293,11 @@ img { max-width: 100%; height: auto; }
      is a graphic, not text, so it answers to 3:1 rather than 4.5:1, and the
      cherry is 7.5:1 on this white. */
   background: var(--masthead-bg);
+  /* What makes the translucency read as glass rather than as a weak white:
+     without it, text scrolling under the bar stays legible through it and the
+     two sets of words collide. Progressive - a browser without it simply gets
+     the 90% white, which is still opaque enough to read on. */
+  backdrop-filter: blur(10px);
   border-bottom: 3px solid var(--ink);
   transition: height 0.2s ease;
 }
@@ -537,7 +558,11 @@ img { max-width: 100%; height: auto; }
 
 .nav[data-open] {
   visibility: visible;
-  background-color: var(--ink);
+  /* Higher than the bar's: this one covers the whole page and the white menu
+     words sit directly on it, so it has to stay near enough to solid ink to
+     hold them at 4.5:1. */
+  background-color: rgb(var(--ink-rgb) / 0.94);
+  backdrop-filter: blur(14px);
   transition: background-color 260ms ease, visibility 0s;
 }
 
@@ -787,6 +812,7 @@ img { max-width: 100%; height: auto; }
      the two-layer background-clip trick that made a gradient border possible
      went with the variants it existed for. */
   background: var(--ticket-paper);
+  color: var(--ticket-text);
   border: 3px solid var(--ticket-frame);
   border-radius: var(--radius-card);
   /* The tags are pinned to this box's corner. */
@@ -800,10 +826,15 @@ img { max-width: 100%; height: auto; }
    she picked on 2026-09-01 stays everywhere else; this is the one frame that
    reads as a frame around a picture, and she wants it cornered. */
 .ticket__poster img,
-.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ink); border-radius: 0; }
+.ticket__poster-blank { display: block; width: 100%; border: 3px solid var(--ticket-frame); border-radius: 0; }
 
-/* Poster proportions, so the slot is the shape a poster will be. */
-.ticket__poster-blank { aspect-ratio: 2 / 3; background: var(--ground-deep); }
+/* Poster proportions, so a card standing in with a landscape photograph is
+   exactly as tall as one carrying real portrait artwork. Cards that do not
+   line up were the reason this changed (2026-09-09); a stand-in free to keep
+   its own shape would have brought the problem straight back. Only the
+   stand-in is forced - real posters keep their own ratio and are never
+   cropped, which is what the marker distinguishes. */
+.ticket__poster img[data-placeholder] { aspect-ratio: 2 / 3; object-fit: cover; }
 
 /* Long production names have to wrap inside the remaining column. */
 .ticket__body { min-width: 0; }
@@ -813,7 +844,12 @@ img { max-width: 100%; height: auto; }
 /* The card is small, so the global half-size subtitle came out around 10px
    here. Given back a little of the difference rather than made equal - it is
    still a subtitle. */
-.ticket__title .production-title__rest { font-size: 0.62em; }
+/* Inherits rather than keeping the global --accent it is given elsewhere: on
+   the inverted card that accent is the card's own ink, which the harness
+   caught at exactly 1.00:1 - ink on ink, invisible. Inheriting means the
+   subtitle follows whatever the card is painted in and cannot be stranded on
+   the wrong scheme again. */
+.ticket__title .production-title__rest { font-size: 0.62em; color: inherit; }
 /* The title's link covers the card, so the whole thing is the tap target
    (2026-09-08: "make whole card clickable / tapable"). A stretched
    pseudo-element rather than a wrapping <a>, because the card can also carry
@@ -822,12 +858,20 @@ img { max-width: 100%; height: auto; }
 
    A date with no production page has no link here, so its card stays inert -
    which is right: there is nowhere for it to go. */
-.ticket__title a { color: var(--accent); text-decoration: none; }
+.ticket__title a { color: var(--ticket-text); text-decoration: none; }
 .ticket__title a::after { content: ""; position: absolute; inset: 0; }
-.ticket:hover .ticket__title a { text-decoration: underline; text-underline-offset: 0.15em; }
 /* Anything else clickable has to come back out from under it. */
 .ticket__body .link { position: relative; z-index: 1; }
-.ticket__title a:hover,
+
+/* The whole card lights rather than the title underlining (2026-09-09: "misto
+   podtrzeni hry na drum roll stripu na homepage udelej red glow kolem bunky").
+   The tap target has always been the whole card, so underlining four words of
+   it described the target badly; a glow around the cell is the shape of the
+   thing you are about to hit.
+   Keyboard gets it too, through :focus-within - the card's link is the thing
+   focused, and a hover-only cue would leave a keyboard on the card with no
+   sign of where it is. The underline stays for :focus-visible on top of the
+   glow, because a colour alone is not an accessible focus indicator. */
 .ticket__title a:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
 
 .ticket__time { margin: 0.4rem 0 0; font-size: clamp(1.5rem, 6.5vw, 2.1rem); }
@@ -847,7 +891,7 @@ img { max-width: 100%; height: auto; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--accent);
+  color: var(--ticket-text);
 }
 
 /* Running time and recommended age, pinned to the card's bottom-right corner
@@ -859,11 +903,21 @@ img { max-width: 100%; height: auto; }
    Right-aligned to just inside the card and never past it. The drum window
    clips horizontally so the dates either side stay hidden, and a badge that
    overhung the right edge would be sliced in half by that clip. */
-.ticket__tags {
+.ticket__bubbles {
   position: absolute;
   right: 0.75rem;
   bottom: 0;
   transform: translateY(50%);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  /* Above the pseudo-element that makes the whole card a link to the
+     production, or the Vstupenky bubble is covered by it and the card
+     swallows the one tap that was going to sell a seat. */
+  z-index: 1;
+}
+
+.ticket__tags {
   display: flex;
   gap: 0.35rem;
   margin: 0;
@@ -874,10 +928,13 @@ img { max-width: 100%; height: auto; }
 /* White on the full cherry is 7.5:1, the same fill the countdown badge uses.
    The white ring is not decoration: the badge crosses the card's own 3px
    brick border, and without it the two reds meet and read as one blob. */
-.ticket__tag {
+.ticket__tag,
+.ticket__bubble {
   padding: 0.22rem 0.6rem;
-  background: var(--ink);
-  color: var(--white);
+  /* Inverted with the card: a badge in the card's own ink would disappear
+     into it. Painted from the same pair, so it can never fall out of step. */
+  background: var(--ticket-text);
+  color: var(--ticket-paper);
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 700;
@@ -896,6 +953,47 @@ img { max-width: 100%; height: auto; }
     /* Clear of the ring, or the ring stands in front of the shadow and the
        badge looks printed on the card instead of pinned to it. */
     0 5px 12px rgb(var(--ink-rgb) / 0.42);
+}
+
+.ticket__bubble { display: inline-block; text-decoration: none; }
+
+/* The second thing on the site allowed her red, and the exception is
+   deliberate (2026-09-09). Everything else that was cherry went to ink when
+   the palette came out and the mark was left as the only colour; a ticket
+   link is the one control here anybody is actually trying to reach, so it
+   takes the same red rather than a third colour invented for it.
+   The ring is hardcoded white rather than taking --ticket-paper like the
+   other badges do. On today's white card the two are the same thing and it
+   makes no difference; it matters only if the card is ever inverted again,
+   when a paper-coloured ring would go ink and leave the red chip's edge at
+   2.3:1 against it - under the 3:1 a graphic boundary wants. White here means
+   the badge survives that on its own. The text is white on red at 7.5:1
+   whatever the card does, which is the ratio that actually governs it. */
+.ticket__bubble--tickets {
+  background: var(--mark);
+  color: var(--white);
+  box-shadow:
+    0 0 0 3px var(--white),
+    0 0 0 4px rgb(var(--ink-rgb) / 0.16),
+    0 5px 12px rgb(var(--ink-rgb) / 0.42);
+}
+
+.ticket__bubble--tickets:hover,
+.ticket__bubble--tickets:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* Two shadows, not one: the ink drop keeps the card lifted off the page and
+   the red spread is the glow itself. Decorative, so it answers to no contrast
+   floor - the card's own text and frame are untouched by it. */
+.ticket:hover,
+.ticket:focus-within {
+  box-shadow:
+    0 10px 24px rgb(var(--ink-rgb) / 0.22),
+    0 0 0 2px rgb(var(--mark-rgb) / 0.60),
+    0 0 10px 2px rgb(var(--mark-rgb) / 0.42);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ticket { transition: box-shadow 180ms ease; }
 }
 
 .ticket p:last-child { margin-bottom: 0; }
