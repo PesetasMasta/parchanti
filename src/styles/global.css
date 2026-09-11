@@ -181,14 +181,10 @@
   /* The seams are a dot matrix, and its cells are pixels, so this is a pixel
      value and not an em one. The tile is 192px tall and repeats only
      sideways, so an element of any other height would either crop the dither
-     or run past the end of it. 192 is also 64 cells of 3px exactly. */
+     or run past the end of it. The cell is 1px as of 2026-09-11, so 192 is
+     also 192 cells exactly - it divides by any cell size the seam might go
+     back to. */
   --seam: 192px;
-  /* The hero's own seam is shorter than the two below it, and has to be: it
-     dissolves the photograph into the band, and the photograph is only
-     min(62vw, 24rem) tall. A 192px matrix would have eaten four fifths of it
-     on a phone. Its own tile, so the cells stay square 3px like the others
-     rather than being squashed by a shorter box. */
-  --hero-seam: 96px;
 
   /* The curve, and now the only smooth thing in a seam. Its ramp is
      deliberately short: a long one scales every dot's alpha on its way and
@@ -743,8 +739,8 @@ img { max-width: 100%; height: auto; }
    same distribution with the low frequencies removed, so it is aperiodic and
    evenly spread at once.
 
-   The tile is 1536px wide, 512 cells, so a phone never sees it repeat inside
-   the viewport. */
+   The tile is 1536px wide and laid at that exact size, so one image pixel is
+   one CSS pixel and a phone never sees it repeat inside the viewport. */
 .footer::before {
   content: "";
   position: absolute;

@@ -36,14 +36,14 @@ const measurements = [
   data.ageRating && { label: 'Přístupnost', text: data.ageRating },
 ].filter(Boolean);
 ---
-<Base title={title} description={data.blurb}>
+<Base title={title} description={data.blurb ?? data.annotation.slice(0, 155)}>
   <article class="page">
     <div class="page__inner">
       <h1 class="display page-heading production__title">
         <ProductionTitle titleLead={data.titleLead} titleRest={data.titleRest} />
       </h1>
 
-      <p class="production__blurb">{data.blurb}</p>
+      {data.blurb && <p class="production__blurb">{data.blurb}</p>}
 
       <p class="prose production__annotation">{data.annotation}</p>
 
@@ -130,18 +130,22 @@ const measurements = [
         ))}
       </dl>
 
-      <div class="press">
-        <p class="press__score display">{data.score}</p>
-        {data.quotes.map((quote) => (
-          <blockquote>
-            <p>{quote.text}</p>
-            <footer>{quote.author} &middot; {quote.rating} &middot; {quote.date}</footer>
-          </blockquote>
-        ))}
-        <p class="press__source">
-          Hodnocení diváků na <a class="link" href={data.idivadlo}>i-divadlo.cz</a>
-        </p>
-      </div>
+      {/* Nothing here exists before a premiere, and an empty score above a
+          link to nowhere is worse than no block at all. */}
+      {data.score && data.idivadlo && (
+        <div class="press">
+          <p class="press__score display">{data.score}</p>
+          {data.quotes.map((quote) => (
+            <blockquote>
+              <p>{quote.text}</p>
+              <footer>{quote.author} &middot; {quote.rating} &middot; {quote.date}</footer>
+            </blockquote>
+          ))}
+          <p class="press__source">
+            Hodnocení diváků na <a class="link" href={data.idivadlo}>i-divadlo.cz</a>
+          </p>
+        </div>
+      )}
 
       {data.photos.length > 0 && (
         <div class="gallery">

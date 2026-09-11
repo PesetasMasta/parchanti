@@ -28,6 +28,19 @@ const program = JSON.parse(readFileSync(new URL('../data/program.json', import.m
 // next time the feed is refreshed.
 const goout = JSON.parse(readFileSync(new URL('../data/goout.json', import.meta.url), 'utf8'));
 
+// The productions, read the same way and for the same reason: the deck is
+// asserted against the files it is built from, so adding one cannot quietly go
+// unchecked. This replaced a hardcoded pair of slugs, which was already stale
+// the moment Červánky arrived (2026-09-11).
+const PRODUCTIONS_DIR = new URL('../src/content/productions/', import.meta.url);
+const productions = readdirSync(PRODUCTIONS_DIR)
+  .filter((name) => name.endsWith('.json'))
+  .map((name) => ({
+    slug: name.replace(/\.json$/, ''),
+    ...JSON.parse(readFileSync(new URL(name, PRODUCTIONS_DIR), 'utf8')),
+  }))
+  .sort((a, b) => a.order - b.order);
+
 // --- 0. Program data, before anything is built. `when` is the client's own
 // display string and `date`/`time` are the machine-readable fields the pages
 // actually render from; they duplicate each other, so they are checked against
@@ -83,6 +96,9 @@ const EXPECTED_ROUTES = [
   '/fotky/',
   '/repertoar/rychle-sipy-a-zahada-klubovny/',
   '/repertoar/hra-lasky-a-nahody/',
+  // Arrived 2026-09-11, before its own premiere: the first production with a
+  // page and no rating, no quotes and no i-divadlo entry.
+  '/repertoar/cervanky/',
   '/soubor/prokop-zach/', '/soubor/zuzana-matuskova/', '/soubor/ondrej-stupka/',
   '/soubor/maximilian-dolansky/', '/soubor/maxmilian-kocek/', '/soubor/matous-vysata/',
   '/soubor/aliska/', '/soubor/jiri-dlouhy/', '/soubor/simon-fikar/',
@@ -492,14 +508,16 @@ onPage('/',
 );
 
 onPage('/',
-  'hero: name, empty claim slot, verbatim pitch, Program CTA, photo',
+  'hero: name, empty claim slot, verbatim pitch, Program CTA',
   `JSON.stringify({
     title: document.querySelector('.hero__title')?.textContent.trim(),
     claimIsPlaceholder: document.querySelector('.hero__claim')?.hasAttribute('data-placeholder') ?? false,
     claimIsEmpty: (document.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
     pitch: document.querySelector('.hero__pitch')?.textContent.trim(),
     cta: document.querySelector('.hero a.button')?.getAttribute('href'),
-    photo: Boolean(document.querySelector('.hero img[src*="/assets/panels/"]')),
+    // Inverted 2026-09-11: the photographs came out of the hero, so what is
+    // asserted is that none came back. The band is type on ink now.
+    photo: Boolean(document.querySelector('.hero img')),
   })`,
   (raw) => {
     const hero = JSON.parse(raw);
@@ -510,7 +528,7 @@ onPage('/',
     const pitch = 'Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!';
     if (hero.pitch !== pitch) return `pitch was ${JSON.stringify(hero.pitch)}`;
     if (hero.cta !== '/program/') return `CTA href was ${JSON.stringify(hero.cta)}`;
-    if (!hero.photo) return 'hero photo is missing';
+    if (hero.photo) return 'a photograph is back in the hero, which was emptied of them on 2026-09-11';
     return null;
   },
 );
@@ -521,7 +539,6 @@ onPage('/',
     slides: [...document.querySelectorAll('.hero__slide')].map((slide) => ({
       on: slide.hasAttribute('data-on'),
       href: slide.querySelector('a.button')?.getAttribute('href'),
-      photo: slide.querySelector('img.hero__photo')?.getAttribute('src'),
     })),
     // The identity slide is the one in flow, so it sets the height and the
     // strip cannot resize as it turns.
@@ -543,7 +560,6 @@ onPage('/',
     const hrefs = r.slides.map((s) => s.href);
     const wanted = ['/program/', '/repertoar/', '/soubor/'];
     if (JSON.stringify(hrefs) !== JSON.stringify(wanted)) return `slide buttons point at ${JSON.stringify(hrefs)}`;
-    if (r.slides.some((s) => !s.photo)) return 'a slide has no photograph behind it';
     if (!r.firstInFlow) return 'the first slide is not in flow, so the strip will resize as it turns';
     if (r.dots.length !== r.slides.length) return `${r.dots.length} controls for ${r.slides.length} slides`;
     if (r.dots.filter((d) => d.current).length !== 1) return 'exactly one control must be marked as the one showing';
@@ -570,7 +586,6 @@ onPage('/',
     const seams = [
       [document.querySelector('.next'), '::before'],
       [document.querySelector('.footer'), '::before'],
-      [document.querySelector('.hero'), '::after'],
     ].filter(([el]) => el);
     const urls = seams.flatMap(([el, pseudo]) => {
       const style = getComputedStyle(el, pseudo);
@@ -587,7 +602,9 @@ onPage('/',
   })()`,
   (raw) => {
     const layers = JSON.parse(raw);
-    if (layers.length < 3) return `only ${layers.length} of the three seams declares a mask image`;
+    // Two since 2026-09-11: the hero's was the photograph's lower edge fading
+    // into the band, and both the photograph and the fade are gone.
+    if (layers.length < 2) return `only ${layers.length} of the two seams declares a mask image`;
     const dead = layers.filter((layer) => !layer.width || !layer.height);
     if (dead.length) {
       return `${dead.map((d) => d.url).join(', ')} referenced but the browser cannot decode it, so that layer paints nothing`;
@@ -688,7 +705,7 @@ onPage('/',
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    const linked = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    const linked = productions.map((production) => `/repertoar/${production.slug}/`);
     // Everything she plays that has no page yet, taken from her own dates -
     // the same derivation the page makes, so the two cannot drift.
     const bare = [...new Set(program.dates.filter((d) => !d.slug).map((d) => d.title))];
@@ -705,10 +722,17 @@ onPage('/',
     }
     if (r.exposed !== 1) return `${r.exposed} cards are exposed at rest, expected exactly the one on top`;
     // The reverse carries the production's own blurb. A card with no blurb to
-    // show has no back and no button offering one.
-    for (const card of r.cards.slice(0, linked.length)) {
-      if (!card.turns) return `${JSON.stringify(card.title)} has a blurb but no way to turn it over`;
-      if (!card.blurb) return `${JSON.stringify(card.title)} turns over onto nothing`;
+    // show has no back and no button offering one - which is now true of a
+    // production WITH a page as well, since Červánky has an annotation and no
+    // blurb, so this keys off the data rather than off having a page.
+    for (const [index, production] of productions.entries()) {
+      const card = r.cards[index];
+      if (production.blurb) {
+        if (!card.turns) return `${JSON.stringify(card.title)} has a blurb but no way to turn it over`;
+        if (!card.blurb) return `${JSON.stringify(card.title)} turns over onto nothing`;
+      } else if (card.turns) {
+        return `${JSON.stringify(card.title)} offers a description it does not have`;
+      }
     }
     for (const card of r.cards.slice(linked.length)) {
       if (card.turns) return `${JSON.stringify(card.title)} offers a description it does not have`;
@@ -952,7 +976,7 @@ onPage('/program/',
 );
 
 onPage('/repertoar/',
-  'both productions listed in order, blurbs verbatim',
+  'every production listed in her order, blurbs verbatim',
   `JSON.stringify({
     slugs: [...document.querySelectorAll('[data-slug]')].map((el) => el.dataset.slug),
     hasCorrectedWording: document.body.textContent.includes('v nové verzi'),
@@ -963,7 +987,10 @@ onPage('/repertoar/',
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    const expected = ['rychle-sipy-a-zahada-klubovny', 'hra-lasky-a-nahody'];
+    // Derived from the files, in their own `order`, so a production added to
+    // the collection cannot go unlisted without this failing. It was a
+    // hardcoded pair until Červánky arrived (2026-09-11) and broke it.
+    const expected = productions.map((production) => production.slug);
     if (JSON.stringify(r.slugs) !== JSON.stringify(expected)) return `slugs were ${JSON.stringify(r.slugs)}`;
     // Inverted 2026-09-09 under the rule that reverses the old verbatim one:
     // her text is proofread, so a regression back to the slip is what fails.
@@ -1126,7 +1153,11 @@ onPage('/soubor/prokop-zach/',
      .map((a) => a.getAttribute('href')))`,
   (raw) => {
     const links = JSON.parse(raw);
-    const expected = ['/repertoar/rychle-sipy-a-zahada-klubovny/', '/repertoar/hra-lasky-a-nahody/'];
+    // Derived: he directs and acts in everything, so the list is every
+    // production that names him, not a pair typed out by hand.
+    const expected = productions
+      .filter((production) => JSON.stringify(production).includes('prokop-zach'))
+      .map((production) => `/repertoar/${production.slug}/`);
     const missing = expected.filter((href) => !links.includes(href));
     return missing.length ? `missing: ${missing.join(', ')}` : null;
   },

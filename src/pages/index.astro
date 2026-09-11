@@ -39,6 +39,11 @@ const deckCards = productions.map((production) => ({
   production,
   picture: production.data.poster ?? standIn(production.data.titleLead),
   awaitingPoster: !production.data.poster,
+  // A card turns over onto its blurb, so a production without one has no back
+  // and must not offer a button to it. Červánky arrived 2026-09-11 with the
+  // long annotation and no one-line blurb, which is the first time a
+  // production with its own page has been in this state.
+  turns: Boolean(production.data.blurb),
 }));
 
 const otherCards = otherTitles.map((title) => ({ title, picture: standIn(title) }));
@@ -75,13 +80,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        slide sets the height and the strip cannot jump as it turns. -->
   <section class="hero page" data-reel>
     <article class="hero__slide" data-on>
-      <img
-        class="hero__photo"
-        src="/assets/panels/hero.png"
-        width="1400"
-        height="1077"
-        alt="Šest herců stojí vedle sebe v řadě v podkroví s lany a petrolejkou nad hlavou."
-      />
       <div class="hero__copy">
         <div class="page__inner">
           <p class="hero__eyebrow">Nezávislé divadlo &middot; Praha</p>
@@ -101,13 +99,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     </article>
 
     <article class="hero__slide">
-      <img
-        class="hero__photo"
-        src="/assets/panels/sipy-2.png"
-        width="900"
-        height="788"
-        alt="Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny."
-      />
       <div class="hero__copy">
         <div class="page__inner">
           <p class="hero__eyebrow">Repertoár</p>
@@ -119,13 +110,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     </article>
 
     <article class="hero__slide">
-      <img
-        class="hero__photo"
-        src="/assets/panels/ensemble.png"
-        width="1100"
-        height="913"
-        alt="Skupina herců stojí těsně vedle sebe a dívá se do objektivu."
-      />
       <div class="hero__copy">
         <div class="page__inner">
           <p class="hero__eyebrow">Soubor</p>
@@ -219,8 +203,8 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
       <div class="deck-stage">
         <div class="deck__frame">
         <div class="deck" data-deck role="group" aria-roledescription="balíček karet" aria-label="Repertoár" tabindex="0">
-          {deckCards.map(({ production, picture, awaitingPoster }) => (
-            <div class="deck__card" data-flippable>
+          {deckCards.map(({ production, picture, awaitingPoster, turns }) => (
+            <div class="deck__card" data-flippable={turns ? true : undefined}>
               <div class="deck__flip">
                 <article class="production-card deck__face">
                   <div class="production-card__picture">
@@ -243,20 +227,24 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
                        the production page is on the back, next to the text
                        that would make someone want it. -->
                   <div class="deck__foot">
-                    <button class="deck__turn deck__turn--info" type="button" data-flip aria-label="Popis inscenace">i</button>
+                    {turns
+                      ? <button class="deck__turn deck__turn--info" type="button" data-flip aria-label="Popis inscenace">i</button>
+                      : <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>}
                   </div>
                 </article>
 
-                <article class="production-card deck__face deck__face--back">
-                  <h3 class="display production-card__title">
-                    <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
-                  </h3>
-                  <p class="deck__blurb">{production.data.blurb}</p>
-                  <div class="deck__foot">
-                    <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>
-                    <button class="deck__turn" type="button" data-flip>Plakát</button>
-                  </div>
-                </article>
+                {turns && (
+                  <article class="production-card deck__face deck__face--back">
+                    <h3 class="display production-card__title">
+                      <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
+                    </h3>
+                    <p class="deck__blurb">{production.data.blurb}</p>
+                    <div class="deck__foot">
+                      <a class="link" href={`/repertoar/${production.id}/`}>Více o inscenaci</a>
+                      <button class="deck__turn" type="button" data-flip>Plakát</button>
+                    </div>
+                  </article>
+                )}
               </div>
             </div>
           ))}
@@ -331,9 +319,12 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        it has to clip them - without this the two off-screen slides widen the
        document and the page scrolls sideways, which check.mjs fails on. */
     overflow: hidden;
-    /* One number for the height of the picture and for the room the slides
-       reserve above their copy, so the two cannot drift apart. */
-    --hero-photo: min(62vw, 24rem);
+    /* --hero-photo went with the photographs (2026-09-11: "fotky z hero
+       uplne pryc"). It existed only to keep the picture's height and the room
+       the slides left above their copy in step, and there is no picture now:
+       the band is type on ink, which is what the rest of the site already is.
+       The dithered edge that faded the photograph into the band went too -
+       there is nothing left to fade, and the band is one colour throughout. */
     /* Vertical drags belong to the page. Without this the reel eats the
        scroll on a phone and the top of the site becomes a trap. */
     touch-action: pan-y;
@@ -354,7 +345,9 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding-top: var(--hero-photo);
+    /* Was the picture's height; now simply room above the words so they do
+       not sit jammed under the bar. */
+    padding-top: clamp(3rem, 14vw, 7rem);
     /* Stacked slides would otherwise sit over the showing slide's button. */
     pointer-events: none;
     transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -372,21 +365,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      photograph with nowhere to be and the wash showing where it should have
      been. */
   .hero__slide:first-child { position: relative; }
-
-  /* Cropped to the band it is actually seen in, not stretched over the whole
-     slide. Covering the slide made the picture taller than the window above
-     the copy, so the visible third was whatever happened to be at the top of
-     the frame - ropes and ceiling rather than the people. */
-  .hero__photo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: var(--hero-photo);
-    object-fit: cover;
-    object-position: center;
-  }
 
   /* No background of its own any more - .hero paints the band for the whole
      reel. Transparent here is safe rather than sloppy: the harness's walk up
@@ -412,43 +390,6 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     background: var(--white);
     color: var(--ink);
     border-color: var(--white);
-  }
-
-  /* The photograph's lower edge dissolved into the band. Drawn once for the
-     reel rather than once per slide: three identical gradients stacked
-     compounded their alpha and the fade came out short and hard.
-
-     A dot matrix now, not a gradient (2026-09-08: "add pixelized gradient to
-     the top of the hero black strip"). It was the last smooth transition
-     left on the page - both seams below it are dithered - and one page that
-     dissolves three different edges should dissolve them the same way.
-
-     Same tile construction as .next::before and .footer::before, and the same
-     orientation as the footer's, since the ink is below this edge rather than
-     above it: dense at the bottom, thinning upward.
-
-     One deliberate difference. The other two intersect the matrix with a
-     radial so the seam curves, and this one does not. That radial holds ink
-     in the far corners, which over a plain ground reads as a proscenium and
-     over a photograph reads as damage - it put dark columns down both sides
-     of the picture and left the matrix visible only in the middle. Compared
-     side by side before choosing. The curve stays where the ground is plain. */
-  .hero::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(var(--hero-photo) - var(--hero-seam));
-    height: var(--hero-seam);
-    z-index: 1;
-    pointer-events: none;
-    background: var(--ink);
-    -webkit-mask-image: url("/assets/hero-dither.png");
-    mask-image: url("/assets/hero-dither.png");
-    -webkit-mask-size: 1536px var(--hero-seam);
-    mask-size: 1536px var(--hero-seam);
-    -webkit-mask-repeat: repeat-x;
-    mask-repeat: repeat-x;
   }
 
   /* visibility, not opacity: it is what takes the copy of a slide nobody is

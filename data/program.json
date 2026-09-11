@@ -2,7 +2,7 @@
   "updated": "2026-09-09",
   "source": "Client's revised Hrací plán, sent 2026-09-02, superseding the 2026-08-17 plan this file was first built from. Her rule is unchanged and holds for the whole file: everything is 20:00 unless the line says otherwise. Three entries moved on 2026-09-09 — Rychlé šípy from čt 15. 10. 20:00 to so 3. 10. 16:00 (she wrote that early start with four exclamation marks, so it is deliberate), and both surviving Toníkova cesta dates from 17:30 to 18:00, with 10. 11. gaining \"premiéra\". Weekdays for all three were verified against the 2026 calendar.",
   "note": "Dates are hand-kept here and are NOT fetched. Her 2026-09-02 decision put ticket sales back on the existing GoOut page, but that page is not the programme: measured 2026-09-09, the account carried two productions and two upcoming dates against the fourteen below, and still listed Audience (Pivařská odyssea), which she asked to have taken off the site. So GoOut supplies only what GoOut knows - a ticket URL and whether a date is on sale - and src/lib/program.js withTickets() matches its rows onto these entries by date and title. A `url` written here by hand always wins. Refresh the feed with scripts/fetch-goout.mjs, which caches to data/goout.json and never overwrites a good cache with a bad fetch. Entry shape: {\"date\": \"2026-09-17\" — ISO, the machine-readable one, \"time\": \"20:00\", \"when\": \"čt 17. 9. 20:00\" — her own display string, kept verbatim, \"title\": \"Hra lásky a náhody\", \"slug\": optional production slug — present only for productions that have a page, \"note\": optional label such as \"premiéra\", \"url\": optional ticket link — omit entirely when tickets are not on sale, and GoOut fills it in when it has the date, \"state\": \"announced\" | \"on_sale\" | \"sold_out\"}. `when` duplicates `date` + `time` on purpose: she wrote it, so it stays, and check.mjs derives the same string from the ISO fields and fails the build if the two ever disagree. That is what catches a weekday drifting off its date.",
-  "unconfirmed": "Open with the client as of 2026-09-09. (1) Toníkova cesta on čt 22. 10. 17:30 is in the 2026-08-17 plan but absent from the 2026-09-02 one. A cancelled date and a line forgotten while retyping look identical on paper, so it is kept here rather than deleted on a guess — but it must be answered before the site goes public, because advertising a performance that is not happening is the one error that sends people to a locked door. Removing it is a one-entry deletion. (2) Its 17:30 also now disagrees with the two surviving Toníkova cesta dates, which the new plan puts at 18:00; her 2026-08-18 confirmation that \"every Toníkova cesta is at 17:30\" is superseded for those two and untested for this one. (3) The title \"Červánky\" is her short form and stays, confirmed 2026-08-18, not the i-divadlo \"Ale ty červánky jsou stejně nejkrásnější\".",
+  "unconfirmed": "Open with the client as of 2026-09-09. (1) Toníkova cesta on čt 22. 10. 17:30 is in the 2026-08-17 plan but absent from the 2026-09-02 one. A cancelled date and a line forgotten while retyping look identical on paper, so it is kept here rather than deleted on a guess — but it must be answered before the site goes public, because advertising a performance that is not happening is the one error that sends people to a locked door. Removing it is a one-entry deletion. (2) Its 17:30 also now disagrees with the two surviving Toníkova cesta dates, which the new plan puts at 18:00; her 2026-08-18 confirmation that \"every Toníkova cesta is at 17:30\" is superseded for those two and untested for this one. (3) The title is now the full \"Ale ty červánky jsou stejně nejkrásnější\". Her 2026-08-18 confirmation of the short form \"Červánky\" is superseded: she sent the production's own material on 2026-09-11 under the full name, and the developer chose to carry it everywhere rather than keep a short form on the dates. Worth watching what it does to narrow layouts - it is by some way the longest title on the site.",
   "dates": [
     {
       "date": "2026-09-17",
@@ -47,7 +47,8 @@
       "date": "2026-10-24",
       "time": "20:00",
       "when": "so 24. 10. 20:00",
-      "title": "Červánky",
+      "title": "Ale ty červánky jsou stejně nejkrásnější",
+      "slug": "cervanky",
       "note": "premiéra",
       "state": "announced"
     },
@@ -55,7 +56,8 @@
       "date": "2026-11-04",
       "time": "20:00",
       "when": "st 4. 11. 20:00",
-      "title": "Červánky",
+      "title": "Ale ty červánky jsou stejně nejkrásnější",
+      "slug": "cervanky",
       "note": "první repríza",
       "state": "announced"
     },
@@ -87,7 +89,8 @@
       "date": "2026-12-01",
       "time": "20:00",
       "when": "út 1. 12. 20:00",
-      "title": "Červánky",
+      "title": "Ale ty červánky jsou stejně nejkrásnější",
+      "slug": "cervanky",
       "note": "druhá repríza",
       "state": "announced"
     },

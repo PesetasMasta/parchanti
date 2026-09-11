@@ -1,0 +1,53 @@
+{
+  "titleLead": "Ale ty červánky jsou stejně nejkrásnější",
+  "creditsBefore": [
+    {
+      "label": "Režie",
+      "parts": [
+        {
+          "text": "Prokop Zach",
+          "slug": "prokop-zach"
+        }
+      ]
+    },
+    {
+      "label": "Hudba",
+      "parts": [
+        {
+          "text": "Marek Cimbál",
+          "slug": "marek-cimbal"
+        }
+      ]
+    }
+  ],
+  "cast": [
+    [
+      "ondrej-stupka"
+    ],
+    [
+      "jiri-dlouhy",
+      "simon-fikar"
+    ],
+    [
+      "prokop-zach"
+    ],
+    [
+      "zuzana-matuskova"
+    ]
+  ],
+  "creditsAfter": [
+    {
+      "label": "Premiéra",
+      "parts": [
+        {
+          "text": "24. 10. 2026"
+        }
+      ]
+    }
+  ],
+  "quotes": [],
+  "photos": [],
+  "order": 3,
+  "annotation": "Tři mladí muži čekají na okamžik, o kterém se bojí mluvit. Jejich banální rozhovor, humor a vzpomínky postupně odhalují příběhy plné násilí, viny, bezmoci a touhy po svobodě. Hranice mezi krásou a hrůzou, životem a smrtí se pomalu stírá. A nad nimi vycházejí červánky – krásné naposledy...",
+  "ageRating": "15+"
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build one seam tile: a dot matrix that thins out along its height.
 #
-#   scripts/make-dither.sh <height-px> <up|down> <out.png>
+#   scripts/make-dither.sh <height-px> <up|down> <out.png> [cell-px]
 #
 # The seams are not gradients. Every cell is either full ink or nothing and
 # what changes down the tile is how many are lit, so there is no intermediate
@@ -9,8 +9,16 @@
 #
 # Three things decide whether it reads as a printed matrix or as noise:
 #
-#   Cell size. 3px, fixed. The tile is built at cell resolution and scaled up
-#   with point sampling, so a cell is a hard square and never a blurred dot.
+#   Cell size. 1px by default, and the one knob worth turning: it is what
+#   decides whether the seam reads as a coarse printed matrix or a fine one.
+#   It was 3px until 2026-09-11, when the client asked twice for the pixels
+#   softened while keeping the effect - it is meant to read as a theatre
+#   spotlight, so dissolving it into a smooth gradient would have thrown away
+#   the point. 3px went to 2px, then to 1px, which is the floor: the mask is
+#   laid at a fixed 1536px so one image pixel is one CSS pixel, and a cell
+#   cannot go below that without the browser resampling it into grey. The tile
+#   is built at cell resolution and scaled up with point sampling, so a cell is
+#   a hard square and never a blurred dot, whatever the size.
 #
 #   Threshold distribution. The lit/unlit decision compares a vertical ramp
 #   against a threshold map, so the map's histogram IS the density curve. A
@@ -23,18 +31,20 @@
 #   high-passes the noise and equalises it, which is blue noise: aperiodic and
 #   evenly spread at once.
 #
-# The two tiles shipped in public/assets predate this script and are not
-# reproduced by it - the noise instance differs, the method does not. Rerun
-# this over them only if they are being retuned, and look at the result.
+# Both shipped tiles ARE reproduced by this script as of 2026-09-11: they used
+# to predate it and differ from each other by more than their direction, which
+# is why the foot of the page and the head of it never quite matched. They are
+# now one method, one cell size, one run apart.
 set -euo pipefail
 
-HEIGHT="${1:?height in px, a multiple of 3}"
+HEIGHT="${1:?height in px}"
 DIRECTION="${2:?up|down}"
 OUT="${3:?output png}"
+CELL="${4:-1}"
 
 WIDTH=1536
-CELL=3
 (( HEIGHT % CELL == 0 )) || { echo "height must be a multiple of $CELL" >&2; exit 1; }
+(( WIDTH % CELL == 0 )) || { echo "width $WIDTH must be a multiple of $CELL" >&2; exit 1; }
 CW=$(( WIDTH / CELL ))
 CH=$(( HEIGHT / CELL ))
 

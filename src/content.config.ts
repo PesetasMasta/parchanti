@@ -38,7 +38,12 @@ const productions = defineCollection({
     // titleRest rather than being special-cased per slug in three templates.
     titleLead: z.string(),
     titleRest: z.string().optional(),
-    blurb: z.string(),
+    // Optional since 2026-09-11, when Červánky arrived before its premiere.
+    // The one-line blurb is hers to write and she has sent only the long
+    // annotation; truncating that into a blurb would be editing her words. A
+    // production without one renders a card that does not turn over, which
+    // the deck already handles - there is nothing on the back to show.
+    blurb: z.string().optional(),
     annotation: z.string(),
     creditsBefore: z.array(creditRow),
     // Cast as alternation groups: [["a"], ["b", "c"]] renders as "A, B / C".
@@ -64,15 +69,21 @@ const productions = defineCollection({
       width: z.number().int(),
       height: z.number().int(),
     }).optional(),
-    score: z.string(),
+    // All three optional since 2026-09-11: a production that has not opened
+    // has no audience rating, nothing quoted about it and no i-divadlo page.
+    // That is a real state the schema did not model - it was written when both
+    // productions had been playing for a year - and Toníkova cesta will need
+    // the same. The press block is skipped entirely rather than printing an
+    // empty score above a link to nowhere.
+    score: z.string().optional(),
     // Quotations from real named people; text is verbatim and case-exact.
     quotes: z.array(z.object({
       text: z.string(),
       author: z.string(),
       rating: z.string(),
       date: z.string(),
-    })),
-    idivadlo: z.string().url(),
+    })).default([]),
+    idivadlo: z.string().url().optional(),
     photos: z.array(z.object({
       src: z.string(),
       alt: z.string(),
