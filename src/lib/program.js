@@ -133,6 +133,21 @@ function czechUrl(url) {
   return url.replace('://goout.net/en/', '://goout.net/cs/');
 }
 
+// Their value goes straight into an href, so it is checked before it gets
+// there rather than trusted because it arrived over TLS. Nothing here suspects
+// GoOut of anything - the point is that a field from somebody else's API is
+// the one input on this site that becomes markup, and "javascript:" in an href
+// runs. A link that fails this is dropped rather than repaired: there is no
+// safe way to guess what a malformed ticket URL meant.
+function isTicketUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && (parsed.hostname === 'goout.net' || parsed.hostname.endsWith('.goout.net'));
+  } catch {
+    return false;
+  }
+}
+
 export function withTickets(dates, goout) {
   const titleOf = new Map((goout?.productions ?? []).map((p) => [p.gooutEventId, p.title]));
 
@@ -147,6 +162,7 @@ export function withTickets(dates, goout) {
       if (row.cancelled) return false;
       if (!STATES[row.ticketingState]) return false;
       if (row.start.slice(0, 10) !== entry.date) return false;
+      if (!isTicketUrl(row.ticketUrl)) return false;
       const theirs = titleOf.get(row.gooutEventId);
       return Boolean(theirs) && titlesAgree(entry.title, theirs);
     });
