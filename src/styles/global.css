@@ -170,11 +170,19 @@
 
   /* The masthead is taken out of flow, so its height is declared rather than
      emergent - the spacer that holds its place has to know the same number.
-     Expanded clears whichever is taller, the fluid mark or the burger (the
-     burger wins below ~570px, the mark above it), plus breathing room; the
-     border counts, since box-sizing is border-box. */
-  --masthead-logo: clamp(2.4rem, 11vw, 3.6rem);
-  --masthead-logo-condensed: 2.1rem;
+     Expanded clears whichever is taller, the fluid mark or the burger, plus
+     breathing room; the border counts, since box-sizing is border-box. The
+     burger used to win only below ~570px and now wins at every width, because
+     the mark got smaller on 2026-09-11 - so the bar is a constant height.
+
+     That day the client picked the mark's size off the slider on the variants
+     sheet and said 35 px. The slider was showing what a 390px phone gets,
+     which was 43 px, so the whole curve is scaled by 35/43 rather than pinned
+     to one number - she asked for the size, not for the responsiveness to go.
+     The new mark's box is cropped tight to the letters, so unlike the drawing
+     it replaced, this number IS the height of the letters. */
+  --masthead-logo: clamp(1.96rem, 8.97vw, 2.94rem);
+  --masthead-logo-condensed: 1.71rem;
   --masthead-height: calc(max(var(--masthead-logo), 3rem) + 1.4rem + 3px);
   --masthead-height-condensed: calc(var(--masthead-logo-condensed) + 0.9rem + 3px);
 
@@ -304,17 +312,22 @@ img { max-width: 100%; height: auto; }
    state, so condensing cannot move it. */
 .masthead-space { height: var(--masthead-height); }
 
-/* Two jobs, two declarations, and the split has to stay. The red belongs to
-   the mark and not to the link: the link's colour is what the contrast
-   harness measures the NAME against, and with the red on the link it reported
-   3.4:1 for a line of text that is painted in ink and always was. The mark is
-   a graphic and answers to 3:1, which the red clears at 7.5:1; the name is
-   text and answers to 4.5:1, which the ink clears at 15.9:1.
+/* The mark is ink now, not her red (client, 2026-09-12: "logo would be black
+   as well"). It went black with the letterforms: the second sketch came in
+   black, the mark that replaced her drawing is set from the site's own font,
+   and this branch is called redesign/black-and-white.
+
+   So there is nothing left to split here - the mark simply inherits the
+   link's colour. The split that used to be in this spot existed because the
+   red was on the mark and had to be kept off the link: the link's colour is
+   what the contrast harness measures the NAME against, and with the red on
+   the link it reported 3.4:1 for a line of text painted in ink and always
+   was. Do not put a colour back on the svg without putting that split back
+   with it.
 
    Inside the dark bands the same file comes through white, inherited from the
    band rather than declared here. */
 .masthead__home { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--ink); }
-.masthead__home svg { color: var(--mark); }
 
 /* Bigger than the first draft at the client's request (2026-08-18), but
    fluid: Rye is a much wider face than the serif it replaced, and at a
@@ -760,7 +773,10 @@ img { max-width: 100%; height: auto; }
   mask-composite: intersect;
 }
 
-.footer svg { height: 3rem; width: auto; display: block; margin-bottom: 1.5rem; }
+/* Scaled by the same 35/43 as the masthead. She gave one number, for the bar
+   at the top; keeping the footer's old proportion to it is an inference, not
+   her instruction. */
+.footer svg { height: 2.45rem; width: auto; display: block; margin-bottom: 1.5rem; }
 
 .footer__links { margin: 0 0 1.5rem; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
 

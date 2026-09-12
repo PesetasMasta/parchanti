@@ -1284,12 +1284,13 @@ for (const [slug, phrases] of [
 }
 
 onPage('/',
-  "the mark and the ticket bubble take her red, and nothing else does",
-  // The red is 7.5:1 on the paper, which a graphic clears twice over, but the
-  // point of the assertion is the second half: it is the one colour left, and
-  // the split that keeps it off the link is what stops the contrast harness
-  // measuring the company name against it (3.4:1) instead of against the ink
-  // it is actually painted in.
+  "the ticket bubble is the only red left, and the mark is not",
+  // Inverted 2026-09-12: the mark used to be the red's main job and now takes
+  // ink with the rest of the black-and-white redesign ("logo would be black as
+  // well"). What is asserted is that it stayed off - a colour put back on the
+  // mark is also a colour on its link, and the contrast harness then measures
+  // the company name against the red (3.4:1) instead of the ink it is painted
+  // in (15.9:1).
   `JSON.stringify({
     mark: getComputedStyle(document.querySelector('.masthead__home svg')).color,
     name: getComputedStyle(document.querySelector('.masthead__home')).color,
@@ -1313,8 +1314,10 @@ onPage('/',
   (raw) => {
     const r = JSON.parse(raw);
     const RED = 'rgb(170, 10, 39)';
-    if (r.mark !== RED) return `the mark is ${r.mark}, not her red`;
-    if (r.name === RED) return 'the red is on the link, so the harness measures the company name against it rather than against the ink';
+    const INK = 'rgb(30, 27, 20)';
+    if (r.mark === RED) return 'the mark took the red back, and with it the link, which puts the company name on a 3.4:1 ground';
+    if (r.mark !== INK) return `the mark is ${r.mark}, not the ink`;
+    if (r.name !== INK) return `the company name is ${r.name}, not the ink`;
     if (r.footerMark === RED) return 'the footer mark is red, which is 1.6:1 on the band and cannot be seen';
     // The one deliberate exception, added 2026-09-09. White on this red is
     // 7.5:1, which is what makes the badge legible whatever the card behind it
@@ -1326,7 +1329,7 @@ onPage('/',
       if (r.ticket.colour !== 'rgb(255, 255, 255)') return `the ticket bubble reads in ${r.ticket.colour}, not white`;
     }
     const strays = r.others.filter((value) => value === RED);
-    if (strays.length) return `${strays.length} surface(s) besides the mark took the red — it paints the mark and nothing else`;
+    if (strays.length) return `${strays.length} surface(s) took the red — the ticket bubble is the only thing left that wears it`;
     return null;
   },
 );
