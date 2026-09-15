@@ -25,11 +25,11 @@ const currentPath = Astro.url.pathname;
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Pins iOS Safari's status bar to the masthead's own white. Without it
-       the bar tints from the page, and since --masthead-bg is only 90% white
-       (global.css) iOS reads the dark hero straight through the glass and the
-       bar shifts as the page scrolls under it. The bar is white, so this is
-       white; it follows --masthead-bg, not --ground. -->
+  <!-- For Safari 15 through 18, and for Chrome on Android. Safari 26 ignores
+       theme-color outright and tints its bars by sampling the page's own CSS
+       instead; the masthead carries a white top ramp for that reader, so this
+       states the same white the ramp paints and the two agree. Not --ground:
+       it answers to the bar, which is what the strip sits against. -->
   <meta name="theme-color" content="#FFFFFF" />
   <!-- Cast names are still unverified against the company's own list. -->
   <meta name="robots" content="noindex, nofollow" />

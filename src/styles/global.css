@@ -200,20 +200,31 @@
    anchor has settled. */
 html {
   scroll-padding-top: 4.5rem;
-  /* The overscroll ground, and the only reason this is a gradient.
+  /* The overscroll ground, in two layers that answer to two different readers.
 
-     body paints --ground opaquely over the whole document, so this is never
+     body paints --ground opaquely over the whole document, so neither layer is
      seen inside the page - only in the rubber-band strips iOS exposes past
-     either end. Flat --ink there would darken the top as well, where the
-     masthead's white shelf is what should carry on; flat --ground leaves the
-     white band under the dark footer that was reported. A hard 50% stop gives
-     each end the colour it already has, because the canvas extends whichever
-     edge the overscroll reaches.
+     either end.
 
-     check.mjs is unaffected: it reads a background-COLOR to decide what a
-     line of text is printed on, and every line is printed on body's flat
-     --ground, not on this. */
-  background: linear-gradient(var(--ground) 50%, var(--ink) 50%);
+     The IMAGE is what the eye gets. A hard 50% stop gives each end the colour
+     it already has: flat --ink would darken the top too, where the masthead's
+     white shelf should carry on, and flat --ground leaves the white band under
+     the dark footer that was reported. The canvas extends whichever edge the
+     overscroll reaches, so the stop position itself never shows.
+
+     The COLOR is what Safari 26 gets, and it is --ink rather than --ground on
+     purpose. With no fixed element near the bottom of the viewport, Safari
+     tints the strip below the page from the root background-COLOR and does not
+     look at a background-image at all - so the gradient alone left that strip
+     white under a dark footer, which is the bug being fixed. It cannot darken
+     the top in exchange: the masthead is fixed at top 0, so the strip up there
+     samples the bar, not this.
+
+     check.mjs is unaffected: it reads a background-COLOR to decide what a line
+     of text is printed on, and every line is printed on body's flat --ground,
+     not on this. */
+  background-color: var(--ink);
+  background-image: linear-gradient(var(--ground) 50%, var(--ink) 50%);
 }
 
 /* The ground: flat --ground, nothing over it.
@@ -297,7 +308,32 @@ img { max-width: 100%; height: auto; }
      The rule is the only ink-weight line that turns cherry. It can: a border
      is a graphic, not text, so it answers to 3:1 rather than 4.5:1, and the
      cherry is 7.5:1 on this white. */
-  background: var(--masthead-bg);
+  background-color: var(--masthead-bg);
+  /* The blend into the status bar (2026-09-15: "zjemnit prechod mezi header a
+     statusbar"). iOS cannot give a Safari tab a translucent status bar at all,
+     so the bar above the page is always an opaque strip and the only question
+     is where its edge falls.
+
+     Safari 26 picks that strip's colour by sampling this element - it is fixed
+     within 4px of the viewport top - and it reads the DECLARED
+     background-color, not the pixels. Declared is 90% white over the root's
+     white, so the strip comes out #FFFFFF, while the bar itself renders
+     #E9E9E8 wherever the dark hero is under the glass. That 22-level step is
+     the seam he photographed.
+
+     This ramp closes it from the page's side rather than the browser's: the
+     bar's own top edge is painted solid white, which is what the strip shows,
+     and fades to nothing over 18px into the glass below. Over white content it
+     is invisible; over the hero it turns the step into a gradient. It is a
+     background-IMAGE on purpose - Safari samples the colour, so the ramp
+     cannot move the strip out from under itself.
+
+     Keep it shorter than the condensed bar (~45px) or it swallows the glass. */
+  background-image: linear-gradient(
+    to bottom,
+    var(--white) 0,
+    rgb(255 255 255 / 0) 18px
+  );
   /* What makes the translucency read as glass rather than as a weak white:
      without it, text scrolling under the bar stays legible through it and the
      two sets of words collide. Progressive - a browser without it simply gets
