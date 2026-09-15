@@ -200,31 +200,27 @@
    anchor has settled. */
 html {
   scroll-padding-top: 4.5rem;
-  /* The overscroll ground, in two layers that answer to two different readers.
+  /* The overscroll ground: flat --ink, the footer's own colour.
 
-     body paints --ground opaquely over the whole document, so neither layer is
+     body paints --ground opaquely over the whole document, so this is never
      seen inside the page - only in the rubber-band strips iOS exposes past
-     either end.
+     either end, and in the strip Safari 26 tints below the page when no fixed
+     element is near the bottom of the viewport.
 
-     The IMAGE is what the eye gets. A hard 50% stop gives each end the colour
-     it already has: flat --ink would darken the top too, where the masthead's
-     white shelf should carry on, and flat --ground leaves the white band under
-     the dark footer that was reported. The canvas extends whichever edge the
-     overscroll reaches, so the stop position itself never shows.
+     This was a linear-gradient until 2026-09-15, meant to give each end the
+     colour it already had. It could not work, and the reason is worth keeping:
+     a background IMAGE on the root is painted over the entire canvas and
+     TILES, because background-repeat defaults to repeat. Past the bottom of
+     the document the next tile begins, and a gradient written --ground first
+     begins white - which is precisely the white band under the dark footer
+     that was reported. The background-color paired with it was unreachable for
+     the same reason: a repeating image leaves the colour nowhere to show.
+     Measured, not reasoned: with a 120px root box the gradient repeats the
+     full height of the viewport in both directions.
 
-     The COLOR is what Safari 26 gets, and it is --ink rather than --ground on
-     purpose. With no fixed element near the bottom of the viewport, Safari
-     tints the strip below the page from the root background-COLOR and does not
-     look at a background-image at all - so the gradient alone left that strip
-     white under a dark footer, which is the bug being fixed. It cannot darken
-     the top in exchange: the masthead is fixed at top 0, so the strip up there
-     samples the bar, not this.
-
-     check.mjs is unaffected: it reads a background-COLOR to decide what a line
-     of text is printed on, and every line is printed on body's flat --ground,
-     not on this. */
+     Flat costs nothing at the top, because the tile above the document ended
+     on --ink already, so that end was dark before this and is dark now. */
   background-color: var(--ink);
-  background-image: linear-gradient(var(--ground) 50%, var(--ink) 50%);
 }
 
 /* The ground: flat --ground, nothing over it.
