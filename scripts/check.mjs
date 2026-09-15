@@ -570,48 +570,13 @@ onPage('/',
   },
 );
 
-onPage('/',
-  'every referenced image asset actually decodes in a browser',
-  // A malformed asset leaves the declaration that points at it intact and
-  // simply paints nothing, so the page silently falls back to whatever is
-  // underneath and every screenshot still looks plausible. That shipped once -
-  // a "--" inside an XML comment, which is illegal and which no build step
-  // here parses. Decoding it is the only assertion that would have caught it.
-  //
-  // The ground is flat colour now, so what is left to guard is the seam
-  // dither: three PNGs used as mask layers, on the photograph's lower edge and
-  // on the two band joins. A mask that fails to decode masks nothing, which
-  // paints the seam as a hard block of ink rather than a fade.
-  `(() => {
-    const seams = [
-      [document.querySelector('.next'), '::before'],
-      [document.querySelector('.footer'), '::before'],
-    ].filter(([el]) => el);
-    const urls = seams.flatMap(([el, pseudo]) => {
-      const style = getComputedStyle(el, pseudo);
-      const declared = style.maskImage || style.webkitMaskImage || '';
-      return [...declared.matchAll(/url\\("?([^")]+)"?\\)/g)].map((m) => m[1]);
-    });
-    if (!urls.length) return JSON.stringify([]);
-    return Promise.all(urls.map((url) => new Promise((done) => {
-      const probe = new Image();
-      probe.onload = () => done({ url, width: probe.naturalWidth, height: probe.naturalHeight });
-      probe.onerror = () => done({ url, width: 0, height: 0 });
-      probe.src = url;
-    }))).then((r) => JSON.stringify(r));
-  })()`,
-  (raw) => {
-    const layers = JSON.parse(raw);
-    // Two since 2026-09-11: the hero's was the photograph's lower edge fading
-    // into the band, and both the photograph and the fade are gone.
-    if (layers.length < 2) return `only ${layers.length} of the two seams declares a mask image`;
-    const dead = layers.filter((layer) => !layer.width || !layer.height);
-    if (dead.length) {
-      return `${dead.map((d) => d.url).join(', ')} referenced but the browser cannot decode it, so that layer paints nothing`;
-    }
-    return null;
-  },
-);
+// The seam-dither mask decode check lived here until 2026-09-15. It probed
+// the only two mask images on the site - .next::before and .footer::before -
+// to catch an asset that is declared but does not decode, since a dead mask
+// masks nothing and silently paints a hard block of ink. Both seams were
+// removed that day ("dejme pryc uplne gradient zpode hero a nad footer"), so
+// there is nothing left for it to probe. Restore it from git if a mask ever
+// comes back.
 
 onPage('/',
   'next-performance strip sits below the hero and shows the next date still to be played',

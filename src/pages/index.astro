@@ -685,7 +685,12 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     top: 38%;
     transform: translateY(-50%);
     z-index: 2;
-    display: grid;
+    /* Hidden by default and turned back on only under @media (hover: hover)
+       below, mirroring .hero__step (2026-09-15: "skryt sipky na repertoar
+       cards na mobilu. melo by byt viditelne jen on mouse hover"). On a phone
+       the deck is dragged, which is the native gesture, and .deck__count still
+       says where in the pack you are. */
+    display: none;
     place-content: center;
     width: 2.75rem;
     height: 2.75rem;
@@ -706,14 +711,15 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   .deck__step--prev { left: -1rem; }
   .deck__step--next { right: -1rem; }
 
-  /* Revealed on hover where there is a pointer that can hover (2026-09-09:
-     "reveal on hover"). Everywhere else - touch, above all - they stay
-     visible, because a control that only appears on hover does not exist on
-     a phone, and these are the deck's only alternative to dragging it.
+  /* They exist only where there is a pointer that can hover, and are revealed
+     by hovering the frame (2026-09-09: "reveal on hover"). They used to stay
+     visible on touch on the argument that a hover-only control does not exist
+     on a phone and these were the deck's only alternative to dragging it;
+     2026-09-15 settled that the other way - dragging IS the phone's answer.
      :focus-visible brings them back for a keyboard, which has no hover
      either. */
   @media (hover: hover) {
-    .deck__step { opacity: 0; transition: opacity 160ms ease; }
+    .deck__step { display: grid; opacity: 0; transition: opacity 160ms ease; }
     .deck__frame:hover .deck__step,
     .deck__step:focus-visible { opacity: 1; }
   }
@@ -782,49 +788,15 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
 
   .production-card__title { margin: 1rem 0 0.5rem; font-size: clamp(1.5rem, 6vw, 2.2rem); }
 
-  /* --- the hero falls into the page ---------------------------------------
+  /* --- the hero meets the page --------------------------------------------
 
-     The hero ends in a solid ink band and the wash starts immediately under
-     it; the gradient carries one into the other (2026-09-06: "mezi hero a
-     strankou udelej gradient").
+     A hard edge, as of 2026-09-15 ("dejme pryc uplne gradient zpode hero a
+     nad footer"). The dithered seam that used to carry the ink band into the
+     wash is gone, and so is the 192px of top padding that existed only as its
+     safety margin - .next inherits .page's own --band-padding now, which is
+     what every other band on the site uses.
 
-     The seam is a dot matrix (2026-09-06). Every cell is full ink or nothing
-     and what changes down it is how many are lit, so there is no intermediate
-     tone in it anywhere to go soft. The tile is a blue-noise dither, which is
-     aperiodic without clumping; the radial is the curve, and the only smooth
-     thing left. Both are described in full beside .footer::before, which is
-     the same seam reflected.
-
-     Concave still: the centre clears first and the corners hold on, so the
-     dark reads as a proscenium opening rather than as a block ending.
-
-     The top padding is not spacing, it is the safety margin that makes the
-     seam legal: check.mjs decides what a line of text is printed on by
-     walking up for a background-COLOR, and a mask on a pseudo-element is
-     invisible to it. Text sitting in the dark half would be unreadable while
-     the harness went on measuring it against the wash and passing. The band
-     is 12rem and the padding clears 12rem. */
-  .next {
-    position: relative;
-    padding-top: calc(var(--band-padding) + var(--seam));
-  }
-
-  .next::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: var(--seam);
-    pointer-events: none;
-    background: var(--ink);
-    -webkit-mask-image: url("/assets/seam-dither.png"), var(--seam-curve);
-    mask-image: url("/assets/seam-dither.png"), var(--seam-curve);
-    -webkit-mask-size: 1536px var(--seam), 100% 100%;
-    mask-size: 1536px var(--seam), 100% 100%;
-    -webkit-mask-repeat: repeat-x, no-repeat;
-    mask-repeat: repeat-x, no-repeat;
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
+     The mirror above the footer went with it; see .footer in global.css. */
 
   /* --- the drum ------------------------------------------------------------
 

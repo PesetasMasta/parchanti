@@ -103,8 +103,8 @@
   --ground-deep: #E6E6E4;  /* the same paper a shade down: the bands and blanks that break it */
   /* One dark, and it is not black (2026-09-06: "sjednotil bych tmavou barvu
      pokud se nerovna cerna"). Held as channels rather than as a hex so that
-     the places needing it at partial alpha - the seams' zero end, the card
-     shadows - derive from the same three numbers instead of restating them.
+     the places needing it at partial alpha - the card shadows, the nav
+     overlay - derive from the same three numbers instead of restating them.
      It was already one colour everywhere; it was written three ways, which is
      how a colour stops being one colour. */
   --ink-rgb: 30 27 20;
@@ -186,21 +186,6 @@
   --masthead-height: calc(max(var(--masthead-logo), 3rem) + 1.4rem + 3px);
   --masthead-height-condensed: calc(var(--masthead-logo-condensed) + 0.9rem + 3px);
 
-  /* The seams are a dot matrix, and its cells are pixels, so this is a pixel
-     value and not an em one. The tile is 192px tall and repeats only
-     sideways, so an element of any other height would either crop the dither
-     or run past the end of it. The cell is 1px as of 2026-09-11, so 192 is
-     also 192 cells exactly - it divides by any cell size the seam might go
-     back to. */
-  --seam: 192px;
-
-  /* The curve, and now the only smooth thing in a seam. Its ramp is
-     deliberately short: a long one scales every dot's alpha on its way and
-     puts back exactly the softness the dither exists to remove. It carves the
-     bow; the dither does the fading. */
-  --seam-curve:    radial-gradient(118% 100% at 50% 100%, rgba(0, 0, 0, 0) 34%, #000 62%);
-  --seam-curve-up: radial-gradient(118% 100% at 50% 0%,   rgba(0, 0, 0, 0) 34%, #000 62%);
-
   --measure: 34rem;
   --gutter: clamp(1.25rem, 5vw, 3rem);
   --band-padding: clamp(2.5rem, 8vw, 5rem);
@@ -213,7 +198,23 @@
    than the number)
    with headroom, since that is the state in effect once a scroll to an
    anchor has settled. */
-html { scroll-padding-top: 4.5rem; }
+html {
+  scroll-padding-top: 4.5rem;
+  /* The overscroll ground, and the only reason this is a gradient.
+
+     body paints --ground opaquely over the whole document, so this is never
+     seen inside the page - only in the rubber-band strips iOS exposes past
+     either end. Flat --ink there would darken the top as well, where the
+     masthead's white shelf is what should carry on; flat --ground leaves the
+     white band under the dark footer that was reported. A hard 50% stop gives
+     each end the colour it already has, because the canvas extends whichever
+     edge the overscroll reaches.
+
+     check.mjs is unaffected: it reads a background-COLOR to decide what a
+     line of text is printed on, and every line is printed on body's flat
+     --ground, not on this. */
+  background: linear-gradient(var(--ground) 50%, var(--ink) 50%);
+}
 
 /* The ground: flat --ground, nothing over it.
 
@@ -718,59 +719,16 @@ img { max-width: 100%; height: auto; }
 
 /* --- footer ---------------------------------------------------------------- */
 
-/* The wash does not stop at the footer's edge, it falls into it (2026-09-06:
-   "mezi strankou a footer zase gradient - plynuly prechod do tmave casti").
-
-   The fade lives in the footer's own top margin rather than over the section
-   above it. That is not tidiness: check.mjs reads a background-COLOR to decide
-   what a line of text is printed on and looks straight through a gradient, so
-   a fade laid over the page would darken real text while the harness went on
-   measuring it against the wash. Given its own empty margin the gradient has
-   nothing to darken but itself, and the measurement stays true. */
+/* No seam above the footer as of 2026-09-15 ("dejme pryc uplne gradient
+   zpode hero a nad footer"). It used to fall into the dark band through a
+   dot-matrix bow (2026-09-06: "mezi strankou a footer zase gradient") carried
+   on a --seam top margin of its own; both are gone and the footer now begins
+   on a hard edge, directly under the preceding band's own padding. The hero's
+   mirror of it went at the same time; see .next in index.astro. */
 .footer {
-  position: relative;
-  margin-top: var(--seam);
   padding: var(--band-padding) var(--gutter);
   background: var(--ink);
   color: var(--white);
-}
-
-/* The mirror of the hero's seam, curving the other way (2026-09-06: "u
-   footeru opacny curve ... at je to stejny"), so the page sits inside a lens
-   rather than on a slope. Same tile flipped, same curve reflected.
-
-   The seam does not fade. It is a dot matrix: every cell is full ink or
-   nothing, and what changes across it is how many are lit, which is why it
-   stays sharp - there is no intermediate tone in it anywhere to go soft. Two
-   mask layers multiplied: the PNG is the dither, the radial is the curve.
-
-   The dither is blue noise, not an ordered matrix. An ordered dither is
-   periodic by construction - an o8x8 matrix repeats every eight cells and you
-   can see the crosshatch - so the threshold map was replaced rather than the
-   method (2026-09-06: "udelat vice random aby se patern matrixu neopakoval").
-   White noise has no pattern but clumps, because dice do; blue noise is the
-   same distribution with the low frequencies removed, so it is aperiodic and
-   evenly spread at once.
-
-   The tile is 1536px wide and laid at that exact size, so one image pixel is
-   one CSS pixel and a phone never sees it repeat inside the viewport. */
-.footer::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: var(--seam);
-  pointer-events: none;
-  background: var(--ink);
-  -webkit-mask-image: url("/assets/seam-dither-up.png"), var(--seam-curve-up);
-  mask-image: url("/assets/seam-dither-up.png"), var(--seam-curve-up);
-  -webkit-mask-size: 1536px var(--seam), 100% 100%;
-  mask-size: 1536px var(--seam), 100% 100%;
-  -webkit-mask-repeat: repeat-x, no-repeat;
-  mask-repeat: repeat-x, no-repeat;
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
 }
 
 /* Scaled by the same 35/43 as the masthead. She gave one number, for the bar
