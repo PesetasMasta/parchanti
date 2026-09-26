@@ -977,6 +977,42 @@ onPage('/repertoar/',
   },
 );
 
+// The listing and each production page render the same upcoming dates, from
+// the same file and the same filter. Compared as ISO dates, so a date the
+// build should have retired, or one dropped from the listing, fails here.
+function expectedPlaydates(slug) {
+  return upcoming(program.dates).filter((entry) => entry.slug === slug).map((entry) => entry.date);
+}
+
+onPage('/repertoar/',
+  'every production lists its upcoming dates',
+  `JSON.stringify(Object.fromEntries([...document.querySelectorAll('[data-slug]')].map((el) => [
+    el.dataset.slug,
+    [...el.querySelectorAll('.playdates__date')].map((a) => a.dataset.date),
+  ])))`,
+  (raw) => {
+    const listed = JSON.parse(raw);
+    for (const { slug } of productions) {
+      const expected = expectedPlaydates(slug);
+      if (JSON.stringify(listed[slug]) !== JSON.stringify(expected)) {
+        return `${slug} lists ${JSON.stringify(listed[slug])}, expected ${JSON.stringify(expected)}`;
+      }
+    }
+    return null;
+  },
+);
+
+for (const { slug } of productions) {
+  onPage(`/repertoar/${slug}/`,
+    'the production page lists its upcoming dates',
+    `JSON.stringify([...document.querySelectorAll('.playdates__date')].map((a) => a.dataset.date))`,
+    (raw) => {
+      const expected = expectedPlaydates(slug);
+      return raw === JSON.stringify(expected) ? null : `listed ${raw}, expected ${JSON.stringify(expected)}`;
+    },
+  );
+}
+
 onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
   'šípy page: verbatim quotes, score, alternation, credits, gallery',
   `JSON.stringify({

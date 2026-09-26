@@ -1,0 +1,92 @@
+---
+// "Kdy hrajeme": a production's upcoming dates, each a link into the programme
+// at the day it names. Used on the production page and on the repertoire
+// listing, so the two cannot drift apart. The caller filters the dates; this
+// only renders them. Anything slotted in follows the list when there is one.
+import { czechDate } from '../lib/program.js';
+
+interface Props {
+  dates: { date: string; time: string; note?: string }[];
+  // h2 on a production page, h3 under each production's h2 on the listing.
+  headingLevel?: 2 | 3;
+}
+
+const { dates, headingLevel = 2 } = Astro.props;
+const Heading = `h${headingLevel}`;
+---
+<section class="playdates">
+  <Heading class="playdates__heading">Kdy hrajeme</Heading>
+  {dates.length === 0 ? (
+    <p class="playdates__empty">
+      Zatím nemáme vypsaný termín. Nové najdete v <a class="link" href="/program/">programu</a>.
+    </p>
+  ) : (
+    <Fragment>
+      <ul class="playdates__list">
+        {dates.map((entry) => (
+          <li>
+            <a class="playdates__date" href={`/program/#termin-${entry.date}`} data-date={entry.date}>
+              <span class="playdates__day display">{czechDate(entry.date)}</span>
+              <span class="playdates__time display">{entry.time}</span>
+              {entry.note && <span class="playdates__note">{entry.note}</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <slot />
+    </Fragment>
+  )}
+</section>
+
+<style>
+  .playdates { margin: 2rem 0; max-width: var(--measure); }
+
+  .playdates__heading {
+    margin: 0 0 0.75rem;
+    font-family: var(--body);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+
+  .playdates__list {
+    margin: 0 0 0.75rem;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Each date is a link into the programme, at the day it names. The pair is
+     one object rather than a row of text: a date and a time belong together
+     and wrap together. */
+  .playdates__date {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--paper);
+    background-clip: padding-box;
+    border: 3px solid var(--ink);
+    border-radius: var(--radius-button);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .playdates__day { font-size: 1rem; }
+  .playdates__time { font-size: 1rem; color: var(--accent); }
+
+  .playdates__note {
+    font-family: var(--body);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .playdates__empty { margin: 0; }
+</style>

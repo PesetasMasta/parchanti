@@ -1,0 +1,55 @@
+# Build and deploy the GitHub Pages preview.
+#
+# The site is static and upcoming() filters by the BUILD date, so a rebuild is
+# what retires a past performance. The nightly run does that without anyone
+# publishing. check.mjs drives a real browser and stays a local gate.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 00:30 UTC is already the next day in Prague, winter and summer, and
+    # todayISO() compares UTC dates, so last night's performance goes here.
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Keeps the committed cache if GoOut fails, so a bad feed never breaks
+      # the build.
+      - run: node scripts/fetch-goout.mjs
+      - run: npm run build
+      - run: scripts/assemble-preview.sh dist
+        env:
+          PREVIEW_BASE: /parchanti
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

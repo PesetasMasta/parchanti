@@ -29,6 +29,11 @@ Brave over the DevTools protocol, so assertions run against computed styles and
 real layout rather than a parsed string. `publish-docs.sh` refuses to publish a
 site that does not pass it.
 
+The site filters performance dates by the build date, so a rebuild is what
+retires a past performance. `.github/workflows/pages.yml` builds and deploys
+the preview on every push to main and every night at 00:30 UTC; it does not
+run `check.mjs`, which stays a local gate.
+
 ## Design direction
 
 Poster press, spread across real pages: bezruci.cz-style curated homepage plus
