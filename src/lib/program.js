@@ -29,8 +29,8 @@ export function todayISO(now = new Date()) {
 
 // Everything still to be played, in order. The site is static, so "today" is
 // the build date: a rebuild is what retires a past performance. That is why
-// publish-docs.sh runs check.mjs, which fails once the listed next date is
-// behind the build.
+// .github/workflows/pages.yml rebuilds nightly, and why check.mjs fails once
+// the listed next date is behind the build.
 export function upcoming(dates, today = todayISO()) {
   return dates.filter((entry) => entry.date >= today);
 }

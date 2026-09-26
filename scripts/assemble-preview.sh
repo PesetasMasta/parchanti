@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Turn a built site into the GitHub Pages preview, in place:
 #   PREVIEW_BASE=/parchanti scripts/assemble-preview.sh <dir>
-# Used by publish-docs.sh on docs/ and by the Actions workflow on dist/.
+# Used by the Pages workflow (.github/workflows/pages.yml) on dist/.
 set -euo pipefail
 
 SITE="${1:?usage: scripts/assemble-preview.sh <dir>}"

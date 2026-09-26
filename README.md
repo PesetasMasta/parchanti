@@ -19,20 +19,19 @@ quoted and no i-divadlo page.
     npm run dev            # live dev server
     node scripts/check.mjs # build + full check suite (needs Brave installed)
     node scripts/serve.mjs # preview dist/ at http://127.0.0.1:4173/
-    bash scripts/publish-docs.sh  # checks, then assembles docs/
 
 Links are root-relative, so the built site is previewed over HTTP, not
 file://. The previous single-page prototype is kept as-is in `prototype/`.
 
 `check.mjs` is the test suite. There is no framework: it drives a real headless
 Brave over the DevTools protocol, so assertions run against computed styles and
-real layout rather than a parsed string. `publish-docs.sh` refuses to publish a
-site that does not pass it.
+real layout rather than a parsed string.
 
-The site filters performance dates by the build date, so a rebuild is what
-retires a past performance. `.github/workflows/pages.yml` builds and deploys
-the preview on every push to main and every night at 00:30 UTC; it does not
-run `check.mjs`, which stays a local gate.
+Publishing is pushing to main: `.github/workflows/pages.yml` builds and deploys
+the GitHub Pages preview on every push and every night at 00:30 UTC. The site
+filters performance dates by the build date, so the nightly run is what retires
+a past performance. The workflow does not run `check.mjs`, which needs a
+browser, so run it before pushing.
 
 ## Design direction
 

@@ -22,7 +22,7 @@ FEEDBACK.md
 ig-zprava.md
 
 # Local review sheets: a copy of the built site per variant, rebuilt on
-# demand by mockups-build.sh. Never published - publish-docs.sh copies dist/.
+# demand by mockups-build.sh. Never published - the Pages workflow deploys dist/.
 mockups/
 mockups-build.sh
 mockups-variants.py
