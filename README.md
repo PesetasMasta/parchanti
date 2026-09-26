@@ -1,9 +1,8 @@
 # Kolekce Parchant — web
 
 Site for the theatre company Kolekce Parchant (Studio Citadela, Prague).
-Not public yet: it is previewed on GitHub Pages behind `noindex` and a
-`robots.txt` disallow, and the domain kolekceparchant.cz is registered but not
-pointed anywhere. This repo holds the visual direction, the GoOut integration,
+Not public yet: it is served at kolekceparchant.cz from GitHub Pages, still
+behind `noindex` and a `robots.txt` disallow until the launch. This repo holds the visual direction, the GoOut integration,
 and the photo pipeline.
 
 ## How this is built
@@ -207,8 +206,9 @@ named actor is the one thing a placeholder must not look like.
 
 ## Next
 
-1. Point kolekceparchant.cz at a host and lift the `noindex` — the domain is
-   registered at WEDOS, the site is previewed on GitHub Pages.
+1. Lift the `noindex` at launch — kolekceparchant.cz already serves the site
+   from GitHub Pages (DNS at WEDOS). It lives in Base.astro's robots meta and
+   the robots.txt that assemble-preview.sh writes.
 2. One date is unanswered and it blocks going public: Toníkova cesta on
    **22. 10.** is on the site and absent from her September plan. A cancelled
    date and a line missed while retyping look identical on paper, so it was

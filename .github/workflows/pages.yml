@@ -37,9 +37,9 @@ jobs:
       # the build.
       - run: node scripts/fetch-goout.mjs
       - run: npm run build
+      # No PREVIEW_BASE: the site is served from the root of
+      # kolekceparchant.cz, so its root-relative links need no prefix.
       - run: scripts/assemble-preview.sh dist
-        env:
-          PREVIEW_BASE: /parchanti
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
