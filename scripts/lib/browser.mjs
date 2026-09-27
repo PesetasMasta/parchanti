@@ -79,7 +79,10 @@ export async function withBrowser(fn) {
   // the second. Starting from an empty profile every time costs nothing (it is
   // scratch state, and it had grown to 121 MB) and makes that unfixable-looking
   // failure impossible.
-  rmSync(PROFILE, { recursive: true, force: true });
+  // Retried, because the previous width's browser has exited but its helper
+  // processes can still be writing into the profile, and the delete then
+  // fails with ENOTEMPTY - about one run in three.
+  rmSync(PROFILE, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 
   const browser = spawn(BRAVE, [
     '--headless',
