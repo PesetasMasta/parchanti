@@ -228,6 +228,45 @@ generic(
   },
 );
 
+// The colour iOS Safari paints past the end of the page and in the strip under
+// its bottom toolbar. WebKit does not read html alone: it blends the body's
+// background-color over the root's (LocalFrameView::documentBackgroundColor),
+// so an opaque body wins outright - which is how html went ink on 2026-09-15
+// and the strip under the footer stayed white. Background images are ignored
+// by that blend, so only the two colours are read here too.
+generic(
+  'the ground past the end of the page is ink, and the page itself is not',
+  `(() => {
+    const channels = (el) => {
+      const [r, g, b, a = 1] = getComputedStyle(el).backgroundColor.match(/[\\d.]+/g).map(Number);
+      return { rgb: [r, g, b], alpha: a };
+    };
+    const html = channels(document.documentElement);
+    const body = channels(document.body);
+    const blended = html.rgb.map((value, i) => Math.round(body.rgb[i] * body.alpha + value * (1 - body.alpha)));
+    return JSON.stringify({
+      extended: 'rgb(' + blended.join(', ') + ')',
+      main: getComputedStyle(document.querySelector('main')).backgroundColor,
+      spacer: getComputedStyle(document.querySelector('.masthead-space')).backgroundColor,
+      // Anything between the three boxes is bare root, which is ink now.
+      seams: [
+        [document.querySelector('.masthead-space'), document.querySelector('main')],
+        [document.querySelector('main'), document.querySelector('.footer')],
+      ].map(([above, below]) => below.getBoundingClientRect().top - above.getBoundingClientRect().bottom),
+    });
+  })()`,
+  (raw) => {
+    const INK = 'rgb(30, 27, 20)';
+    const WHITE = 'rgb(255, 255, 255)';
+    const { extended, main, spacer, seams } = JSON.parse(raw);
+    if (extended !== INK) return `Safari would extend ${extended} past the footer, not the ink`;
+    if (main !== WHITE) return `main is ${main}, so the page ground is not white`;
+    if (spacer !== WHITE) return `the masthead spacer is ${spacer}, so the root shows through the bar`;
+    if (seams.some((gap) => Math.abs(gap) > 0.5)) return `ink shows between the grounded boxes: gaps of ${seams.join('px and ')}px`;
+    return null;
+  },
+);
+
 generic(
   'nothing overflows horizontally',
   `(() => {
@@ -1637,21 +1676,22 @@ try {
     }
   });
 
-  // The ground rides on body, which propagates to the canvas: that is what
-  // makes it cover a document of any length. It is flat colour now, and the
-  // thing worth asserting about flat colour is that it is EXACTLY --ground -
+  // The ground rides on main (and the masthead spacer), not body - body has to
+  // stay transparent or Safari extends white under the footer; see the
+  // generic check on the ground past the end of the page. It is flat colour,
+  // and the thing worth asserting about flat colour is that it is EXACTLY --ground -
   // that value is the ground every contrast ratio in this file is measured
   // against, so if it drifts, every one of those measurements is quietly wrong.
   await withBrowser(async (visit) => {
     await visit(`http://127.0.0.1:${PORT}/`, { width: 390, height: 844 }, async (evaluate) => {
       const measured = await evaluate(`(() => {
-        const style = getComputedStyle(document.body);
+        const style = getComputedStyle(document.querySelector('main'));
         return { image: style.backgroundImage, colour: style.backgroundColor };
       })()`);
       const wrong = [];
-      if (measured.image !== 'none') wrong.push(`body carries a background image again: ${measured.image}`);
+      if (measured.image !== 'none') wrong.push(`main carries a background image again: ${measured.image}`);
       if (measured.colour !== 'rgb(255, 255, 255)') wrong.push(`the ground is ${measured.colour}, not --ground`);
-      const label = '[/] the ground is flat --ground on body';
+      const label = '[/] the ground is flat --ground on main';
       console.log(`${wrong.length ? 'FAIL' : 'pass'}  ${label}${wrong.length ? ` — ${wrong.join('; ')}` : ''}`);
       if (wrong.length) failures.push(label);
     });

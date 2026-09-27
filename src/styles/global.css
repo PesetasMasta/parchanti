@@ -202,10 +202,10 @@ html {
   scroll-padding-top: 4.5rem;
   /* The overscroll ground: flat --ink, the footer's own colour.
 
-     body paints --ground opaquely over the whole document, so this is never
-     seen inside the page - only in the rubber-band strips iOS exposes past
-     either end, and in the strip Safari 26 tints below the page when no fixed
-     element is near the bottom of the viewport.
+     main and the masthead spacer paint --ground over the page above the
+     footer, so this is never seen inside the page - only in the rubber-band
+     strips iOS exposes past either end, and in the strip Safari 26 tints below
+     the page when no fixed element is near the bottom of the viewport.
 
      This was a linear-gradient until 2026-09-15, meant to give each end the
      colour it already had. It could not work, and the reason is worth keeping:
@@ -234,11 +234,21 @@ html {
    assumes --ground underneath, and now that is literally what is painted
    rather than the darkest tone a texture happened to reach.
 
-   Still on body, so it propagates to the canvas and covers a document of any
-   length. */
+   NOT on body, and that is the 2026-09-27 fix for the white strip under the
+   footer. iOS Safari does not take the colour past the end of the page from
+   html alone: WebKit blends body's background-color over the root's
+   (LocalFrameView::documentBackgroundColor), so an opaque body wins outright
+   and html going ink on 2026-09-15 changed nothing he could see. So body
+   stays transparent and the ground is painted on the two boxes above the
+   footer instead. check.mjs does WebKit's blend and asserts it comes out ink,
+   and that the three boxes meet with no bare root between them. */
+.masthead-space,
+main {
+  background: var(--ground);
+}
+
 body {
   margin: 0;
-  background: var(--ground);
   color: var(--ink);
   font-family: var(--body);
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
