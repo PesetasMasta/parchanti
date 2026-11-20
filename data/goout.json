@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-09T17:36:10.648Z",
+  "fetchedAt": "2026-11-20T06:15:15.082Z",
   "performerId": 2590315,
   "performerUrl": "https://goout.net/en/kolekce-parchant/pzpmtpg/",
   "venueId": 4025,
@@ -26,6 +26,30 @@
       "attributed": true,
       "images": [
         "https://goout.net/i/132/1325650-%%%.jpg"
+      ]
+    },
+    {
+      "gooutEventId": 3427905,
+      "title": "Ale ty červánky jsou stejně nejkrásnější",
+      "url": "https://goout.net/en/ale-ty-cervanky-jsou-stejne-nejkrasnejsi/ezfqjti/",
+      "attributed": true,
+      "images": [
+        "https://goout.net/i/141/1410870-%%%.jpg",
+        "https://goout.net/i/141/1410871-%%%.jpg",
+        "https://goout.net/i/141/1410872-%%%.jpg",
+        "https://goout.net/i/141/1410873-%%%.jpg",
+        "https://goout.net/i/141/1410874-%%%.jpg",
+        "https://goout.net/i/141/1410875-%%%.jpg",
+        "https://goout.net/i/141/1410876-%%%.jpg"
+      ]
+    },
+    {
+      "gooutEventId": 3442417,
+      "title": "Toníkova cesta",
+      "url": "https://goout.net/en/tonikova-cesta/ezrvhui/",
+      "attributed": true,
+      "images": [
+        "https://goout.net/i/141/1411195-%%%.jpg"
       ]
     },
     {
@@ -441,7 +465,7 @@
       "gooutEventId": 3242569,
       "start": "2026-09-17T20:00:00+02:00",
       "cancelled": false,
-      "ticketingState": "ACTIVE",
+      "ticketingState": "ENDED",
       "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szajfmy/",
       "venue": {
         "name": "Studio Citadela",
@@ -454,7 +478,7 @@
       "gooutEventId": 3345388,
       "start": "2026-09-24T20:00:00+02:00",
       "cancelled": false,
-      "ticketingState": "ACTIVE",
+      "ticketingState": "ENDED",
       "ticketUrl": "https://goout.net/en/rychle-sipy/szxifmy/",
       "venue": {
         "name": "Studio Citadela",
@@ -467,7 +491,7 @@
       "gooutEventId": 3242569,
       "start": "2026-10-01T20:00:00+02:00",
       "cancelled": false,
-      "ticketingState": "ACTIVE",
+      "ticketingState": "ENDED",
       "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szyifmy/",
       "venue": {
         "name": "Studio Citadela",
@@ -478,10 +502,114 @@
     {
       "scheduleId": 9569689,
       "gooutEventId": 3345388,
-      "start": "2026-10-03T16:00:00+02:00",
+      "start": "2026-10-16T18:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szomlmy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9577469,
+      "gooutEventId": 3427905,
+      "start": "2026-10-24T20:00:00+02:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/ale-ty-cervanky-jsou-stejne-nejkrasnejsi/sztxxmy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583642,
+      "gooutEventId": 3345388,
+      "start": "2026-11-08T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szruiny/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9611993,
+      "gooutEventId": 3442417,
+      "start": "2026-11-13T17:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/tonikova-cesta/szseepy/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583646,
+      "gooutEventId": 3242569,
+      "start": "2026-11-14T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ENDED",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szvuiny/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583648,
+      "gooutEventId": 3427905,
+      "start": "2026-11-20T20:00:00+01:00",
       "cancelled": false,
       "ticketingState": "ACTIVE",
-      "ticketUrl": "https://goout.net/en/rychle-sipy/szomlmy/",
+      "ticketUrl": "https://goout.net/en/ale-ty-cervanky-jsou-stejne-nejkrasnejsi/szxuiny/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583647,
+      "gooutEventId": 3427905,
+      "start": "2026-12-01T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/ale-ty-cervanky-jsou-stejne-nejkrasnejsi/szwuiny/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583641,
+      "gooutEventId": 3345388,
+      "start": "2026-12-03T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/rychle-sipy/szquiny/",
+      "venue": {
+        "name": "Studio Citadela",
+        "address": "Klimentská 16",
+        "city": "Praha 1"
+      }
+    },
+    {
+      "scheduleId": 9583645,
+      "gooutEventId": 3242569,
+      "start": "2026-12-08T20:00:00+01:00",
+      "cancelled": false,
+      "ticketingState": "ACTIVE",
+      "ticketUrl": "https://goout.net/en/hra-lasky-a-nahody/szuuiny/",
       "venue": {
         "name": "Studio Citadela",
         "address": "Klimentská 16",
