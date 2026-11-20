@@ -15,7 +15,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # write: the build commits the refreshed GoOut cache back, below.
+  contents: write
   pages: write
   id-token: write
 
@@ -36,6 +37,23 @@ jobs:
       # Keeps the committed cache if GoOut fails, so a bad feed never breaks
       # the build.
       - run: node scripts/fetch-goout.mjs
+      # Since 2026-11-20 most dates come from this cache, and the copy in the
+      # repo is the fallback when GoOut is down - so it should be last night's,
+      # not whenever someone last ran the script by hand (it had gone two
+      # months stale). Only a real change is committed: every fetch rewrites
+      # fetchedAt, and a commit per night for a timestamp is noise. A push
+      # made with GITHUB_TOKEN does not start another run, so this cannot
+      # loop, and a lost race with a newer commit must never block the deploy.
+      - name: Commit the refreshed GoOut cache
+        continue-on-error: true
+        run: |
+          if git diff --quiet -I '"fetchedAt"' -- data/goout.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          git add data/goout.json
+          git commit -m 'Refresh the GoOut cache'
+          git pull --rebase origin main
+          git push origin HEAD:main
       - run: npm run build
       # No PREVIEW_BASE: the site is served from the root of
       # kolekceparchant.cz, so its root-relative links need no prefix.
