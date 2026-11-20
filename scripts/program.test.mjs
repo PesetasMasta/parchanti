@@ -105,3 +105,25 @@ test('entries come out in date order', () => {
   const dates = result.map((entry) => entry.date);
   assert.deepEqual(dates, [...dates].sort());
 });
+
+// Another company's show at the same venue, with a title that is only a word
+// of ours, must not claim our production: before 2026-11-20 a loose title
+// could at worst add a ticket link to a date we already had, but now one
+// match imports every date the event has (review, 2026-11-20).
+test('a one-word title from another show does not claim a production', () => {
+  const venue = {
+    productions: [{ gooutEventId: 9, title: 'Hra', attributed: false }],
+    dates: [row(90, 9, '2027-01-15T20:00:00+01:00')],
+  };
+  const dates = schedule([], venue, [{ slug: 'hra', title: 'Hra lásky a náhody' }]);
+  assert.deepEqual(dates, []);
+});
+
+test('a title that is empty after cleanup matches nothing', () => {
+  const venue = {
+    productions: [{ gooutEventId: 9, title: '???', attributed: false }],
+    dates: [row(90, 9, '2027-01-15T20:00:00+01:00')],
+  };
+  const dates = schedule([], venue, [{ slug: 'hra', title: 'Hra lásky a náhody' }]);
+  assert.deepEqual(dates, []);
+});

@@ -180,11 +180,26 @@ function isCancelled(row) {
   return row.cancelled || row.ticketingState === 'CANCELLED';
 }
 
-// Every GoOut row that is this production, cancelled or not. Matched on the
-// loose title, as tickets are: GoOut sells Rychlé šípy under the short name.
+// Stricter than titlesAgree, because here one match imports every date an
+// event has rather than lending a link to a date we already had. The cache
+// holds every company's shows at Studio Citadela, so another company's "Hra"
+// must not become Hra lásky a náhody. The same title, or one being the other
+// plus more words, as long as the shorter has two words at least: GoOut sells
+// Rychlé šípy a záhada klubovny as "Rychlé šípy". An empty title matches
+// nothing.
+function sameShow(ours, theirs) {
+  const a = loose(ours).split(' ').filter(Boolean);
+  const b = loose(theirs).split(' ').filter(Boolean);
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  if (shorter.length === 0) return false;
+  if (shorter.length === longer.length) return shorter.join(' ') === longer.join(' ');
+  return shorter.length >= 2 && shorter.every((word, index) => word === longer[index]);
+}
+
+// Every GoOut row that is this production, cancelled or not.
 function rowsOf(production, goout) {
   const ids = new Set((goout?.productions ?? [])
-    .filter((event) => titlesAgree(production.title, event.title))
+    .filter((event) => sameShow(production.title, event.title))
     .map((event) => event.gooutEventId));
   return (goout?.dates ?? []).filter((row) => ids.has(row.gooutEventId));
 }
