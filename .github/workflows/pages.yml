@@ -14,11 +14,10 @@ on:
     - cron: '30 0 * * *'
   workflow_dispatch:
 
-permissions:
-  # write: the build commits the refreshed GoOut cache back, below.
-  contents: write
-  pages: write
-  id-token: write
+# Nothing by default; each job asks for what it needs. In particular the job
+# that runs npm ci and the build - third-party code - can read the repo but
+# never push to it.
+permissions: {}
 
 concurrency:
   group: pages
@@ -27,6 +26,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -37,23 +38,11 @@ jobs:
       # Keeps the committed cache if GoOut fails, so a bad feed never breaks
       # the build.
       - run: node scripts/fetch-goout.mjs
-      # Since 2026-11-20 most dates come from this cache, and the copy in the
-      # repo is the fallback when GoOut is down - so it should be last night's,
-      # not whenever someone last ran the script by hand (it had gone two
-      # months stale). Only a real change is committed: every fetch rewrites
-      # fetchedAt, and a commit per night for a timestamp is noise. A push
-      # made with GITHUB_TOKEN does not start another run, so this cannot
-      # loop, and a lost race with a newer commit must never block the deploy.
-      - name: Commit the refreshed GoOut cache
-        continue-on-error: true
-        run: |
-          if git diff --quiet -I '"fetchedAt"' -- data/goout.json; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
-          git add data/goout.json
-          git commit -m 'Refresh the GoOut cache'
-          git pull --rebase origin main
-          git push origin HEAD:main
+      # Handed to commit-cache below, which is the only job allowed to push.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: goout-cache
+          path: data/goout.json
       - run: npm run build
       # No PREVIEW_BASE: the site is served from the root of
       # kolekceparchant.cz, so its root-relative links need no prefix.
@@ -65,9 +54,48 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  # Since 2026-11-20 most dates come from the GoOut cache, and the copy in the
+  # repo is the fallback when GoOut is down - so it should be last night's, not
+  # whenever someone last ran the script by hand (it had gone two months
+  # stale). Its own job so that the push token never shares a runner with npm
+  # code, and so it can fail red without holding up the deploy, which needs
+  # only the build. Main only: a manual run on a branch must not commit to it,
+  # let alone push it to main. Only a real change is committed - every fetch
+  # rewrites fetchedAt, and a commit a night for a timestamp is noise. No
+  # rebase: if main moved meanwhile the push fails, the run shows it, and the
+  # next night tries again. A push made with GITHUB_TOKEN starts no new run.
+  commit-cache:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/download-artifact@v8
+        with:
+          name: goout-cache
+          path: data
+      - name: Commit the refreshed GoOut cache
+        run: |
+          if git diff --quiet -I '"fetchedAt"' -- data/goout.json; then
+            echo 'Nothing but fetchedAt changed; nothing to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          git add data/goout.json
+          git commit -m 'Refresh the GoOut cache'
+          git push origin HEAD:main
