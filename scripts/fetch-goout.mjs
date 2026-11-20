@@ -5,9 +5,9 @@
 // If GoOut changes or goes away, the site keeps rendering the last known dates.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { titlesAgree } from '../src/lib/program.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -153,10 +153,23 @@ function ours(fresh, ourTitles) {
   return { productions, dates: fresh.dates.filter((date) => ids.has(date.gooutEventId)) };
 }
 
+// Every title the company plays: her hand-kept dates, and since 2026-11-20 the
+// full title of every production with a page. Those take their dates from
+// this cache, so one must not drop out of it because nobody happens to have
+// a hand date for it any more - Rychlé šípy is not attributed on GoOut and is
+// kept by title alone.
+export function ourTitles(root = ROOT) {
+  const program = JSON.parse(readFileSync(join(root, 'data', 'program.json'), 'utf8'));
+  const productionsDir = join(root, 'src', 'content', 'productions');
+  const pages = readdirSync(productionsDir)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => JSON.parse(readFileSync(join(productionsDir, name), 'utf8')))
+    .map((production) => [production.titleLead, production.titleRest].filter(Boolean).join(' '));
+  return [...new Set([...program.dates.map((entry) => entry.title), ...pages])];
+}
+
 async function main() {
   const cached = await readCache();
-  const program = JSON.parse(readFileSync(join(ROOT, 'data', 'program.json'), 'utf8'));
-  const ourTitles = [...new Set(program.dates.map((entry) => entry.title))];
 
   let fresh;
   try {
@@ -169,7 +182,7 @@ async function main() {
       fetchScope({ venue: String(VENUE_ID) }),
     ]);
 
-    fresh = ours(merge(results), ourTitles);
+    fresh = ours(merge(results), ourTitles());
     if (fresh.dates.length === 0) throw new Error('feed returned no dates');
   } catch (error) {
     if (!cached) {
@@ -208,4 +221,6 @@ async function main() {
   }
 }
 
-main();
+// Run only as a script, so the test can import what it needs without fetching
+// or writing the cache.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
