@@ -90,22 +90,25 @@ export function monthGrids(dates) {
   });
 }
 
-// --- tickets from GoOut ------------------------------------------------------
+// --- dates and tickets from GoOut --------------------------------------------
 //
-// Her decision 2026-09-02 reversed the 2026-08-11 one: the existing GoOut page
-// stays and becomes where tickets are sold. It does NOT become where the
-// program comes from, and that is a measurement rather than a preference - on
-// 2026-09-09 the account carried two productions and two upcoming dates
-// against the fourteen in data/program.json, and it still lists Audience
-// (Pivařská odyssea), which she asked to have taken off the site. So the dates
-// stay hand-kept and GoOut supplies what only GoOut can: a link per date, and
-// whether that date is still on sale.
+// Her decision 2026-09-02 made the existing GoOut page where tickets are sold.
+// On 2026-09-09 it was deliberately NOT made where the program comes from: the
+// account carried two upcoming dates against the fourteen in
+// data/program.json, and it lists Audience (Pivařská odyssea), which she asked
+// to have taken off the site.
 //
-// Nothing here fails when GoOut is missing a date, which is the normal case
-// today: an entry with no match keeps the state it was written with and
-// renders no link, exactly as before. As the rest of the autumn is entered
-// into the account, those dates pick up links on the next build with no code
-// change.
+// The first reason stopped holding. By 2026-11-20 she had kept GoOut current
+// and the hand file had not been touched since 2026-09-11: that evening's
+// Červánky was on sale and missing from the site, and eight autumn entries
+// disagreed with GoOut. So schedule() below takes a production's dates from
+// GoOut whenever GoOut lists it at all - but only for productions with a page
+// on the site, which is what keeps the second reason honoured: Audience has
+// no page, so nothing of it can arrive this way.
+//
+// withTickets() still serves the hand entries that remain (Toníkova cesta,
+// and any production GoOut does not list yet): a link per date and whether it
+// is on sale, and nothing when GoOut has no match.
 
 // GoOut sells under the full title, she writes the short one: "Červánky"
 // against "Ale ty červánky jsou stejně nejkrásnější". Comparing loosely is
@@ -170,4 +173,65 @@ export function withTickets(dates, goout) {
     if (!match) return entry;
     return { ...entry, url: czechUrl(match.ticketUrl), state: STATES[match.ticketingState] };
   });
+}
+
+// GoOut marks a cancellation two ways, and rows have been seen with either.
+function isCancelled(row) {
+  return row.cancelled || row.ticketingState === 'CANCELLED';
+}
+
+// Every GoOut row that is this production, cancelled or not. Matched on the
+// loose title, as tickets are: GoOut sells Rychlé šípy under the short name.
+function rowsOf(production, goout) {
+  const ids = new Set((goout?.productions ?? [])
+    .filter((event) => titlesAgree(production.title, event.title))
+    .map((event) => event.gooutEventId));
+  return (goout?.dates ?? []).filter((row) => ids.has(row.gooutEventId));
+}
+
+// One GoOut row as an entry the pages render. The start carries its own
+// offset, so the first sixteen characters are already Prague's calendar day
+// and clock, summer or winter. Her note for the same day survives; nothing
+// else of the hand entry does, because GoOut is the one that is kept current.
+function entryFromRow(row, production, handDates) {
+  const date = row.start.slice(0, 10);
+  const time = row.start.slice(11, 16);
+  const hand = handDates.find((entry) => entry.slug === production.slug && entry.date === date);
+  const state = STATES[row.ticketingState];
+  const sells = Boolean(state) && isTicketUrl(row.ticketUrl);
+  return {
+    date,
+    time,
+    when: displayWhen({ date, time }),
+    title: production.title,
+    slug: production.slug,
+    ...(hand?.note ? { note: hand.note } : {}),
+    ...(sells ? { url: czechUrl(row.ticketUrl), state } : { state: 'announced' }),
+  };
+}
+
+// The dates the site shows, past ones included - callers take upcoming().
+// `productions` is every production with a page, as { slug, title } with the
+// full title. A production GoOut lists at all takes all its dates from GoOut
+// and its hand entries are dropped, so a date she moved on GoOut cannot also
+// linger here. One GoOut does not list yet (a premiere not yet on sale) keeps
+// its hand dates, as does anything without a page - which is also why a
+// GoOut event with no page, like Audience, never reaches the site.
+export function schedule(handDates, goout, productions) {
+  const fromGoout = new Set();
+  const entries = [];
+
+  for (const production of productions) {
+    const rows = rowsOf(production, goout);
+    if (rows.length === 0) continue;
+    fromGoout.add(production.slug);
+    for (const row of rows) {
+      if (!isCancelled(row)) entries.push(entryFromRow(row, production, handDates));
+    }
+  }
+
+  const handKept = withTickets(handDates.filter((entry) => !fromGoout.has(entry.slug)), goout);
+
+  return [...entries, ...handKept]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 }
