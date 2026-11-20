@@ -13,7 +13,7 @@ import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { staticServer } from './serve.mjs';
 import { withBrowser } from './lib/browser.mjs';
-import { displayWhen, czechDate, upcoming, todayISO, withTickets } from '../src/lib/program.js';
+import { displayWhen, czechDate, upcoming, todayISO, schedule } from '../src/lib/program.js';
 
 const DIST = new URL('../dist', import.meta.url).pathname;
 const PORT = 4517;
@@ -41,6 +41,13 @@ const productions = readdirSync(PRODUCTIONS_DIR)
   }))
   .sort((a, b) => a.order - b.order);
 
+// The dates the pages render, merged by the same function from the same two
+// files, so a page and its assertion cannot disagree about what is on.
+const siteDates = schedule(program.dates, goout, productions.map((production) => ({
+  slug: production.slug,
+  title: [production.titleLead, production.titleRest].filter(Boolean).join(' '),
+})));
+
 // --- 0. Program data, before anything is built. `when` is the client's own
 // display string and `date`/`time` are the machine-readable fields the pages
 // actually render from; they duplicate each other, so they are checked against
@@ -57,7 +64,7 @@ const productions = readdirSync(PRODUCTIONS_DIR)
     }
     process.exit(1);
   }
-  if (upcoming(program.dates).length === 0) {
+  if (upcoming(siteDates).length === 0) {
     console.error(`  program.json: every listed date is behind ${todayISO()} — the site would show the empty state`);
     process.exit(1);
   }
@@ -655,7 +662,7 @@ onPage('/',
   })`,
   (raw) => {
     const r = JSON.parse(raw);
-    const next = upcoming(program.dates)[0];
+    const next = upcoming(siteDates)[0];
     if (!r.belowHero) return 'the strip must sit below the first screen, not above it';
     // Both states are asserted here, so the empty state stays covered when the
     // season ends and every date has been played.
@@ -666,7 +673,7 @@ onPage('/',
     if (r.emptyVisible) return 'dates are still to come, but the empty state is showing';
     // The drum turns through the next few dates. Six is the cap in
     // index.astro; fewer than six left to play means fewer slides.
-    const wanted = Math.min(upcoming(program.dates).length, 6);
+    const wanted = Math.min(upcoming(siteDates).length, 6);
     if (r.cards !== wanted) return `expected ${wanted} dates in the drum, got ${r.cards}`;
     // Off-window slides are translated a whole width sideways, so the window
     // has to clip them or the page scrolls.
@@ -901,7 +908,7 @@ onPage('/program/',
   })`,
   (raw) => {
     const p = JSON.parse(raw);
-    const dates = upcoming(program.dates);
+    const dates = upcoming(siteDates);
     if (p.heading !== 'Program') return `heading was ${JSON.stringify(p.heading)}`;
     if (!p.accessNote) return 'the accessibility line she asked for is missing';
     if (!dates.length) {
@@ -955,11 +962,12 @@ onPage('/program/',
   }))`,
   (raw) => {
     const cards = JSON.parse(raw);
-    // Merged the same way the page merges it. Twelve of the fourteen autumn
-    // dates are not in the GoOut account (measured 2026-09-09), and the thing
-    // worth pinning is that those render NO link: a "Vstupenky" that goes
-    // nowhere is the failure this whole arrangement exists to avoid.
-    const merged = upcoming(withTickets(program.dates, goout));
+    // Merged the same way the page merges it. Since 2026-11-20 most dates
+    // come from GoOut itself, but the hand-kept ones (Toníkova cesta, and any
+    // production GoOut does not list yet) still often have no ticket there,
+    // and the thing worth pinning is that those render NO link: a "Vstupenky"
+    // that goes nowhere is the failure this whole arrangement exists to avoid.
+    const merged = upcoming(siteDates);
     if (cards.length !== merged.length) return `${cards.length} cards for ${merged.length} dates`;
 
     for (const [index, entry] of merged.entries()) {
@@ -1029,7 +1037,7 @@ onPage('/repertoar/',
 // the same file and the same filter. Compared as ISO dates, so a date the
 // build should have retired, or one dropped from the listing, fails here.
 function expectedPlaydates(slug) {
-  return upcoming(program.dates).filter((entry) => entry.slug === slug).map((entry) => entry.date);
+  return upcoming(siteDates).filter((entry) => entry.slug === slug).map((entry) => entry.date);
 }
 
 onPage('/repertoar/',
