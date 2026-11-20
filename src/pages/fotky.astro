@@ -1,37 +1,45 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import ProductionTitle from '../components/ProductionTitle.astro';
 
-// Only the Rychlé šípy photographs are identifiable. Nothing else may be
-// captioned with a production name; misattributing someone else's production
-// is worse than an uncaptioned photo. hero.png is the company itself.
+// Every photograph here comes from a production's own file, grouped under
+// that production's title. The photographer's set arrived on 2026-11-20
+// already sorted by show, so each one is attributed by her sorting, not by
+// our reading of the set - misattributing someone else's production is the
+// error this page used to guard against by captioning almost nothing.
 //
-// The same rule is what picks the stand-in pool in src/lib/stand-in.js: the
-// panels that read as the company can stand in for a missing poster, and the
-// ones showing the Rychlé šípy set cannot.
-const photos = [
-  { src: '/assets/panels/sipy-1.png', width: 900, height: 863, caption: 'Rychlé šípy a záhada klubovny', animate: true,
-    alt: 'Dívka v kapuci se s leknutím dívá vzhůru, za ní se v klubovně tísní další čtyři postavy pod visícími petrolejkami.' },
-  { src: '/assets/panels/sipy-2.png', width: 900, height: 788, caption: 'Rychlé šípy a záhada klubovny', animate: false,
-    alt: 'Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny.' },
-  { src: '/assets/panels/sipy-3.png', width: 900, height: 750, caption: 'Rychlé šípy a záhada klubovny', animate: false,
-    alt: 'Skupina postav stojí v klubovně kolem sedící dívky, jedna z nich gestikuluje uprostřed pohybu.' },
-  { src: '/assets/panels/hero.png', width: 1400, height: 1077, caption: 'Soubor', animate: false,
-    alt: 'Šest herců stojí vedle sebe v řadě v podkroví s lany a petrolejkou nad hlavou.' },
-];
+// The grey panels that stood here before (and hero.png, captioned "Soubor")
+// are gone from this page; they still serve src/lib/stand-in.js, which is a
+// separate job. A production with no photographs yet simply has no group.
+const productions = (await getCollection('productions'))
+  .filter((production) => production.data.photos.length > 0)
+  .sort((a, b) => a.data.order - b.data.order);
 ---
 <Base title="Fotky — Kolekce Parchant" description="Fotografie z představení souboru Kolekce Parchant ve Studiu Citadela.">
   <section class="page fotky">
     <div class="page__inner">
       <h1 class="display page-heading">Fotky</h1>
 
-      <div class="gallery">
-        {photos.map((photo) => (
-          <figure class="gallery__item" data-animate={photo.animate ? 'hero' : undefined}>
-            <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" />
-            <figcaption>{photo.caption}</figcaption>
-          </figure>
-        ))}
-      </div>
+      {productions.map((production, productionIndex) => (
+        <section class="fotky__group">
+          <h2 class="display fotky__title">
+            <a href={`/repertoar/${production.id}/`}>
+              <ProductionTitle titleLead={production.data.titleLead} titleRest={production.data.titleRest} />
+            </a>
+          </h2>
+
+          <div class="gallery">
+            {production.data.photos.map((photo, photoIndex) => (
+              // The one hook the actors-moving animation will attach to
+              // (backlog: the-actors-moving-animation). Nothing reads it yet.
+              <figure class="gallery__item" data-animate={productionIndex === 0 && photoIndex === 0 ? 'hero' : undefined}>
+                <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" />
+              </figure>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   </section>
 </Base>
@@ -39,19 +47,21 @@ const photos = [
 <style>
   .fotky { background: transparent; }
 
-  .gallery { display: grid; gap: 1.5rem; }
+  .fotky__group + .fotky__group { margin-top: 3rem; }
 
-  @media (min-width: 48rem) { .gallery { grid-template-columns: 1fr 1fr; } }
+  .fotky__title { margin: 0 0 1.25rem; font-size: clamp(1.6rem, 6vw, 2.4rem); }
 
-  .gallery__item { margin: 0; }
+  .fotky__title a { color: inherit; text-decoration: none; }
 
-  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); }
+  .fotky__title a:hover { text-decoration: underline; }
 
-  .gallery__item figcaption {
-    margin-top: 0.5rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
+  /* Columns, as on the production pages: the set mixes upright and wide
+     frames, and columns keep each whole without leaving holes. */
+  .gallery { columns: 1; column-gap: 1rem; }
+
+  @media (min-width: 48rem) { .gallery { columns: 2; } }
+
+  .gallery__item { margin: 0 0 1rem; break-inside: avoid; }
+
+  .gallery__item img { display: block; width: 100%; border: 3px solid var(--ink); border-radius: var(--radius-inner); }
 </style>

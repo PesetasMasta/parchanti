@@ -79,6 +79,22 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        slide in normal flow - the other two are laid over it - so the tallest
        slide sets the height and the strip cannot jump as it turns. -->
   <section class="hero page" data-reel>
+    <!-- One photograph for the whole reel, behind the slides rather than in
+         one of them, so it stays still while the copy travels over it
+         (2026-11-20). It is the photographer's own colour shot, not one of the
+         desaturated panels that left the hero on 2026-09-11. -->
+    <div class="hero__photo">
+      <img
+        src="/assets/photos/hero/img-4109.jpg"
+        srcset="/assets/photos/hra-lasky-a-nahody/img-4109.jpg 1600w, /assets/photos/hero/img-4109.jpg 2400w"
+        sizes="100vw"
+        width="2400"
+        height="1600"
+        fetchpriority="high"
+        alt="Scéna z inscenace Hra lásky a náhody: dvě postavy v brýlích rozpažují nad glóbem pod kančí kůží na zdi."
+      />
+    </div>
+
     <article class="hero__slide" data-on>
       <div class="hero__copy">
         <div class="page__inner">
@@ -319,12 +335,13 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
        it has to clip them - without this the two off-screen slides widen the
        document and the page scrolls sideways, which check.mjs fails on. */
     overflow: hidden;
-    /* --hero-photo went with the photographs (2026-09-11: "fotky z hero
-       uplne pryc"). It existed only to keep the picture's height and the room
-       the slides left above their copy in step, and there is no picture now:
-       the band is type on ink, which is what the rest of the site already is.
-       The dithered edge that faded the photograph into the band went too -
-       there is nothing left to fade, and the band is one colour throughout. */
+    /* One number for the room the slides leave above their copy and for how
+       much of the photograph shows above it, so the two cannot drift apart.
+       The panels left the hero on 2026-09-11 ("fotky z hero uplne pryc");
+       the photographer's colour photograph came back into it on 2026-11-20. */
+    --hero-photo: min(56vw, 26rem);
+    /* How far the photograph runs on under the copy, fading into the ink. */
+    --hero-fade: 7rem;
     /* Vertical drags belong to the page. Without this the reel eats the
        scroll on a phone and the top of the site becomes a trap. */
     touch-action: pan-y;
@@ -345,9 +362,8 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    /* Was the picture's height; now simply room above the words so they do
-       not sit jammed under the bar. */
-    padding-top: clamp(3rem, 14vw, 7rem);
+    /* The window the photograph shows through above the words. */
+    padding-top: var(--hero-photo);
     /* Stacked slides would otherwise sit over the showing slide's button. */
     pointer-events: none;
     transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -364,7 +380,45 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
      and moves the slide instead of making room inside it - which left the
      photograph with nowhere to be and the wash showing where it should have
      been. */
-  .hero__slide:first-child { position: relative; }
+  /* first-of-type, not first-child: the photograph is the reel's first child
+     now, and with first-child no slide stays in flow and the band collapses
+     to nothing. The slides are articles and the photograph is a div. */
+  .hero__slide:first-of-type { position: relative; }
+
+  /* Pinned to the top of the band and cropped to it, then faded into the ink
+     over the first lines of copy. The fade ends in solid ink before the pitch
+     and the button, so everything below the title reads against the band
+     itself, and the title reads against at least three-quarters ink. */
+  .hero__photo {
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: calc(var(--hero-photo) + var(--hero-fade));
+  }
+
+  .hero__photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* The two figures' heads sit about a quarter of the way down the frame;
+       on a wide band this keeps them in it rather than cropping to the wall. */
+    object-position: center 35%;
+  }
+
+  .hero__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--ink-rgb) / 0.25) 0,
+      rgb(var(--ink-rgb) / 0) 22%,
+      rgb(var(--ink-rgb) / 0) 45%,
+      rgb(var(--ink-rgb) / 0.8) 78%,
+      var(--ink) 100%
+    );
+  }
 
   /* No background of its own any more - .hero paints the band for the whole
      reel. Transparent here is safe rather than sloppy: the harness's walk up

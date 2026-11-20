@@ -72,7 +72,50 @@
   "score": "90 %",
   "quotes": [],
   "idivadlo": "https://www.i-divadlo.cz/divadlo/kolekce-parchant/hra-lasky-a-nahody",
-  "photos": [],
+  "photos": [
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4109.jpg",
+      "alt": "Dvě postavy v brýlích, jedna v růžovém saku s palmami, druhá v černé sukni a květované halence, rozpažují nad glóbem pod kančí kůží na zdi.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4040.jpg",
+      "alt": "Pět herců bez košil se protahuje v řadě pod kančími kůžemi, uprostřed na koberci klečí postava v černých šatech.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4523.jpg",
+      "alt": "Postava v květované halence stojí na židli a shlíží na postavu ve žluté košili a červeném fezu.",
+      "width": 1067,
+      "height": 1600
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4593.jpg",
+      "alt": "Dvojice před kančí kůží: postava ve žluté květované halence se dívá na postavu v růžovém saku, která si upravuje rukáv.",
+      "width": 1600,
+      "height": 1066
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4469.jpg",
+      "alt": "V červeném světle klečí postava v kápi a objímá postavu v leopardích kalhotách, nad nimi visí kančí kůže.",
+      "width": 1067,
+      "height": 1600
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4692.jpg",
+      "alt": "Dvě postavy leží na koberci hlavami k sobě, nad nimi sedí postava v leopardím kožichu a drží je za hlavy.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/hra-lasky-a-nahody/img-4706.jpg",
+      "alt": "Čtyři postavy se k sobě tisknou ve dvou párech a šeptají si, jedna drží v ruce hůl.",
+      "width": 1600,
+      "height": 1067
+    }
+  ],
   "order": 2,
   "annotation": "Slavná komedie francouzského klasika. Ona předstírá, že je služka. On dělá, že je sluha. Oba chtějí „nenápadně“ zjistit, koho si mají vzít. Výsledek? Láska na první pohled mezi dvěma lidmi, kteří si myslí, že milují úplně někoho jiného. Zkrátka romantika, chaos a převleky. Ať žije láska! A záměny!",
   "ageRating": "12+",

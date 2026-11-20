@@ -554,9 +554,15 @@ onPage('/',
     claimIsEmpty: (document.querySelector('.hero__claim')?.textContent.trim().length ?? 1) === 0,
     pitch: document.querySelector('.hero__pitch')?.textContent.trim(),
     cta: document.querySelector('.hero a.button')?.getAttribute('href'),
-    // Inverted 2026-09-11: the photographs came out of the hero, so what is
-    // asserted is that none came back. The band is type on ink now.
-    photo: Boolean(document.querySelector('.hero img')),
+    // The panels came out of the hero on 2026-09-11; one colour photograph
+    // went back in on 2026-11-20. It belongs to the reel, not to a slide, so
+    // it stays still while the slides travel. The band's height comes from
+    // the first slide staying in flow, which the photograph broke once by
+    // becoming the reel's first child - hence the height assertion.
+    photos: document.querySelectorAll('.hero img').length,
+    photoInSlide: Boolean(document.querySelector('.hero__slide img')),
+    photoAlt: document.querySelector('.hero img')?.alt ?? '',
+    bandHeight: document.querySelector('.hero').getBoundingClientRect().height,
   })`,
   (raw) => {
     const hero = JSON.parse(raw);
@@ -567,7 +573,10 @@ onPage('/',
     const pitch = 'Divadelní soubor, který se nebojí provokovat. Jsme tu abychom bourali hranice a vytvářeli nezapomenutelné zážitky!';
     if (hero.pitch !== pitch) return `pitch was ${JSON.stringify(hero.pitch)}`;
     if (hero.cta !== '/program/') return `CTA href was ${JSON.stringify(hero.cta)}`;
-    if (hero.photo) return 'a photograph is back in the hero, which was emptied of them on 2026-09-11';
+    if (hero.photos !== 1) return `expected one photograph in the hero, got ${hero.photos}`;
+    if (hero.photoInSlide) return 'the hero photograph must sit behind the reel, not inside a slide that travels';
+    if (!hero.photoAlt.includes('Hra lásky a náhody')) return 'the hero photograph alt must name the production it is from';
+    if (hero.bandHeight < 200) return `the hero band is ${hero.bandHeight}px tall — no slide is in flow`;
     return null;
   },
 );
@@ -1094,13 +1103,14 @@ onPage('/repertoar/rychle-sipy-a-zahada-klubovny/',
     if (!r.premiere) return 'premiere date missing';
     if (!r.blurb) return 'blurb (with the corrected "v nové verzi") missing from the production page';
     if (r.blurbOldSlip) return "'v nové size' is back on the production page — corrected 2026-09-09";
-    if (r.photos !== 3) return `expected 3 gallery photos, got ${r.photos}`;
+    // The photographer's set, 2026-11-20, replacing the three grey panels.
+    if (r.photos !== 7) return `expected 7 gallery photos, got ${r.photos}`;
     return null;
   },
 );
 
 onPage('/repertoar/hra-lasky-a-nahody/',
-  'hra page: badge only, zero quotes, Aliska in cast, no photos',
+  'hra page: badge only, zero quotes, Aliska in cast, gallery',
   `JSON.stringify({
     quotes: document.querySelectorAll('.press blockquote').length,
     score: document.querySelector('.press__score')?.textContent.trim(),
@@ -1116,7 +1126,9 @@ onPage('/repertoar/hra-lasky-a-nahody/',
     if (r.quotes !== 0) return 'Hra lásky has no review text, so it must show no quote';
     if (r.score !== '90 %') return `score was ${JSON.stringify(r.score)}`;
     if (!r.aliska) return 'Aliska missing from cast links';
-    if (r.photos !== 0) return "no identifiable photos exist for this production — showing any misattributes someone's work";
+    // Zero until 2026-11-20, when the photographer's set arrived already
+    // sorted by production - before that nothing was identifiably this show.
+    if (r.photos !== 7) return `expected 7 gallery photos, got ${r.photos}`;
     if (!r.idivadlo) return 'i-divadlo source link missing';
     if (r.heading !== 'Hra lásky a náhody') return `heading was ${JSON.stringify(r.heading)}`;
     if (r.headingSplit) return 'the whole title is the heading — it must not be split into two sizes';
@@ -1389,23 +1401,31 @@ onPage('/o-prostoru/',
 );
 
 onPage('/fotky/',
-  'gallery: four photos, honest captions, one animation hook',
+  'gallery: each production\'s own photos under its own title, one animation hook',
   `JSON.stringify({
-    captions: [...document.querySelectorAll('.gallery__item figcaption')].map((c) => c.textContent.trim()),
+    groups: [...document.querySelectorAll('.fotky__group')].map((group) => ({
+      href: group.querySelector('.fotky__title a')?.getAttribute('href'),
+      srcs: [...group.querySelectorAll('.gallery__item img')].map((img) => img.getAttribute('src')),
+    })),
     animateHooks: document.querySelectorAll('[data-animate]').length,
+    photos: document.querySelectorAll('.gallery__item img').length,
     altsDistinct: new Set([...document.querySelectorAll('.gallery__item img')].map((img) => img.alt)).size,
   })`,
   (raw) => {
     const g = JSON.parse(raw);
-    const expected = [
-      'Rychlé šípy a záhada klubovny', 'Rychlé šípy a záhada klubovny',
-      'Rychlé šípy a záhada klubovny', 'Soubor',
-    ];
-    if (JSON.stringify(g.captions) !== JSON.stringify(expected)) {
-      return `captions were ${JSON.stringify(g.captions)} — only šípy photos are identifiable; nothing else may carry a production name`;
+    // Derived from the production files: a photo may only appear under the
+    // production whose file lists it, which is the attribution rule.
+    const expected = productions
+      .filter((production) => production.photos.length > 0)
+      .map((production) => ({
+        href: `/repertoar/${production.slug}/`,
+        srcs: production.photos.map((photo) => photo.src),
+      }));
+    if (JSON.stringify(g.groups) !== JSON.stringify(expected)) {
+      return `groups were ${JSON.stringify(g.groups)} — each photo must sit under the production whose file lists it`;
     }
     if (g.animateHooks !== 1) return `expected exactly one data-animate hook, got ${g.animateHooks}`;
-    if (g.altsDistinct !== 4) return 'alt texts must describe each photo, not duplicate the captions';
+    if (g.altsDistinct !== g.photos) return 'alt texts must describe each photo, not repeat one another';
     return null;
   },
 );
@@ -1435,10 +1455,18 @@ generic(
        src: img.getAttribute('src'),
        attr: img.getAttribute('width') + 'x' + img.getAttribute('height'),
        real: img.naturalWidth + 'x' + img.naturalHeight,
+       // With srcset and a w descriptor, naturalWidth is the chosen file
+       // scaled to the layout width, not the file's own pixels. Only the
+       // shape can be compared there - which is what the declared size is
+       // for anyway: reserving the right box before the file arrives.
+       responsive: img.hasAttribute('srcset'),
      })))`,
   (raw) => {
     const images = JSON.parse(raw);
-    const wrong = images.filter((img) => img.attr !== img.real);
+    const ratio = (size) => { const [w, h] = size.split('x').map(Number); return w / h; };
+    const wrong = images.filter((img) => (img.responsive
+      ? Math.abs(ratio(img.attr) - ratio(img.real)) > 0.01
+      : img.attr !== img.real));
     return wrong.length
       ? wrong.map((img) => `${img.src} declares ${img.attr}, file is ${img.real}`).join('; ')
       : null;

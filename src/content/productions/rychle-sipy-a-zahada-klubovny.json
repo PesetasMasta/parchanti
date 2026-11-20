@@ -106,22 +106,46 @@
   "idivadlo": "https://www.i-divadlo.cz/divadlo/kolekce-parchant/rychle-sipy-a-zahada-klubovny",
   "photos": [
     {
-      "src": "/assets/panels/sipy-1.png",
-      "alt": "Dívka v kapuci se s leknutím dívá vzhůru, za ní se v klubovně tísní další čtyři postavy pod visícími petrolejkami.",
-      "width": 900,
-      "height": 863
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-6086.jpg",
+      "alt": "Šest herců stojí zavěšených do sebe v řadě v klubovně, vpravo od nich visí šipka s nápisem Klubovna.",
+      "width": 1600,
+      "height": 1067
     },
     {
-      "src": "/assets/panels/sipy-2.png",
-      "alt": "Šest herců se sklání nad otevřeným komiksem, který drží uprostřed skupiny sedící na podlaze klubovny.",
-      "width": 900,
-      "height": 788
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-5754.jpg",
+      "alt": "Postava v bílé košili a červených trenýrkách stojí vpředu a mluví, za ní stojí a dřepí zbytek party pod pytlem Cafés do Brasil.",
+      "width": 1600,
+      "height": 1067
     },
     {
-      "src": "/assets/panels/sipy-3.png",
-      "alt": "Skupina postav stojí v klubovně kolem sedící dívky, jedna z nich gestikuluje uprostřed pohybu.",
-      "width": 900,
-      "height": 750
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-5877.jpg",
+      "alt": "Pět postav se tlačí hlavami k sobě nad malým zápisníkem, který jedna z nich drží.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-5861.jpg",
+      "alt": "Postava v kapuci a oranžových kalhotách strká jinou postavu hlavou napřed do plechové popelnice.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-6004.jpg",
+      "alt": "V oranžovém světle přetahují dvě postavy klacek u popelnice, třetí přihlíží s rukama v bok a čtvrtá je fotí z podlahy.",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-5795.jpg",
+      "alt": "Postava v červené mikině drží za čepici dřepící postavu v kožichu, která se mračí.",
+      "width": 1067,
+      "height": 1600
+    },
+    {
+      "src": "/assets/photos/rychle-sipy-a-zahada-klubovny/img-6059.jpg",
+      "alt": "Dvě postavy, jedna v červené mikině a druhá ve žlutém svetru, hrají na jevišti s fotbalovým míčem.",
+      "width": 1600,
+      "height": 1067
     }
   ],
   "order": 1,
