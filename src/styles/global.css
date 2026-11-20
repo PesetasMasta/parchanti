@@ -993,19 +993,27 @@ img { max-width: 100%; height: auto; }
 .ticket__bubble--tickets:hover,
 .ticket__bubble--tickets:focus-visible { text-decoration: underline; text-underline-offset: 0.15em; }
 
-/* Two shadows, not one: the ink drop keeps the card lifted off the page and
-   the red spread is the glow itself. Decorative, so it answers to no contrast
-   floor - the card's own text and frame are untouched by it. */
+/* The card inverts rather than glowing red (2026-11-20: "zkusil bych otocit
+   barvy jenom a mozna nechat stin aby to poplo ale cernej"), replacing the
+   red glow of 2026-09-09. Done by swapping the three --ticket-* values, so
+   everything painted from them flips together: text, frame, and the badges,
+   which were built to invert with the card. The Vstupenky badge keeps its red
+   on a hardcoded white ring and so reads the same on the ink card.
+   The shadow stays and deepens, in ink rather than red, so the card still
+   lifts as well as turning. Darker than the resting shadow but pulled in at
+   the sides by the negative spread: the drum window clips 1rem off the card
+   (--drum-bleed), and at this weight a full-width blur reached that clip and
+   showed as a grey box around the card. */
 .ticket:hover,
 .ticket:focus-within {
-  box-shadow:
-    0 10px 24px rgb(var(--ink-rgb) / 0.22),
-    0 0 0 2px rgb(var(--mark-rgb) / 0.60),
-    0 0 10px 2px rgb(var(--mark-rgb) / 0.42);
+  --ticket-paper: var(--ink);
+  --ticket-frame: var(--ink);
+  --ticket-text: var(--white);
+  box-shadow: 0 14px 24px -4px rgb(var(--ink-rgb) / 0.5);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ticket { transition: box-shadow 180ms ease; }
+  .ticket { transition: box-shadow 180ms ease, background-color 180ms ease, color 180ms ease; }
 }
 
 .ticket p:last-child { margin-bottom: 0; }
