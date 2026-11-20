@@ -446,6 +446,14 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
     border-color: var(--white);
   }
 
+  /* Hover turns it back to ink (2026-11-20). The white rule stays and is what
+     outlines the ink fill on the ink band. */
+  .hero .button:hover,
+  .hero .button:focus-visible {
+    background: var(--ink);
+    color: var(--white);
+  }
+
   /* visibility, not opacity: it is what takes the copy of a slide nobody is
      looking at out of the tab order, so the hidden slides' buttons cannot be
      reached with a keyboard. */
@@ -535,6 +543,23 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   }
 
   .hero__dot[aria-current]::before { background: var(--white); }
+
+  /* Hover turns the controls over too (2026-11-20). The arrows get a plate in
+     the colour they are drawn in, shaped like the buttons rather than a disc:
+     the deck's arrows were asked for "bez kolecka" (2026-09-09), and a
+     rounded square is the site's button shape anyway. A hollow dot fills. */
+  .hero__step,
+  .drum__step,
+  .deck__step { border-radius: var(--radius-button); }
+
+  .hero__step:hover,
+  .hero__step:focus-visible {
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  .hero__dot:hover::before,
+  .hero__dot:focus-visible::before { background: var(--white); }
 
   .hero__eyebrow {
     margin: 0 0 1rem;
@@ -1024,6 +1049,24 @@ const description = 'Kolekce Parchant je nezávislý divadelní soubor ze Studia
   }
 
   .drum__dot[aria-current]::before { background: var(--accent); }
+
+  .drum__step:hover,
+  .drum__step:focus-visible {
+    background: var(--accent);
+    color: var(--white);
+  }
+
+  .drum__dot:hover::before,
+  .drum__dot:focus-visible::before { background: var(--accent); }
+
+  /* The halo is for a glyph crossing artwork; on its own ink plate it would
+     only blur the white arrow's edge. */
+  .deck__step:hover,
+  .deck__step:focus-visible {
+    background: var(--ink);
+    color: var(--white);
+    text-shadow: none;
+  }
 </style>
 
 <script>

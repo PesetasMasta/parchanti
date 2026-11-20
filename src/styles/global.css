@@ -423,6 +423,21 @@ img { max-width: 100%; height: auto; }
   cursor: pointer;
 }
 
+/* Hover turns the button over, like the ticket card (2026-11-20: "hover
+   convert color na menu a tlacitka v hero"). Swapping the two tokens carries
+   the label and the bars with the fill, including the scroll-driven bars
+   below, which mix from --button-text. The fill turns white on a white bar, so
+   an inset ink ring keeps the button's edge; inset because the button has no
+   border to colour and a real one would shift the label by 3px. No
+   transition: in the scroll-driven bar the fill follows the scroll, and a
+   duration would make it lag behind the finger. */
+.burger:hover,
+.burger:focus-visible {
+  --button-bg: var(--white);
+  --button-text: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--ink);
+}
+
 /* Bars drawn as gradients: fewer nodes, and the open state swaps one value.
 
    They belong to the condensed state and nothing else (2026-09-08: "remove
@@ -572,6 +587,23 @@ img { max-width: 100%; height: auto; }
   .burger[aria-expanded="true"] .burger__bars {
     background: linear-gradient(var(--bar) 0 0) 0 50% / 100% 3px no-repeat;
   }
+
+  /* Hover here runs the other way along the same quarter. Expanded it is the
+     white fill and ink ring from the rule above; condensed, where the button
+     is bare ink bars, turning it over means an ink fill with white bars - the
+     look the stepped fallback already gives the condensed button. The ring
+     fades out as the fill comes in: the condensed bar is 44.75px tall around a
+     44px button, so a ring on the button's edge would be cut off by the bar. */
+  .burger:hover,
+  .burger:focus-visible {
+    background: color-mix(in srgb, var(--white), var(--ink) calc(100% * var(--burger-chrome)));
+    box-shadow: inset 0 0 0 calc(3px * (1 - var(--burger-chrome))) var(--ink);
+  }
+
+  .burger:hover .burger__bars,
+  .burger:focus-visible .burger__bars {
+    --bar: color-mix(in srgb, var(--ink), var(--white) calc(100% * var(--burger-chrome)));
+  }
 }
 
 
@@ -703,12 +735,28 @@ img { max-width: 100%; height: auto; }
    second colour to turn it, so the affordance becomes an underline - and
    keyboard focus gets a ring as well, because an underline alone is easy to
    miss on a link that is already 4.5rem tall. */
-.nav__link:hover { text-decoration: underline; text-underline-offset: 0.15em; }
+/* Since 2026-11-20 the hover turns the word over instead of underlining it,
+   like the buttons and the ticket card ("hover convert color"). The padding
+   is there at rest and handed back by the negative margin, so the white plate
+   has room around the letters without the word moving when it appears.
+   Keyboard focus gets the plate and keeps its ring, because a ring is what a
+   keyboard user looks for. */
+.nav__link {
+  padding: 0 0.2em;
+  margin: 0 -0.2em;
+  border-radius: var(--radius-button);
+}
+.nav__link:hover,
 .nav__link:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
+  background: var(--white);
+  color: var(--ink);
+}
+.nav__link:focus-visible {
   outline: 3px solid var(--white);
   outline-offset: 6px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nav__link { transition: background-color 180ms ease, color 180ms ease; }
 }
 
 .nav__link[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.15em; }
@@ -782,6 +830,24 @@ img { max-width: 100%; height: auto; }
 
 .footer__links a { color: var(--white); font-weight: 700; text-underline-offset: 0.2em; }
 
+/* Turned over on hover like the nav (2026-11-20); the same at-rest padding
+   and negative margin keep the plate from moving the text. */
+.footer__links a {
+  padding: 0.1em 0.3em;
+  margin: 0 -0.3em;
+  border-radius: var(--radius-button);
+}
+.footer__links a:hover,
+.footer__links a:focus-visible {
+  background: var(--white);
+  color: var(--ink);
+  /* The plate is the cue now; the underline sat on its bottom edge. */
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .footer__links a { transition: background-color 180ms ease, color 180ms ease; }
+}
+
 .footer__address { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
 .button {
@@ -798,6 +864,18 @@ img { max-width: 100%; height: auto; }
   border: 3px solid var(--ink);
   border-radius: var(--radius-button);
   text-decoration: none;
+}
+
+/* Turned over on hover, like the ticket card and the burger (2026-11-20). The
+   ink rule stays, so the white fill keeps its edge on white paper. */
+.button:hover,
+.button:focus-visible {
+  background: var(--white);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button { transition: background-color 180ms ease, color 180ms ease; }
 }
 
 /* --- production titles ----------------------------------------------------
