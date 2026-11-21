@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-20T06:15:15.082Z",
+  "fetchedAt": "2026-11-21T07:33:51.516Z",
   "performerId": 2590315,
   "performerUrl": "https://goout.net/en/kolekce-parchant/pzpmtpg/",
   "venueId": 4025,
@@ -569,7 +569,7 @@
       "gooutEventId": 3427905,
       "start": "2026-11-20T20:00:00+01:00",
       "cancelled": false,
-      "ticketingState": "ACTIVE",
+      "ticketingState": "ENDED",
       "ticketUrl": "https://goout.net/en/ale-ty-cervanky-jsou-stejne-nejkrasnejsi/szxuiny/",
       "venue": {
         "name": "Studio Citadela",
